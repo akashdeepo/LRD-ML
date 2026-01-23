@@ -1,0 +1,71 @@
+# =============================================================================
+# LRD-ML Project .gitignore
+# =============================================================================
+
+# Claude Code artifacts
+.claude/
+nul
+
+# Data files (potentially confidential or large)
+*.csv
+!requirements.txt
+
+# But keep sample/example data structure
+# data/
+
+# Bloomberg specific
+*bloomberg*
+*Bloomberg*
+*PX_LAST*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Pickle files (intermediate results - can be regenerated)
+*.pkl
+
+# Large intermediate files
+results/intermediate/*.csv
+
+# Keep LaTeX output but not auxiliary files
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+
+# But DO include:
+# - All .py files
+# - All .tex files
+# - PDF figures (results/figures/*.pdf)
+# - PNG figures (results/figures/*.png)
+# - LaTeX tables (results/tables/*.tex)
+# - Documentation (.md files)
