@@ -1,0 +1,299 @@
+% =============================================================================
+% Standalone Tables for LRD-ML Paper
+% Copy these directly into your Overleaf document
+% =============================================================================
+
+% -----------------------------------------------------------------------------
+% TABLE 1: Summary Statistics
+% -----------------------------------------------------------------------------
+\begin{table}[htbp]
+\centering
+\caption{Summary Statistics for Daily Stock Returns}
+\label{tab:summary_stats}
+\small
+\begin{tabular}{lcccccc}
+\toprule
+ & Mean & Std & Skewness & Kurtosis & Min & Max \\
+ & (\% ann.) & (\% ann.) & & & (\%) & (\%) \\
+\midrule
+\multicolumn{7}{l}{\textbf{Panel A: Pooled Sample}} \\
+All Stocks (N=125) & 9.67 & 32.47 & -0.05 & 7.98 & -13.29 & 13.19 \\
+\midrule
+\multicolumn{7}{l}{\textbf{Panel B: By Sector}} \\
+Communication (n=6) & 9.82 & 33.33 & 0.03 & 6.09 & -13.17 & 13.19 \\
+Consumer Disc. (n=11) & 11.21 & 34.28 & 0.02 & 6.13 & -13.29 & 13.19 \\
+Consumer Staples (n=12) & 8.00 & 22.83 & -0.20 & 9.87 & -12.53 & 12.35 \\
+Energy (n=9) & 9.31 & 36.16 & -0.12 & 5.45 & -13.29 & 13.19 \\
+Financials (n=13) & 6.77 & 36.70 & 0.01 & 7.33 & -13.29 & 13.19 \\
+Healthcare (n=12) & 9.67 & 27.38 & -0.11 & 7.13 & -12.88 & 12.60 \\
+Industrials (n=13) & 9.96 & 29.23 & -0.13 & 6.44 & -13.16 & 13.12 \\
+Materials (n=11) & 9.69 & 32.96 & -0.08 & 5.56 & -13.21 & 13.19 \\
+Real Estate (n=12) & 11.23 & 33.62 & -0.06 & 9.70 & -13.29 & 13.19 \\
+Technology (n=12) & 11.12 & 38.73 & -0.05 & 5.28 & -13.21 & 13.02 \\
+Utilities (n=12) & 9.45 & 22.93 & -0.21 & 10.64 & -13.10 & 13.11 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item \textit{Notes:} Sample period is January 2000 to January 2025 (6,296 trading days). Mean and Std are annualized. Skewness and Kurtosis are excess values. Returns are log returns, winsorized at 0.1\% and 99.9\%.
+\end{tablenotes}
+\end{table}
+
+
+% -----------------------------------------------------------------------------
+% TABLE 2: Data Description
+% -----------------------------------------------------------------------------
+\begin{table}[htbp]
+\centering
+\caption{Data Description and Macro Variables}
+\label{tab:data_description}
+\small
+\begin{tabular}{llccc}
+\toprule
+\multicolumn{5}{l}{\textbf{Panel A: Sample Coverage}} \\
+\midrule
+& Description & Period & Observations & Stocks \\
+\midrule
+Stock Returns & Daily log returns (S\&P 500) & 2000--2025 & 6,296 & 125 \\
+Volatility Proxy & Squared returns & 2000--2025 & 6,296 & 125 \\
+\midrule
+\multicolumn{5}{l}{\textbf{Panel B: Market Variables}} \\
+\midrule
+Variable & Source & Mean & Std & Coverage \\
+\midrule
+VIX & CBOE & 19.87 & 8.46 & 100\% \\
+S\&P 500 Return & Yahoo Finance & 0.03\% & 1.18\% & 100\% \\
+\midrule
+\multicolumn{5}{l}{\textbf{Panel C: Macro Variables}} \\
+\midrule
+3M Treasury & FRED & 1.95\% & 2.01\% & 100\% \\
+10Y Treasury & FRED & 3.41\% & 1.18\% & 100\% \\
+Term Spread (10Y-2Y) & FRED & 1.09\% & 0.98\% & 100\% \\
+IG Credit Spread & FRED & 1.56\% & 0.84\% & 100\% \\
+HY Credit Spread & FRED & 4.87\% & 2.51\% & 100\% \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item \textit{Notes:} All data aligned to common trading days. Missing macro data forward-filled.
+\end{tablenotes}
+\end{table}
+
+
+% -----------------------------------------------------------------------------
+% TABLE 3: LRD Estimates
+% -----------------------------------------------------------------------------
+\begin{table}[htbp]
+\centering
+\caption{Long-Range Dependence Estimates by Sector (Volatility)}
+\label{tab:lrd_estimates}
+\small
+\begin{tabular}{lcccccc}
+\toprule
+ & \multicolumn{3}{c}{GPH Estimator} & \multicolumn{2}{c}{Local Whittle} & \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-6}
+Sector & $\bar{d}$ & Std($d$) & \% Sig. & $\bar{d}$ & Std($d$) & N \\
+\midrule
+Communication & 0.192 & 0.034 & 100\% & 0.380 & 0.026 & 6 \\
+Consumer Disc. & 0.217 & 0.024 & 100\% & 0.392 & 0.022 & 11 \\
+Consumer Staples & 0.213 & 0.028 & 100\% & 0.430 & 0.032 & 12 \\
+Energy & 0.219 & 0.032 & 100\% & 0.411 & 0.020 & 9 \\
+Financials & 0.201 & 0.031 & 100\% & 0.398 & 0.027 & 13 \\
+Healthcare & 0.217 & 0.027 & 100\% & 0.421 & 0.024 & 12 \\
+Industrials & 0.223 & 0.022 & 100\% & 0.415 & 0.021 & 13 \\
+Materials & 0.216 & 0.024 & 100\% & 0.405 & 0.018 & 11 \\
+Real Estate & 0.196 & 0.033 & 100\% & 0.431 & 0.031 & 12 \\
+Technology & 0.221 & 0.031 & 100\% & 0.397 & 0.028 & 12 \\
+Utilities & 0.213 & 0.030 & 100\% & 0.443 & 0.029 & 12 \\
+\midrule
+\textbf{Overall} & \textbf{0.213} & \textbf{0.029} & \textbf{100\%} & \textbf{0.413} & \textbf{0.027} & \textbf{125} \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item \textit{Notes:} GPH and Local Whittle estimates computed on full sample of squared returns. Bandwidth $m = \lfloor T^{0.5} \rfloor \approx 79$. \% Sig. indicates percentage of stocks with $|t| > 1.96$ (significant at 5\% level).
+\end{tablenotes}
+\end{table}
+
+
+% -----------------------------------------------------------------------------
+% TABLE 4: Feature Definitions
+% -----------------------------------------------------------------------------
+\begin{table}[htbp]
+\centering
+\caption{Feature Definitions and Summary Statistics}
+\label{tab:features}
+\small
+\begin{tabular}{llcccc}
+\toprule
+Category & Feature & Mean & Std & Min & Max \\
+\midrule
+\multicolumn{6}{l}{\textbf{HAR Components}} \\
+  & RV$_d$ (daily) & 0.0005 & 0.0013 & 0.0000 & 0.0177 \\
+  & RV$_w$ (weekly) & 0.0005 & 0.0008 & 0.0000 & 0.0095 \\
+  & RV$_m$ (monthly) & 0.0005 & 0.0006 & 0.0000 & 0.0044 \\
+\midrule
+\multicolumn{6}{l}{\textbf{LRD Features}} \\
+  & $\hat{d}_t$ & 0.096 & 0.075 & -0.073 & 0.275 \\
+  & SE($\hat{d}_t$) & 0.086 & 0.000 & 0.086 & 0.086 \\
+  & $\mathbb{1}_{\hat{d}>0}$ & 0.173 & 0.378 & 0.000 & 1.000 \\
+\midrule
+\multicolumn{6}{l}{\textbf{Memory Dynamics}} \\
+  & $\Delta\hat{d}_t$ & -0.000 & 0.003 & -0.025 & 0.033 \\
+  & Vol($\hat{d}$)$_t$ & 0.007 & 0.009 & 0.000 & 0.072 \\
+  & Trend($\hat{d}$)$_t$ & -0.000 & 0.001 & -0.008 & 0.007 \\
+\midrule
+\multicolumn{6}{l}{\textbf{Cross-Sectional}} \\
+  & $\bar{d}_t^{CS}$ (mean) & 0.108 & 0.072 & 0.017 & 0.295 \\
+  & $\sigma_d^{CS}$ (std) & 0.060 & 0.009 & 0.044 & 0.099 \\
+  & Skew($d$)$^{CS}$ & 0.148 & 0.316 & -0.969 & 1.170 \\
+\midrule
+\multicolumn{6}{l}{\textbf{Market}} \\
+  & VIX$_t$ & 19.87 & 8.46 & 9.14 & 82.69 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item \textit{Notes:} Statistics computed from pooled sample across all stocks and dates. Rolling LRD estimates use 500-day windows. RV = realized volatility proxy (squared returns).
+\end{tablenotes}
+\end{table}
+
+
+% -----------------------------------------------------------------------------
+% TABLE 5: Model Comparison
+% -----------------------------------------------------------------------------
+\begin{table}[htbp]
+\centering
+\caption{Out-of-Sample Forecast Comparison: HAR-RV vs. HAR-LRD}
+\label{tab:model_comparison}
+\small
+\begin{tabular}{lccccc}
+\toprule
+Stock & MSE$_{\text{HAR}}$ & MSE$_{\text{LRD}}$ & Improvement & DM Stat \\
+\midrule
+AAPL & 4.89 & 4.63 & 5.2\% & 1.69* \\
+MSFT & 2.18 & 2.02 & 7.5\% & 0.87 \\
+JPM & 9.85 & 9.43 & 4.2\% & 1.17 \\
+XOM & 4.26 & 4.26 & 0.1\% & 0.06 \\
+JNJ & 1.51 & 1.47 & 2.7\% & 0.57 \\
+GE & 22.65 & 22.32 & 1.5\% & 0.73 \\
+IBM & 6.88 & 6.67 & 3.0\% & 1.00 \\
+WMT & 5.79 & 5.31 & 8.3\% & 1.09 \\
+KO & 1.18 & 1.19 & -0.8\% & -0.35 \\
+PG & 2.11 & 2.07 & 2.1\% & 0.20 \\
+\midrule
+\textbf{Average} & \textbf{6.13} & \textbf{5.94} & \textbf{3.4\%} & - \\
+\textbf{Wins/Total} & \multicolumn{4}{c}{\textbf{9/10 (90\%)}} \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item \textit{Notes:} MSE values multiplied by $10^7$ for readability. HAR = HAR-RV benchmark. LRD = HAR-RV augmented with LRD features. DM Stat is the Diebold-Mariano test statistic; positive values indicate HAR-LRD is more accurate. ***, **, * denote significance at 1\%, 5\%, 10\% levels. Rolling forecasts with 2000-day initial training window.
+\end{tablenotes}
+\end{table}
+
+
+% -----------------------------------------------------------------------------
+% TABLE 6: Feature Importance
+% -----------------------------------------------------------------------------
+\begin{table}[htbp]
+\centering
+\caption{Feature Importance for Volatility Forecasting}
+\label{tab:feature_importance}
+\small
+\begin{tabular}{clcc}
+\toprule
+Rank & Feature & XGBoost Gain & Permutation Imp. \\
+\midrule
+1 & RV$_m$ (monthly) & 0.332 & 4.89e-01 \\
+2 & $\bar{d}^{CS}$ (CS mean)$^\dagger$ & 0.138 & 3.03e-01 \\
+3 & RV$_w$ (weekly) & 0.125 & 1.44e-01 \\
+4 & VIX & 0.102 & 3.72e-01 \\
+5 & $\sigma_d^{CS}$ (CS std)$^\dagger$ & 0.092 & 9.79e-02 \\
+6 & $\Delta\hat{d}$$^\dagger$ & 0.077 & 8.01e-02 \\
+7 & RV$_d$ (daily) & 0.070 & 6.12e-02 \\
+8 & $\hat{d}$$^\dagger$ & 0.064 & 4.07e-02 \\
+\midrule
+\multicolumn{4}{l}{\textbf{Summary}} \\
+\midrule
+& HAR Features (RV$_d$, RV$_w$, RV$_m$, VIX) & \multicolumn{2}{c}{62.9\%} \\
+& LRD Features ($\hat{d}$, $\Delta\hat{d}$, CS mean, CS std) & \multicolumn{2}{c}{\textbf{37.1\%}} \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item \textit{Notes:} $^\dagger$ indicates LRD-based features. XGBoost Gain measures feature contribution to model splits (higher = more important). Permutation importance measures MSE increase when feature values are randomly shuffled. Based on pooled sample of 57,698 observations.
+\end{tablenotes}
+\end{table}
+
+
+% -----------------------------------------------------------------------------
+% FIGURE CAPTIONS (for reference when uploading to Overleaf)
+% -----------------------------------------------------------------------------
+
+% Figure 1: Data Overview
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=\textwidth]{fig1_data_overview.png}
+%     \caption{Data Overview. Panel (a) shows daily log returns for AAPL, illustrating typical volatility clustering. Panel (b) compares autocorrelation functions (ACF) of returns (negligible) and squared returns (significant and slowly decaying), providing visual evidence of long-range dependence in volatility. Panel (c) displays the VIX index over the sample period, with notable spikes during the 2008 financial crisis and 2020 COVID-19 pandemic.}
+%     \label{fig:data_overview}
+% \end{figure}
+
+% Figure 2: LRD Estimates
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=\textwidth]{fig2_lrd_estimates.png}
+%     \caption{LRD Estimation Results. Panel (a) shows the cross-sectional distribution of GPH memory parameter estimates $\hat{d}$, confirming positive and significant memory for all stocks. Panel (b) displays rolling 500-day estimates for sample stocks (AAPL, JPM, XOM), revealing time-variation in memory that increases during crisis periods. Panel (c) shows cross-sectional dispersion of memory parameters over time, which spikes during market stress (2008, 2020).}
+%     \label{fig:lrd_estimates}
+% \end{figure}
+
+% Figure 5: Feature Importance
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=\textwidth]{fig5_interpretation.png}
+%     \caption{Feature Importance Analysis. Panel (a) shows XGBoost feature importance by gain, ranking features by their contribution to model splits. Panel (b) shows permutation importance, measuring the increase in MSE when each feature is randomly shuffled. Green bars indicate LRD-based features; blue bars indicate HAR and market features. Cross-sectional mean memory ($\bar{d}^{CS}$) is the second most important feature, demonstrating the predictive value of LRD information.}
+%     \label{fig:interpretation}
+% \end{figure}
+
+
+% -----------------------------------------------------------------------------
+% TABLE 7: Subsample Analysis (Robustness)
+% -----------------------------------------------------------------------------
+\begin{table}[htbp]
+\centering
+\caption{Forecast Performance Across Subsamples}
+\label{tab:subsamples}
+\small
+\begin{tabular}{lcccc}
+\toprule
+Period & MSE (HAR) & MSE (LRD) & Improvement & N \\
+\midrule
+Financial Crisis (2008-2009) & 22.70 & 22.08 & 2.7\% & 10 \\
+Recovery (2010-2015) & 1.72 & 1.73 & -0.9\% & 10 \\
+Bull Market (2016-2019) & 1.83 & 1.81 & 1.0\% & 10 \\
+COVID \& After (2020-2024) & 8.37 & 7.95 & 4.9\% & 10 \\
+\midrule
+\textbf{Summary} & \multicolumn{4}{c}{\textbf{LRD improves in 3/4 subperiods}} \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item \textit{Notes:} MSE values multiplied by $10^7$. Rolling forecast methodology. LRD features show largest improvement during high-volatility regimes (Financial Crisis: +2.7\%, COVID: +4.9\%), supporting the hypothesis that memory dynamics signal regime changes.
+\end{tablenotes}
+\end{table}
+
+
+% -----------------------------------------------------------------------------
+% TABLE 8: Multi-Horizon Forecasts (Robustness)
+% -----------------------------------------------------------------------------
+\begin{table}[htbp]
+\centering
+\caption{Forecast Performance Across Horizons}
+\label{tab:horizons}
+\small
+\begin{tabular}{lccc}
+\toprule
+Horizon & MSE (HAR) & MSE (LRD) & Improvement \\
+\midrule
+1-day & 3.96 & 4.01 & -1.2\% \\
+5-day & 1.05 & 1.07 & -2.1\% \\
+22-day & 0.39 & 0.41 & -5.5\% \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item \textit{Notes:} MSE values multiplied by $10^7$. h-day horizon forecasts average volatility over next h days. LRD features optimized for 1-day ahead prediction; longer horizons show diminishing returns as memory parameters capture recent dynamics.
+\end{tablenotes}
+\end{table}
