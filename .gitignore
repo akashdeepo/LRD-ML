@@ -13,10 +13,13 @@ nul
 # But keep sample/example data structure
 # data/
 
-# Bloomberg specific
-*bloomberg*
-*Bloomberg*
+# Bloomberg-sourced data (raw and processed) — never push
+bloomberg_pull/
 *PX_LAST*
+
+# Advisor / private documents — do not push to public repo
+*.docx
+*.doc
 
 # Python
 __pycache__/
