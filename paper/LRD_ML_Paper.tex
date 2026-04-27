@@ -74,9 +74,39 @@ We investigate whether estimated parameters from Long-Range Dependence (LRD) mod
 \section{Introduction}
 \label{sec:introduction}
 
-Long-range dependence (LRD) in financial time series, particularly in volatility, has been extensively documented since the seminal work of \citet{ding1993long}. The fractional differencing parameter $d$ characterizes the rate of decay in autocorrelations and has profound implications for forecasting, risk management, and derivative pricing. However, the traditional approach treats the estimated memory parameter $\hat{d}$ primarily as a tool for achieving stationarity through fractional differencing, discarding potentially valuable information contained in the estimate itself.
+Long-range dependence (LRD) in financial time series, particularly in volatility, has been extensively documented since the seminal work of \citet{ding1993long}. The fractional differencing parameter $d$ characterizes the rate of decay in autocorrelations and has profound implications for forecasting, risk management, and derivative pricing. However, the traditional approach treats the estimated memory parameter $\hat{d}$ primarily as a tool for achieving stationarity through fractional differencing, discarding potentially
+valuable information contained in the estimate itself.
 
-This paper proposes a novel perspective: we treat $\hat{d}$ and related statistics as \emph{informative features} for machine learning algorithms rather than mere nuisance parameters. Our key insight is that the memory parameter captures fundamental properties of the underlying price process that may have predictive power for future volatility, independent of its role in model specification.
+\vspace{0.3cm}
+\noindent
+Empirical evidence shows that long memory is primarily a feature of volatility rather than returns and persists across markets and sampling frequencies
+\citep{he2025lrd, baillie2019longmemory}. Fractionally integrated models such as ARFIMA and FIGARCH provide a natural framework for capturing this behavior and remain statistically significant even after accounting for heavy-tailed innovations and nonlinear dynamics \citep{he2025lrd}. These findings suggest that the long-memory parameter summarizes fundamental aspects of volatility persistence.
+
+\vspace{0.3cm}
+\noindent
+In parallel, reduced form approaches such as the Heterogeneous Autoregressive (HAR) model have been shown to approximate long-memory behavior using multi-scale volatility
+aggregation. While HAR models perform competitively in practice, recent evidence indicates that volatility dynamics and HAR coefficients vary across market regimes, particularly during periods of heightened uncertainty \citep{blake2025regime}. This instability highlights the importance of modeling time variation in persistence.
+
+\vspace{0.3cm}
+\noindent
+At the same time, machine learning methods have gained prominence in volatility forecasting. Recent studies demonstrate that tree-based and ensemble learning methods outperform traditional econometric benchmarks when supplied with rich feature sets
+\citep{omer2026mlrv, zhang2024intraday}. These gains are especially pronounced at longer forecast horizons, where persistence and long-memory effects dominate volatility dynamics.
+
+\vspace{0.3cm}
+\noindent
+Despite these advances, existing approaches typically learn long-range dependence
+implicitly through lagged inputs or model structure. The estimated memory parameter itself is rarely incorporated explicitly into the forecasting stage. This omission is notable given evidence that volatility regimes, structural changes, and higher-order dependence play a central role in predictive performance \citep{blake2025regime}.
+
+\vspace{0.3cm}
+\noindent
+Recent regime-aware and feature-engineered forecasting frameworks further demonstrate that explicitly incorporating structural information improves volatility prediction,
+particularly during turbulent periods \citep{blake2025regime}. These findings motivate a forecasting strategy that conditions directly on descriptors of volatility persistence.
+
+\vspace{0.3cm}
+\noindent
+This paper proposes a novel perspective: we treat $\hat{d}$ and related statistics as
+\emph{informative features} for machine learning algorithms rather than mere nuisance
+parameters. Our key insight is that the memory parameter captures fundamental properties of the underlying price process that may have predictive power for future volatility, independent of its role in model specification.
 
 \subsection{Research Questions}
 
@@ -140,6 +170,19 @@ where $\hat{G}(d) = \frac{1}{m}\sum_{j=1}^m \lambda_j^{2d} I(\lambda_j)$. This e
 \begin{equation}
     \hat{d}_{\text{LW}} = \arg\min_d Q(d), \quad \text{SE}(\hat{d}) = \frac{1}{2\sqrt{m}}
 \end{equation}
+
+\subsubsection{FIGARCH Model}
+
+As a parametric complement to our semi-parametric estimators, we also employ the Fractionally Integrated GARCH (FIGARCH) model of \citet{baillie1996figarch}. The FIGARCH(1,$d$,1) specification models the conditional variance as:
+\begin{equation}
+    \sigma_t^2 = \omega + \beta \sigma_{t-1}^2 + \left[1 - \beta L - (1-\phi L)(1-L)^d\right] \epsilon_t^2
+\end{equation}
+where $L$ is the lag operator, $d \in (0, 1)$ is the fractional integration parameter, and $(1-L)^d$ is the fractional differencing operator defined via the binomial expansion:
+\begin{equation}
+    (1-L)^d = \sum_{k=0}^{\infty} \binom{d}{k} (-L)^k = 1 - dL - \frac{d(1-d)}{2}L^2 - \cdots
+\end{equation}
+
+For $d \in (0, 0.5)$, the process exhibits stationary long memory with hyperbolic decay in the autocorrelation of squared returns. When $d = 0$, FIGARCH reduces to standard GARCH(1,1). The FIGARCH model provides a parametric validation of our semi-parametric LRD estimates and allows for direct comparison of memory parameter estimates across methodologies.
 
 \subsection{Feature Engineering from LRD Estimates}
 
@@ -261,9 +304,10 @@ Utilities (n=12) & 9.45 & 22.93 & -0.21 & 10.64 & -13.10 & 13.11 \\
 \item \textit{Notes:} Sample period: January 2000 to January 2025 (6,296 trading days). Mean and Std are annualized. Returns are log returns, winsorized at 0.1\% and 99.9\%.
 \end{tablenotes}
 \end{table}
-
+\noindent
 The pooled sample exhibits typical stylized facts: near-zero mean, moderate volatility (32.47\% annualized), negative skewness, and substantial excess kurtosis (7.98), confirming fat tails. Technology and Financials show highest volatility, while Consumer Staples and Utilities are most stable.
 
+\newpage
 \subsection{Evidence of Long-Range Dependence}
 
 Figure \ref{fig:data_overview} illustrates the key stylized facts motivating our analysis.
@@ -274,6 +318,55 @@ Figure \ref{fig:data_overview} illustrates the key stylized facts motivating our
     \caption{Data Overview. Panel (a) shows daily log returns for AAPL, illustrating volatility clustering. Panel (b) compares autocorrelation functions of returns (negligible) and squared returns (significant and slowly decaying), providing visual evidence of long-range dependence in volatility. Panel (c) displays the VIX index, with spikes during the 2008 Financial Crisis and 2020 COVID pandemic.}
     \label{fig:data_overview}
 \end{figure}
+
+\subsection{Preliminary Diagnostics}
+
+Figure \ref{fig:preliminary_diagnostics} presents additional diagnostic analyses that establish key stylized facts motivating our LRD-based approach.
+
+Panel (a) compares the empirical return distribution to theoretical benchmarks. The pooled sample of 780,765 daily returns exhibits substantial departure from normality: skewness of $-0.053$, excess kurtosis of $7.98$, and a Jarque-Bera statistic exceeding 2 million. The Student-$t$ distribution with approximately 2.6 degrees of freedom provides a superior fit, capturing the heavy tails characteristic of financial returns.
+
+Panel (b) displays the cross-stock volatility correlation matrix for representative stocks. Correlations range from 0.20 to 0.48, indicating that volatility co-moves substantially across the market. This motivates our use of cross-sectional features: if volatility is correlated across stocks, then aggregate memory statistics may contain predictive information for individual stock volatility.
+
+Panel (c) illustrates the performance of a parametric FIGARCH(1,$d$,1) model fitted to AAPL returns. The estimated memory parameter $\hat{d} = 0.318$ confirms long-range dependence via a conditional volatility specification. The fitted volatility closely tracks realized volatility (absolute returns), with notable increases during crisis periods (2008, 2020). This validates our semi-parametric GPH and Local Whittle estimates and demonstrates that long memory is robust to estimation methodology.
+
+Panel (d) presents a QQ-plot comparing sample quantiles to theoretical normal quantiles. The pronounced S-shaped deviation confirms heavy tails on both sides of the distribution---a hallmark of financial returns that standard GARCH models fail to fully capture but that long-memory models can accommodate.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{fig_preliminary_diagnostics.png}
+    \caption{Preliminary Diagnostics. Panel (a) shows the log-return distribution with normal and Student-$t$ fits. Panel (b) displays the cross-stock volatility correlation matrix. Panel (c) compares FIGARCH(1,$d$,1) fitted volatility to realized volatility for AAPL ($\hat{d}=0.318$). Panel (d) shows the QQ-plot demonstrating departure from normality.}
+    \label{fig:preliminary_diagnostics}
+\end{figure}
+
+Table \ref{tab:figarch_estimates} reports FIGARCH parameter estimates for ten representative stocks. The fractional integration parameter $d$ ranges from 0.235 (PG) to 0.461 (JPM), with a mean of 0.329. These estimates are consistent with our semi-parametric GPH estimates ($\bar{d} = 0.213$) and Local Whittle estimates ($\bar{d} = 0.413$), falling between the two as expected given the different bandwidth and efficiency properties of each estimator.
+
+\begin{table}[H]
+\centering
+\caption{FIGARCH(1,$d$,1) Model Estimates}
+\label{tab:figarch_estimates}
+\small
+\begin{tabular}{lcccccc}
+\toprule
+Stock & $\omega$ & $d$ & $\phi$ & $\beta$ & AIC & BIC \\
+\midrule
+AAPL & 0.186 & 0.318 & 0.340 & 0.558 & 26748 & 26788 \\
+MSFT & 0.244 & 0.291 & 0.254 & 0.432 & 24065 & 24105 \\
+JPM & 0.114 & 0.461 & 0.176 & 0.520 & 24548 & 24589 \\
+XOM & 0.059 & 0.440 & 0.224 & 0.572 & 22012 & 22053 \\
+JNJ & 0.065 & 0.327 & 0.337 & 0.514 & 18228 & 18269 \\
+GE & 0.085 & 0.384 & 0.308 & 0.564 & 24405 & 24446 \\
+WMT & 0.147 & 0.251 & 0.375 & 0.505 & 20907 & 20947 \\
+KO & 0.134 & 0.267 & 0.000 & 0.176 & 18836 & 18876 \\
+PG & 0.179 & 0.235 & 0.000 & 0.093 & 18740 & 18781 \\
+BA & 0.202 & 0.321 & 0.269 & 0.493 & 25448 & 25489 \\
+\midrule
+\textbf{Mean} & -- & \textbf{0.329} & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item \textit{Notes:} FIGARCH(1,$d$,1) estimated with AR(1) mean and normal errors. $d$ is the fractional integration parameter; $d \in (0, 0.5)$ indicates stationary long memory.
+\end{tablenotes}
+\end{table}
 
 % =============================================================================
 % 4. EMPIRICAL RESULTS
@@ -481,7 +574,7 @@ COVID \& After (2020--2024) & 8.37 & 7.95 & 4.9\% & 10 \\
 \item \textit{Notes:} MSE $\times 10^7$. Positive improvement = HAR-LRD outperforms HAR-RV.
 \end{tablenotes}
 \end{table}
-
+\noindent
 LRD features provide the largest improvements during high-volatility regimes: COVID (+4.9\%) and Financial Crisis (+2.7\%). During the low-volatility Recovery period, performance is marginally worse (-0.9\%). This supports our hypothesis that memory dynamics are particularly informative during regime transitions.
 
 \subsection{Forecast Horizon Analysis}
@@ -556,6 +649,21 @@ These findings suggest that using $\hat{d}$ only for fractional differencing may
 
 \begin{thebibliography}{99}
 
+\bibitem[Baillie et al., 1996]{baillie1996figarch}
+Baillie, R.~T., Bollerslev, T., and Mikkelsen, H.~O. (1996).
+\newblock Fractionally integrated generalized autoregressive conditional heteroskedasticity.
+\newblock \textit{Journal of Econometrics}, 74(1):3--30.
+
+\bibitem[Baillie et al., 2019]{baillie2019longmemory}
+Baillie, R., Calonaci, F., Cho, D., and Rho, S. (2019).
+\newblock Long memory, realized volatility and HAR models.
+\newblock Working Paper No. 881, Queen Mary University of London.
+
+\bibitem[Blake et al., 2025]{blake2025regime}
+Blake, A. C., Gandhi, N. A., and Jakkula, A. R. (2025).
+\newblock Improving S\&P 500 volatility forecasting through regime-switching methods.
+\newblock arXiv preprint arXiv:2510.03236.
+
 \bibitem[Chen and Guestrin, 2016]{chen2016xgboost}
 Chen, T. and Guestrin, C. (2016).
 \newblock XGBoost: A scalable tree boosting system.
@@ -581,10 +689,25 @@ Geweke, J. and Porter-Hudak, S. (1983).
 \newblock The estimation and application of long memory time series models.
 \newblock \textit{Journal of Time Series Analysis}, 4(4):221--238.
 
+\bibitem[He and Rachev, 2025]{he2025lrd}
+He, Y. and Rachev, S. (2025).
+\newblock Long-range dependence in financial markets: Empirical evidence and generative modeling challenges.
+\newblock arXiv preprint arXiv:2509.19663.
+
+\bibitem[Omer et al., 2026]{omer2026mlrv}
+Omer, T., M{\aa}nsson, K., Sj{\"o}lander, P., and Uddin, G. S. (2026).
+\newblock Machine learning approaches to forecast the realized volatility of crude oil prices.
+\newblock \textit{Journal of Forecasting}, forthcoming.
+
 \bibitem[Robinson, 1995]{robinson1995gaussian}
 Robinson, P.~M. (1995).
 \newblock Gaussian semiparametric estimation of long range dependence.
 \newblock \textit{The Annals of Statistics}, 23(5):1630--1661.
+
+\bibitem[Zhang et al., 2024]{zhang2024intraday}
+Zhang, C., Zhang, Y., Cucuringu, M., and Qian, Z. (2024).
+\newblock Volatility forecasting with machine learning and intraday commonality.
+\newblock \textit{Journal of Financial Econometrics}, 22(2), 492--530.
 
 \end{thebibliography}
 

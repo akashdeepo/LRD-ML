@@ -120,6 +120,19 @@ where $\hat{G}(d) = \frac{1}{m}\sum_{j=1}^m \lambda_j^{2d} I(\lambda_j)$. This e
     \hat{d}_{\text{LW}} = \arg\min_d Q(d), \quad \text{SE}(\hat{d}) = \frac{1}{2\sqrt{m}}
 \end{equation}
 
+\subsubsection{FIGARCH Model}
+
+As a parametric complement to our semi-parametric estimators, we also employ the Fractionally Integrated GARCH (FIGARCH) model of \citet{baillie1996figarch}. The FIGARCH(1,$d$,1) specification models the conditional variance as:
+\begin{equation}
+    \sigma_t^2 = \omega + \beta \sigma_{t-1}^2 + \left[1 - \beta L - (1-\phi L)(1-L)^d\right] \epsilon_t^2
+\end{equation}
+where $L$ is the lag operator, $d \in (0, 1)$ is the fractional integration parameter, and $(1-L)^d$ is the fractional differencing operator defined via the binomial expansion:
+\begin{equation}
+    (1-L)^d = \sum_{k=0}^{\infty} \binom{d}{k} (-L)^k = 1 - dL - \frac{d(1-d)}{2}L^2 - \cdots
+\end{equation}
+
+For $d \in (0, 0.5)$, the process exhibits stationary long memory with hyperbolic decay in the autocorrelation of squared returns. When $d = 0$, FIGARCH reduces to standard GARCH(1,1). The FIGARCH model provides a parametric validation of our semi-parametric LRD estimates and allows for direct comparison of memory parameter estimates across methodologies.
+
 \subsection{Feature Engineering from LRD Estimates}
 
 We construct a comprehensive feature vector $\mathbf{F}_t^{\text{LRD}}$ from rolling window estimates of the memory parameter:
@@ -262,6 +275,56 @@ Figure \ref{fig:data_overview} illustrates the key stylized facts motivating our
     \caption{Data Overview: (a) AAPL returns, (b) ACF comparison showing no memory in returns but significant memory in squared returns, (c) VIX index highlighting crisis periods.}
     \label{fig:data_overview}
 \end{figure}
+
+\subsection{Preliminary Diagnostics}
+
+Figure \ref{fig:preliminary_diagnostics} presents additional diagnostic analyses that establish key stylized facts motivating our LRD-based approach.
+
+Panel (a) compares the empirical return distribution to theoretical benchmarks. The pooled sample of 780,765 daily returns exhibits substantial departure from normality: skewness of $-0.053$, excess kurtosis of $7.98$, and a Jarque-Bera statistic exceeding 2 million. The Student-$t$ distribution with approximately 2.6 degrees of freedom provides a superior fit, capturing the heavy tails characteristic of financial returns.
+
+Panel (b) displays the cross-stock volatility correlation matrix for representative stocks. Correlations range from 0.20 to 0.48, indicating that volatility co-moves substantially across the market. This motivates our use of cross-sectional features: if volatility is correlated across stocks, then aggregate memory statistics may contain predictive information for individual stock volatility.
+
+Panel (c) illustrates the performance of a parametric FIGARCH(1,$d$,1) model fitted to AAPL returns. The estimated memory parameter $\hat{d} = 0.318$ confirms long-range dependence via a conditional volatility specification. The fitted volatility closely tracks realized volatility (absolute returns), with notable increases during crisis periods (2008, 2020). This validates our semi-parametric GPH and Local Whittle estimates and demonstrates that long memory is robust to estimation methodology.
+
+Panel (d) presents a QQ-plot comparing sample quantiles to theoretical normal quantiles. The pronounced S-shaped deviation confirms heavy tails on both sides of the distribution---a hallmark of financial returns that standard GARCH models fail to fully capture but that long-memory models can accommodate.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/fig_preliminary_diagnostics.png}
+    \caption{Preliminary Diagnostics: (a) Log-return distribution with normal and Student-$t$ fits, (b) Cross-stock volatility correlation matrix, (c) FIGARCH(1,$d$,1) fitted volatility for AAPL ($\hat{d}=0.318$), (d) QQ-plot showing departure from normality.}
+    \label{fig:preliminary_diagnostics}
+\end{figure}
+
+Table \ref{tab:figarch_estimates} reports FIGARCH parameter estimates for ten representative stocks. The fractional integration parameter $d$ ranges from 0.235 (PG) to 0.461 (JPM), with a mean of 0.329. These estimates are consistent with our semi-parametric GPH estimates ($\bar{d} = 0.213$) and Local Whittle estimates ($\bar{d} = 0.413$), falling between the two as expected given the different bandwidth and efficiency properties of each estimator.
+
+% FIGARCH Table
+\begin{table}[htbp]
+\centering
+\caption{FIGARCH(1,$d$,1) Model Estimates}
+\label{tab:figarch_estimates}
+\small
+\begin{tabular}{lcccccc}
+\toprule
+Stock & $\omega$ & $d$ & $\phi$ & $\beta$ & AIC & BIC \\
+\midrule
+AAPL & 0.186 & 0.318 & 0.340 & 0.558 & 26748 & 26788 \\
+MSFT & 0.244 & 0.291 & 0.254 & 0.432 & 24065 & 24105 \\
+JPM & 0.114 & 0.461 & 0.176 & 0.520 & 24548 & 24589 \\
+XOM & 0.059 & 0.440 & 0.224 & 0.572 & 22012 & 22053 \\
+JNJ & 0.065 & 0.327 & 0.337 & 0.514 & 18228 & 18269 \\
+GE & 0.085 & 0.384 & 0.308 & 0.564 & 24405 & 24446 \\
+WMT & 0.147 & 0.251 & 0.375 & 0.505 & 20907 & 20947 \\
+KO & 0.134 & 0.267 & 0.000 & 0.176 & 18836 & 18876 \\
+PG & 0.179 & 0.235 & 0.000 & 0.093 & 18740 & 18781 \\
+BA & 0.202 & 0.321 & 0.269 & 0.493 & 25448 & 25489 \\
+\midrule
+\textbf{Mean} & -- & \textbf{0.329} & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item Notes: FIGARCH(1,$d$,1) estimated with AR(1) mean and normal errors. $d$ is the fractional integration parameter; $d \in (0, 0.5)$ indicates stationary long memory.
+\end{tablenotes}
+\end{table}
 
 % =============================================================================
 \section{Empirical Results}
@@ -535,6 +598,11 @@ These findings suggest that the long-memory literature's traditional focus on us
 % \bibliography{references}
 
 \begin{thebibliography}{99}
+
+\bibitem[Baillie et al., 1996]{baillie1996figarch}
+Baillie, R.~T., Bollerslev, T., and Mikkelsen, H.~O. (1996).
+\newblock Fractionally integrated generalized autoregressive conditional heteroskedasticity.
+\newblock {\em Journal of Econometrics}, 74(1):3--30.
 
 \bibitem[Chen and Guestrin, 2016]{chen2016xgboost}
 Chen, T. and Guestrin, C. (2016).
