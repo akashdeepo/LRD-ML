@@ -34,12 +34,13 @@ Results).
 | D_lasso | 0.6403 | 0.3381 | 0.2680 | +4.23% | +6.97% | +0.33% | +23.9 |
 | D_en | 0.6405 | 0.3382 | 0.2677 | +4.20% | +6.93% | +0.44% | +24.1 |
 | D_ridge | 0.6452 | 0.3418 | 0.2698 | +3.50% | +5.95% | −0.32% | +20.0 |
-| D_rf (h=1 only) | 0.6658 | — | — | +0.42% | — | — | +1.6 |
+| D_rf | 0.6658 | 0.3553 | 0.2831 | +0.42% | +2.22% | **−5.29%** | up to +6.8 |
+| D_gbm | 0.7584 | 0.3993 | 0.3206 | **−13.43%** | **−9.87%** | **−19.22%** | (all negative) |
 
 **The story:**
 1. **B ≈ A.** Adding only own-stock persistence (without cross-sectional or interactions) yields no improvement. HAR already captures own-stock vol persistence via its multi-horizon decomposition.
 2. **C >> A.** Adding cross-sectional persistence (mean and dispersion of $\hat d$ across stocks), market state (VIX, MOVE), and the persistence × market interactions ($\hat d \cdot$ VIX, $\hat d \cdot$ MOVE) yields a **4–8% MSE reduction** that is overwhelmingly significant (DM-$t \in [15, 24]$).
-3. **Linear C beats non-linear D_rf.** Random-forest with the same predictors gains only +0.42% at $h=1$ — substantially worse than the linear OLS Model C. **Theory-informed feature engineering on a linear model dominates a black-box non-linear ML on raw features.**
+3. **Theory-informed linear C beats every non-linear ML.** Random Forest fails to match Model C across all horizons (worst: −5.3% at h=22) and Gradient Boosting actively *worsens* forecasts by 10–19% at every horizon. **Theory-informed feature engineering on a linear model dominates black-box non-linear ML.** With only 18 hand-engineered predictors and ~430 training observations, tree models overfit the noise in volatility; the linear projection is the right inductive bias.
 4. **Best horizon is h=5.** Persistence features matter most at the medium (weekly) horizon, exactly as Rachev's framework predicts (long-memory effects appear at medium horizons; short-run is dominated by noise; long-run by macro factors).
 
 ## Regime Split (Table 7)
@@ -111,8 +112,8 @@ results/intermediate/
   forecasts/D_lasso_h{01,05,22}_yhat.csv, _y.csv
   forecasts/D_ridge_h{01,05,22}_yhat.csv, _y.csv
   forecasts/D_en_h{01,05,22}_yhat.csv, _y.csv
-  forecasts/D_rf_h*_yhat.csv     (RF — partially complete; running in background)
-  forecasts/D_gbm_h*_yhat.csv    (GBM — pending; running after RF)
+  forecasts/D_rf_h{01,05,22}_yhat.csv, _y.csv
+  forecasts/D_gbm_h{01,05,22}_yhat.csv, _y.csv
   table5_raw.csv, table6_lasso_coefs.csv, table7_raw.csv, table8_raw.csv
 ```
 
@@ -127,10 +128,7 @@ modules/module6_forecast_eval.py    Tables 5–8, DM tests, regime/sector splits
 
 ## Status
 
-- **Linear A/B/C and D_lasso/ridge/en**: **complete and validated**.
-- **D_rf**: $h=1$ done (gain +0.42%); $h=5, 22$ running in background.
-- **D_gbm**: pending (runs after RF finishes).
-- Tables 5–8 will be regenerated automatically once RF/GBM panels arrive.
+All A/B/C/D panels complete; Tables 5–8 reflect the full set of models.
 
 ## Implications for the Paper
 
@@ -138,5 +136,5 @@ The empirical pattern is unusually clean for Section 8:
 
 1. **Persistence as a feature is not enough** (B vs A): own-stock $\hat d$ does not improve over HAR.
 2. **Persistence as a system-wide state variable IS enough** (C vs A): cross-sectional $\bar d_t$, sector $\bar d_s$, and the $\hat d \cdot$ VIX interaction collectively reduce MSE by 4–8%.
-3. **Linear, theory-informed > non-linear, theory-agnostic**: D_rf with the same predictors loses to the linear C — a finding that supports the paper's "structurally-informed feature engineering matters more than algorithm choice" thesis.
+3. **Linear, theory-informed > non-linear, theory-agnostic**: Random Forest and Gradient Boosting with the *same predictors* underperform the linear Model C — RF is roughly flat (+0.4% / +2.2% / −5.3%) and GBM actively hurts (−13% / −10% / −19%). This supports the paper's "structurally-informed feature engineering matters more than algorithm choice" thesis. With ~430 training observations and 18 features, tree models overfit; the linear projection is the right inductive bias for this signal.
 4. **Stress amplification**: gains concentrate in the high-VIX quartile and in COVID — consistent with persistence as a "duration of unresolved uncertainty" indicator.
