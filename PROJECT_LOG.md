@@ -463,10 +463,12 @@ LRD_Nicholas/
     │   ├── table1_summary_stats.tex
     │   ├── table2_data_description.tex
     │   ├── table3_lrd_estimates.tex
-    │   └── table4_features.tex
+    │   ├── table4_features.tex
+    │   └── table_figarch_estimates.tex
     ├── figures/
     │   ├── fig1_data_overview.pdf
-    │   └── fig2_lrd_estimates.pdf
+    │   ├── fig2_lrd_estimates.pdf
+    │   └── fig_preliminary_diagnostics.pdf
     └── intermediate/
         ├── vol_gph.csv
         ├── cs_dispersion.csv
@@ -477,4 +479,190 @@ LRD_Nicholas/
 
 ---
 
-*Last updated: 2025-01-21*
+## Session: 2025-01-30 - Preliminary Diagnostics and FIGARCH
+
+### Objective
+Add preliminary diagnostics section with:
+1. Log-return distribution analysis
+2. Cross-stock volatility correlation heatmap
+3. ARIMA-FIGARCH fitted volatility
+4. QQ-plot for normality assessment
+
+### Implemented
+- **New module:** `modules/module1b_preliminary_diagnostics.py`
+  - FIGARCH(1,d,1) model fitting using `arch` library
+  - Diagnostic figure with 4 panels
+  - FIGARCH comparison table
+
+### Key Results
+1. **Return Distribution:**
+   - Excess kurtosis: 7.98
+   - Jarque-Bera: 2,070,028 (p < 0.001)
+   - Student-t with ~2.6 df fits better than normal
+
+2. **FIGARCH Estimates:**
+   - Mean d = 0.329 (range: 0.235 to 0.461)
+   - Consistent with semi-parametric estimates (GPH: 0.213, LW: 0.413)
+   - Validates long memory across all 10 sample stocks
+
+3. **Cross-Stock Correlations:**
+   - Volatility correlations range from 0.20 to 0.48
+   - Supports use of cross-sectional features
+
+### New Outputs
+- `results/figures/fig_preliminary_diagnostics.pdf`
+- `results/figures/fig_preliminary_diagnostics.png`
+- `results/tables/table_figarch_estimates.tex`
+
+### Paper Updates
+- Added "Preliminary Diagnostics" subsection to Section 3 (Data)
+- Added FIGARCH methodology to Section 2 (Methodology)
+- Added Figure 2: Preliminary Diagnostics
+- Added Table: FIGARCH(1,d,1) Model Estimates
+- Added Baillie et al. (1996) reference
+
+---
+
+## Session: 2026-04-25 — Bloomberg pull, panel rebuild, and Phases 1–3
+
+### Context
+Following Prof. Rachev's 19 April 2026 feedback (the extended framework
+*Memory, Roughness, and Information Persistence in Financial Markets*), we
+restructured the data, code, and outputs around the new 10-section paper plan
+(see [REVISION_PLAN.tex](REVISION_PLAN.tex)).
+
+### Bloomberg pull and clean-up
+Nicholas pulled five files into `bloomberg_pull/`:
+`OHLCV.xlsx`, `intraday.xlsx`, `sector_ETF.xlsx`, `market_level_daily.csv`,
+`stock_metadata.csv`.
+
+Issues found and fixed by `preprocess_bloomberg.py` and
+`preprocess_supporting.py`:
+
+| Issue | Fix |
+|---|---|
+| `AAPL` sheet contained AAP (Advance Auto Parts) data — closes matched to the cent ($58, $3.5B mcap; not Apple) | Replaced with real AAPL pulled from yfinance for the same window |
+| Sheet named `JMP` (data was correct JPM) | Renamed → `JPM` |
+| `TXN` Bloomberg sheet was empty | Pulled from yfinance |
+| Sector ETF file in Bloomberg multi-block wide layout | Flattened into one panel per OHLCV field |
+| Market-level CSV had `"Last Px"` header noise row | Stripped, columns renamed (`SPX`, `INDU`, `NDX`, `RTY`, `VIX`, `MOVE`, `USGG3M`, `USGG10YR`, `USYC2Y10`, `CDX_IG_5Y`, `CDX_HY_5Y`) |
+| Stock metadata file used company names as join key | Mapped to ticker order from `OHLCV.xlsx`; added `SizeBucket` (Small/Mid/Large) by mcap terciles |
+
+Constraints accepted:
+- **Intraday** only Oct 2025 → Apr 2026 (Terminal 1-year cap). Will be used as a
+  recent-period high-frequency robustness slice, not for rolling estimates.
+- **Daily history** starts 2001-11-29 (Bloomberg's earliest for some tickers).
+- **CDX IG/HY** start 2011-09-09; CDX HY column is a *price* index (Bloomberg
+  field `CDX HY CDSI GEN 5Y PRC Corp`), not spread.
+- **AAPL/TXN historical mcap** not available from yfinance; static current mcap
+  in `metadata.csv` is sufficient for size-bucket assignment.
+
+Output panels under `bloomberg_pull/processed/`:
+- `prices_close.csv`, `prices_open.csv`, `prices_high.csv`, `prices_low.csv` (all 6,136 × 125)
+- `volume.csv`, `mktcap.csv`
+- `ohlcv_long.csv` (long format, 732,892 × 7)
+- `metadata.csv` (125 × 6)
+- `market_level.csv` (6,322 × 11)
+- `sector_etf_{open,close,high,low,volume}.csv` (6,538 × 11 each)
+- `rv_parkinson.csv` (6,136 × 125) — primary forecasting target
+
+### Phase 1 — Repoint pipeline to new data
+- New module `modules/io_v2.py` — single source of truth for loading +
+  70%-coverage filter + winsorized log returns + log RV + market alignment.
+  Caches under `bloomberg_pull/processed/clean_panel/`.
+- Filter retained **115 / 125** stocks. Dropped (insufficient history): ABBV,
+  AVGO, DG, DOW, HCA, HLT, KHC, META, TSLA, ZTS.
+- `module1_data_description.py` rewritten — uses real GICS sectors (11),
+  Parkinson RV in Figure 1 panel (b), three-way ACF comparison in panel (c)
+  (returns vs squared returns vs Parkinson RV).
+- `module1b_preliminary_diagnostics.py` rewritten — same 4-panel diagnostic
+  figure with Parkinson sqrt(RV) in panel (c), all 10 sample-stock FIGARCH
+  fits succeeded (no GARCH fallback this time).
+
+Headline numbers (refreshed):
+- Pooled return: mean 9.38% ann, std 31.48% ann, excess kurtosis 11.64,
+  JB ≈ 3.95M
+- VIX: 9.14 → 82.69 (covers GFC + COVID peaks)
+- FIGARCH(1,d,1): mean $\hat d$ = **0.329** across 10 stocks, range
+  [0.237, 0.461]
+
+Outputs refreshed: `table1_summary_stats.tex`, `table2_data_description.tex`,
+`table_figarch_estimates.tex`, `fig1_data_overview.pdf`,
+`fig_preliminary_diagnostics.pdf`.
+
+### Phase 2 — Estimation layer (LRD + roughness)
+`module2_lrd_estimation.py` rewritten end-to-end:
+- Static cross-sectional GPH and Local Whittle on returns and Parkinson RV.
+- New rolling Hurst / roughness estimator via the scaling method on
+  log Parkinson RV (qth-moment increments over lags {1,2,3,5,8,13,21}).
+- Rolling weekly panels (window 750, stride 5) for d_GPH, d_LW, H — feeds
+  Module 3 directly.
+
+| Series | Estimator | Mean d | % Significant |
+|---|---|---|---|
+| Returns | GPH | −0.011 | 0% |
+| Returns | LW | −0.028 | 19% |
+| Parkinson RV | GPH | **+0.226** | **98%** |
+| Parkinson RV | LW | **+0.440** | **100%** |
+| log(RV) | Hurst | **H = 0.063** | 100% have H<0.5 |
+
+**Key result for the paper.** Cross-sectional mean $\hat d_t$ by regime:
+| Period | Mean $\hat d_t$ | vs calm |
+|---|---|---|
+| Calm 2013–2014 | +0.154 | baseline |
+| GFC 2008-Q3 → 2009-Q4 | **+0.259** | +68% |
+| COVID 2020 | **+0.287** | +86% |
+
+Correlation $\rho(\text{VIX}, \text{mean } \hat d_t)$ = **+0.501**.
+
+Roughness exponent H ≈ 0.06 across all 115 stocks places our panel firmly in
+the rough-volatility range of Gatheral–Jaisson–Rosenbaum (2018).
+
+Outputs: `table3_lrd_estimates.tex`, `fig2_lrd_estimates.pdf`,
+intermediate panels `lrd_*.csv`, `hurst_rv_log.csv`,
+`rolling_d_gph.csv`, `rolling_d_lw.csv`, `rolling_hurst.csv`
+(each rolling panel is 1078 × 115).
+
+### Phase 3 — Persistence feature vector
+`module3_feature_engineering.py` rewritten to consume Phase 2 outputs and
+produce the full Z_t vector per Rachev's framework Section 6:
+
+23 panels saved under `results/intermediate/features/`:
+- LRD: `feat_d_gph`, `feat_d_lw`, `feat_h`
+- Memory dynamics: `feat_delta_d_{gph,lw}`, `feat_vol_d_{gph,lw}`,
+  `feat_trend_d_{gph,lw}`, `feat_delta_h`
+- HAR: `feat_har_{d,w,m}` (built from Parkinson RV, non-anticipative)
+- Sector aggregate: `feat_sector_mean_d` (each stock gets its own
+  GICS-sector mean)
+- Cross-sectional: `feat_cross_section.csv` (mean, std, median, skew, kurt,
+  range, $P(\hat d > 0.30)$ over time)
+- Threshold flags: `feat_threshold_{10,20,30,40}`
+- Interactions: `feat_d_x_{vix,move,illiq}` (illiquidity = inverse of 22-day
+  rolling dollar volume)
+- Market axis: `market_axes.csv` (VIX, MOVE, USYC2Y10, USGG10YR, CDX IG/HY)
+
+Sanity check: AAPL `d × VIX` mean = 1.05 in calm 2013–14, **12.16 in GFC**,
+**8.22 in COVID** — interaction term amplifies crisis predictability exactly
+as Rachev's framework predicts.
+
+Outputs: `table4_features.tex` (categorized feature definitions and pooled
+statistics for all categories: LRD, Roughness, Memory dynamics, HAR, Sector,
+Cross-sectional, Market, Interaction).
+
+### Cross-phase consistency (verified end-to-end)
+- All Phase 1 panels: shape (6136, 115); all Phase 2/3 rolling panels: (1078, 115)
+- Tickers identical across Phase 1, 2, 3
+- Phase 2 `rolling_d_gph` ≡ Phase 3 `feat_d_gph` (zero diff)
+- Interaction `d × VIX` reconstructs to within 4e-15 of `d * VIX`
+- HAR_d at sample date $t$ equals raw Parkinson RV on the prior trading day —
+  confirms HAR features are non-anticipative
+
+### What's next
+Phase 4: build `module4_benchmarks.py` (extended: AR, HAR, ARFIMA, FIGARCH on
+log RV), `module5_ml_models.py` (nested A/B/C/D — Lasso/Ridge/EN, RF, GBM at
+horizons h ∈ {1, 5, 22}), `module6_forecast_eval.py` (MSE + QLIKE,
+Diebold–Mariano tests, regime/sector/size splits).
+
+---
+
+*Last updated: 2026-04-25*
