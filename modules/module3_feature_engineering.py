@@ -1,534 +1,330 @@
 """
-MODULE 3: Feature Engineering
-=============================
-Constructs the novel LRD-based features for ML modeling.
-Produces Table 4 for the paper.
+MODULE 3: Persistence-Based Feature Engineering (v2)
+====================================================
+Builds the persistence feature vector Z_t per Rachev's framework Sec. 6:
 
-Key Features:
-1. LRD Features: d_hat, SE(d_hat), z_t^2 (standardized residuals)
-2. Memory Dynamics: Δd, Vol(d), Trend(d)
-3. Cross-Sectional: mean_d, std_d, skew_d
-4. HAR Components: RV_d, RV_w, RV_m
-5. Market Features: VIX, returns, spreads
+  Z_t = ( d_GPH_t,  Δd_GPH_t,  Vol(d)_t,  Trend(d)_t,
+          d_LW_t,   ΔLW_t,
+          H_t,      ΔH_t,
+          d̄_t,      σ_d^t,    skew_d^t,   kurt_d^t,   range_d^t,
+          d̄_{s,t}  (per-sector mean),
+          1{d_t > τ}_τ  (threshold indicators),
+          d_t * VIX_t,  d_t * MOVE_t,  d_t * (1/Liq_t)  (interactions),
+          HAR components: RV_d, RV_w, RV_m on Parkinson RV )
 
-Author: Akash Deep, Nicholas Appiah
-Date: January 2025
+The module consumes Phase 2 outputs (rolling_d_gph.csv, rolling_d_lw.csv,
+rolling_hurst.csv) so that estimation does not have to be repeated.
+
+Outputs (under results/intermediate/features/):
+  feat_d_gph.csv, feat_d_lw.csv, feat_h.csv, feat_delta_d_gph.csv, ...
+  feat_har_d.csv, feat_har_w.csv, feat_har_m.csv,
+  feat_cross_section.csv  (market-level: mean/std/skew/kurt/range_d, VIX, MOVE, ...)
+  feat_sector_mean_d.csv  (T_sample x N: each stock gets its sector's mean d̂)
+  feat_thresholds.csv     (T_sample x (N x K) flags above τ_k)
+  feat_interactions.csv   (T_sample x (N x I) interaction terms)
+  market_axes.csv         (the broadcast market vector aligned to stride)
 """
 
-import pandas as pd
-import numpy as np
-from scipy import stats
-import os
-import sys
+from __future__ import annotations
+
 import warnings
-warnings.filterwarnings('ignore')
+from pathlib import Path
 
-# Add modules directory to path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from module2_lrd_estimation import gph_estimator, local_whittle_estimator
+import numpy as np
+import pandas as pd
+from scipy import stats
 
-# ============================================
-# CONFIGURATION
-# ============================================
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PROCESSED_DIR = os.path.join(BASE_DIR, "processed")
-RESULTS_DIR = os.path.join(BASE_DIR, "results")
-TABLES_DIR = os.path.join(RESULTS_DIR, "tables")
-INTERMEDIATE_DIR = os.path.join(RESULTS_DIR, "intermediate")
+from modules.io_v2 import build_clean_panel, sector_map
 
-# Feature engineering parameters
-ROLLING_WINDOW = 500      # Window for LRD estimation
-MEMORY_DYNAMICS_LAG = 22  # ~1 month for memory dynamics
+warnings.filterwarnings("ignore")
+
+BASE = Path(__file__).resolve().parent.parent
+TABLES_DIR = BASE / "results" / "tables"
+INTERMEDIATE_DIR = BASE / "results" / "intermediate"
+FEAT_DIR = INTERMEDIATE_DIR / "features"
+
 HAR_DAILY = 1
 HAR_WEEKLY = 5
 HAR_MONTHLY = 22
 
+DYNAMICS_LAG = 22       # days for delta, vol, trend (in rolling-cadence steps once we re-stride)
+THRESHOLDS = (0.10, 0.20, 0.30, 0.40)
+LIQUIDITY_FLOOR = 1e3   # avoid division blowup on illiquid days
 
-def load_data():
-    """Load all required data"""
-    print("Loading data...")
 
-    returns = pd.read_csv(os.path.join(PROCESSED_DIR, "returns.csv"),
-                          index_col=0, parse_dates=True)
-    vol_proxy = pd.read_csv(os.path.join(PROCESSED_DIR, "volatility_proxy.csv"),
-                            index_col=0, parse_dates=True)
-    market = pd.read_csv(os.path.join(PROCESSED_DIR, "market.csv"),
-                         index_col=0, parse_dates=True)
-    macro = pd.read_csv(os.path.join(PROCESSED_DIR, "macro.csv"),
-                        index_col=0, parse_dates=True)
+def load_phase2() -> dict[str, pd.DataFrame]:
+    files = {
+        "d_gph": INTERMEDIATE_DIR / "rolling_d_gph.csv",
+        "d_lw": INTERMEDIATE_DIR / "rolling_d_lw.csv",
+        "h": INTERMEDIATE_DIR / "rolling_hurst.csv",
+    }
+    out = {}
+    for k, fp in files.items():
+        out[k] = pd.read_csv(fp, index_col=0, parse_dates=True)
+        print(f"  {k}: {out[k].shape}  range {out[k].index.min().date()} -> {out[k].index.max().date()}")
+    return out
 
-    # Load pre-computed LRD estimates if available
-    lrd_files = {
-        'vol_gph': os.path.join(INTERMEDIATE_DIR, "lrd_vol_gph.csv"),
-        'cs_dispersion': os.path.join(INTERMEDIATE_DIR, "lrd_cs_dispersion.csv"),
+
+def memory_dynamics(d: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    """Δd, rolling Vol(d), rolling Trend(d) — all evaluated on the rolling-stride
+    cadence of d. Stride is roughly 5 trading days, so a 22-step horizon ≈ 110
+    days; we use a smaller window of 4 (~20 trading days) for dynamics.
+    """
+    win = max(4, DYNAMICS_LAG // 5)
+    delta = d.diff()
+    vol = d.rolling(window=win, min_periods=2).std()
+
+    def _slope(arr: np.ndarray) -> float:
+        m = ~np.isnan(arr)
+        if m.sum() < 2:
+            return np.nan
+        x = np.arange(len(arr))[m]
+        return float(np.polyfit(x, arr[m], 1)[0])
+
+    trend = d.rolling(window=win, min_periods=2).apply(_slope, raw=True)
+    return {"delta": delta, "vol": vol, "trend": trend}
+
+
+def cross_sectional_features(d: pd.DataFrame) -> pd.DataFrame:
+    return pd.DataFrame({
+        "cs_mean_d": d.mean(axis=1),
+        "cs_std_d": d.std(axis=1),
+        "cs_median_d": d.median(axis=1),
+        "cs_skew_d": d.apply(lambda r: stats.skew(r.dropna()), axis=1),
+        "cs_kurt_d": d.apply(lambda r: stats.kurtosis(r.dropna()), axis=1),
+        "cs_pct_above_30": (d > 0.30).mean(axis=1),
+        "cs_range_d": d.max(axis=1) - d.min(axis=1),
+    })
+
+
+def sector_mean_panel(d: pd.DataFrame, sectors: dict) -> pd.DataFrame:
+    """For each (date, ticker) return the mean d_t of all stocks in the same
+    GICS sector — broadcast to the same shape as d."""
+    sec_series = pd.Series(sectors)
+    sec_series = sec_series.reindex(d.columns)
+    out = pd.DataFrame(index=d.index, columns=d.columns, dtype=float)
+    for sec, tickers in sec_series.groupby(sec_series).groups.items():
+        if len(tickers) == 0:
+            continue
+        sec_mean = d[list(tickers)].mean(axis=1)
+        for t in tickers:
+            out[t] = sec_mean
+    return out
+
+
+def threshold_flags(d: pd.DataFrame, taus: tuple[float, ...] = THRESHOLDS) -> dict[float, pd.DataFrame]:
+    return {tau: (d > tau).astype(float) for tau in taus}
+
+
+def interaction_panels(d: pd.DataFrame, market_axis: pd.DataFrame,
+                       liquidity: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    """Each interaction is (T_sample x N): elementwise product of d with a
+    market scalar, broadcast across stocks, or with per-stock liquidity proxy.
+    """
+    vix = market_axis["VIX"].reindex(d.index).ffill()
+    move = market_axis["MOVE"].reindex(d.index).ffill()
+
+    illiq = liquidity.reindex(d.index).clip(lower=LIQUIDITY_FLOOR)
+    illiq_inv = 1.0 / illiq
+
+    return {
+        "d_x_vix": d.multiply(vix, axis=0),
+        "d_x_move": d.multiply(move, axis=0),
+        "d_x_illiq": d * illiq_inv,
     }
 
-    lrd_data = {}
-    for name, path in lrd_files.items():
-        if os.path.exists(path):
-            lrd_data[name] = pd.read_csv(path, index_col=0, parse_dates=True)
-            print(f"  Loaded {name}: {lrd_data[name].shape}")
 
-    print(f"  Returns: {returns.shape}")
-    print(f"  Volatility proxy: {vol_proxy.shape}")
-    print(f"  Market: {market.shape}")
-    print(f"  Macro: {macro.shape}")
-
-    return returns, vol_proxy, market, macro, lrd_data
-
-
-# ============================================
-# HAR COMPONENTS
-# ============================================
-def compute_har_components(vol_proxy):
-    """
-    Compute HAR (Heterogeneous Autoregressive) components.
-
-    HAR-RV uses three horizons:
-    - Daily: RV_t (lag 1)
-    - Weekly: average of RV_{t-4} to RV_t (5 days)
-    - Monthly: average of RV_{t-21} to RV_t (22 days)
-    """
-    print("\nComputing HAR components...")
-
-    har_features = pd.DataFrame(index=vol_proxy.index)
-
-    # For each stock, compute HAR components
-    for col in vol_proxy.columns:
-        rv = vol_proxy[col]
-
-        # Daily (lag 1)
-        har_features[f'{col}_RV_d'] = rv.shift(1)
-
-        # Weekly (5-day average)
-        har_features[f'{col}_RV_w'] = rv.rolling(window=HAR_WEEKLY).mean().shift(1)
-
-        # Monthly (22-day average)
-        har_features[f'{col}_RV_m'] = rv.rolling(window=HAR_MONTHLY).mean().shift(1)
-
-    print(f"  HAR features shape: {har_features.shape}")
-    return har_features
-
-
-def compute_har_for_stock(vol_series):
-    """Compute HAR components for a single stock"""
-    rv_d = vol_series.shift(1)
-    rv_w = vol_series.rolling(window=HAR_WEEKLY).mean().shift(1)
-    rv_m = vol_series.rolling(window=HAR_MONTHLY).mean().shift(1)
-
-    return pd.DataFrame({
-        'RV_d': rv_d,
-        'RV_w': rv_w,
-        'RV_m': rv_m,
-    }, index=vol_series.index)
-
-
-# ============================================
-# ROLLING LRD FEATURES
-# ============================================
-def compute_rolling_lrd_features(vol_proxy, window=ROLLING_WINDOW, sample_freq=1):
-    """
-    Compute rolling LRD features for all stocks.
-
-    Features per stock:
-    - d_hat: estimated memory parameter
-    - se_d: standard error
-    - d_significant: binary indicator (|t| > 1.96)
-
-    sample_freq: compute every N days to save time (1 = daily)
-    """
-    print(f"\nComputing rolling LRD features (window={window})...")
-
-    n_stocks = len(vol_proxy.columns)
-    n_dates = len(vol_proxy)
-
-    # Initialize storage
-    d_hat_all = pd.DataFrame(index=vol_proxy.index, columns=vol_proxy.columns)
-    se_all = pd.DataFrame(index=vol_proxy.index, columns=vol_proxy.columns)
-
-    # Compute for each date (after warmup)
-    for i in range(window, n_dates, sample_freq):
-        if i % 250 == 0:
-            print(f"  Processing day {i}/{n_dates} ({vol_proxy.index[i].strftime('%Y-%m')})")
-
-        for col in vol_proxy.columns:
-            window_data = vol_proxy[col].iloc[i-window:i].values
-            d_hat, se = gph_estimator(window_data)
-            d_hat_all.iloc[i, d_hat_all.columns.get_loc(col)] = d_hat
-            se_all.iloc[i, se_all.columns.get_loc(col)] = se
-
-    # Forward fill if sample_freq > 1
-    if sample_freq > 1:
-        d_hat_all = d_hat_all.ffill()
-        se_all = se_all.ffill()
-
-    print(f"  d_hat shape: {d_hat_all.shape}")
-    return d_hat_all, se_all
-
-
-def compute_rolling_lrd_fast(vol_proxy, window=ROLLING_WINDOW, sample_freq=5):
-    """
-    Fast version: compute LRD every sample_freq days and interpolate.
-    """
-    print(f"\nComputing rolling LRD features (fast mode, every {sample_freq} days)...")
-
-    n_dates = len(vol_proxy)
-    sample_indices = list(range(window, n_dates, sample_freq))
-
-    # Storage for sampled values
-    d_samples = []
-    se_samples = []
-    dates_samples = []
-
-    for i in sample_indices:
-        if len(d_samples) % 50 == 0:
-            print(f"  Processing {len(d_samples)}/{len(sample_indices)} samples...")
-
-        d_row = {}
-        se_row = {}
-
-        for col in vol_proxy.columns:
-            window_data = vol_proxy[col].iloc[i-window:i].dropna().values
-            if len(window_data) >= 250:
-                d_hat, se = gph_estimator(window_data)
-                d_row[col] = d_hat
-                se_row[col] = se
-
-        d_samples.append(d_row)
-        se_samples.append(se_row)
-        dates_samples.append(vol_proxy.index[i])
-
-    # Convert to DataFrames
-    d_hat_sampled = pd.DataFrame(d_samples, index=dates_samples)
-    se_sampled = pd.DataFrame(se_samples, index=dates_samples)
-
-    # Reindex to full date range and interpolate
-    full_index = vol_proxy.index[window:]
-    d_hat_all = d_hat_sampled.reindex(full_index).interpolate(method='linear').ffill().bfill()
-    se_all = se_sampled.reindex(full_index).interpolate(method='linear').ffill().bfill()
-
-    print(f"  d_hat shape: {d_hat_all.shape}")
-    return d_hat_all, se_all
-
-
-# ============================================
-# MEMORY DYNAMICS FEATURES
-# ============================================
-def compute_memory_dynamics(d_hat_df, lag=MEMORY_DYNAMICS_LAG):
-    """
-    Compute memory dynamics features:
-    - Δd: change in d_hat
-    - Vol(d): rolling volatility of d_hat
-    - Trend(d): slope of d_hat over last L days
-    """
-    print("\nComputing memory dynamics features...")
-
-    dynamics = {}
-
-    for col in d_hat_df.columns:
-        d = d_hat_df[col]
-
-        # Change in d
-        delta_d = d.diff()
-
-        # Volatility of d (rolling std)
-        vol_d = d.rolling(window=lag).std()
-
-        # Trend of d (slope over last L days)
-        def rolling_slope(series, window):
-            slopes = []
-            for i in range(len(series)):
-                if i < window - 1:
-                    slopes.append(np.nan)
-                else:
-                    y = series.iloc[i-window+1:i+1].values
-                    x = np.arange(window)
-                    mask = ~np.isnan(y)
-                    if mask.sum() >= 2:
-                        slope = np.polyfit(x[mask], y[mask], 1)[0]
-                        slopes.append(slope)
-                    else:
-                        slopes.append(np.nan)
-            return pd.Series(slopes, index=series.index)
-
-        trend_d = rolling_slope(d, lag)
-
-        dynamics[f'{col}_delta_d'] = delta_d
-        dynamics[f'{col}_vol_d'] = vol_d
-        dynamics[f'{col}_trend_d'] = trend_d
-
-    dynamics_df = pd.DataFrame(dynamics)
-    print(f"  Memory dynamics shape: {dynamics_df.shape}")
-    return dynamics_df
-
-
-# ============================================
-# CROSS-SECTIONAL FEATURES
-# ============================================
-def compute_cross_sectional_features(d_hat_df):
-    """
-    Compute cross-sectional features from d_hat distribution.
-
-    Features:
-    - mean_d: cross-sectional mean of d_hat
-    - std_d: cross-sectional std (dispersion)
-    - skew_d: cross-sectional skewness
-    - kurt_d: cross-sectional kurtosis
-    - pct_high_d: % of stocks with d > 0.3
-    """
-    print("\nComputing cross-sectional features...")
-
-    cs_features = pd.DataFrame(index=d_hat_df.index)
-
-    cs_features['mean_d'] = d_hat_df.mean(axis=1)
-    cs_features['std_d'] = d_hat_df.std(axis=1)
-    cs_features['median_d'] = d_hat_df.median(axis=1)
-    cs_features['skew_d'] = d_hat_df.apply(lambda x: stats.skew(x.dropna()), axis=1)
-    cs_features['kurt_d'] = d_hat_df.apply(lambda x: stats.kurtosis(x.dropna()), axis=1)
-    cs_features['pct_high_d'] = (d_hat_df > 0.3).mean(axis=1)
-    cs_features['range_d'] = d_hat_df.max(axis=1) - d_hat_df.min(axis=1)
-
-    print(f"  Cross-sectional features shape: {cs_features.shape}")
-    return cs_features
-
-
-# ============================================
-# MARKET FEATURES
-# ============================================
-def compute_market_features(market, macro):
-    """
-    Compute market-level features.
-    """
-    print("\nComputing market features...")
-
-    mkt_features = pd.DataFrame(index=market.index)
-
-    # VIX and its dynamics
-    mkt_features['VIX'] = market['VIX']
-    mkt_features['VIX_lag1'] = market['VIX'].shift(1)
-    mkt_features['VIX_ma5'] = market['VIX'].rolling(5).mean()
-    mkt_features['VIX_ma22'] = market['VIX'].rolling(22).mean()
-    mkt_features['VIX_change'] = market['VIX'].diff()
-    mkt_features['VIX_pct_change'] = market['VIX'].pct_change()
-
-    # Market returns
-    if 'SP500_ret' in market.columns:
-        mkt_features['SP500_ret'] = market['SP500_ret']
-        mkt_features['SP500_ret_lag1'] = market['SP500_ret'].shift(1)
-        mkt_features['SP500_ret_ma5'] = market['SP500_ret'].rolling(5).mean()
-
-    # Macro variables
-    for col in macro.columns:
-        mkt_features[col] = macro[col]
-        mkt_features[f'{col}_change'] = macro[col].diff()
-
-    print(f"  Market features shape: {mkt_features.shape}")
-    return mkt_features
-
-
-# ============================================
-# BUILD FEATURE MATRIX
-# ============================================
-def build_feature_matrix_single_stock(ticker, vol_proxy, returns, d_hat_df, se_df,
-                                       cs_features, mkt_features):
-    """
-    Build complete feature matrix for a single stock.
-    """
-    features = pd.DataFrame(index=vol_proxy.index)
-
-    # Target: next-day volatility (to predict)
-    features['target_vol'] = vol_proxy[ticker].shift(-1)
-    features['target_vol_5d'] = vol_proxy[ticker].rolling(5).mean().shift(-5)
-    features['target_vol_22d'] = vol_proxy[ticker].rolling(22).mean().shift(-22)
-
-    # HAR components
-    har = compute_har_for_stock(vol_proxy[ticker])
-    for col in har.columns:
-        features[col] = har[col]
-
-    # Current volatility
-    features['vol_current'] = vol_proxy[ticker]
-
-    # Returns
-    features['return'] = returns[ticker]
-    features['return_lag1'] = returns[ticker].shift(1)
-    features['return_abs'] = returns[ticker].abs()
-    features['return_neg'] = (returns[ticker] < 0).astype(int)
-
-    # LRD features (if available)
-    if d_hat_df is not None and ticker in d_hat_df.columns:
-        features['d_hat'] = d_hat_df[ticker]
-        features['d_hat_lag1'] = d_hat_df[ticker].shift(1)
-
-        if se_df is not None and ticker in se_df.columns:
-            features['se_d'] = se_df[ticker]
-            features['d_significant'] = (features['d_hat'].abs() / features['se_d'] > 1.96).astype(int)
-
-    # Memory dynamics
-    if d_hat_df is not None and ticker in d_hat_df.columns:
-        d = d_hat_df[ticker]
-        features['delta_d'] = d.diff()
-        features['vol_d'] = d.rolling(22).std()
-        features['trend_d'] = d.diff(22) / 22
-
-    # Cross-sectional features
-    for col in cs_features.columns:
-        features[f'cs_{col}'] = cs_features[col]
-
-    # Market features
-    for col in mkt_features.columns:
-        features[f'mkt_{col}'] = mkt_features[col]
-
-    return features
-
-
-# ============================================
-# EXPORT TABLE 4
-# ============================================
-def export_table4_latex(feature_stats, filepath):
-    """Export Table 4: Feature definitions and statistics"""
-    print(f"\nExporting Table 4 to {filepath}")
-
-    with open(filepath, 'w') as f:
-        f.write("% Table 4: Feature Definitions and Summary Statistics\n")
-        f.write("% Generated by module3_feature_engineering.py\n\n")
-
-        f.write("\\begin{table}[htbp]\n")
-        f.write("\\centering\n")
-        f.write("\\caption{Feature Definitions and Summary Statistics}\n")
-        f.write("\\label{tab:features}\n")
-        f.write("\\small\n")
-        f.write("\\begin{tabular}{llcccc}\n")
-        f.write("\\toprule\n")
-        f.write("Category & Feature & Mean & Std & Min & Max \\\\\n")
-        f.write("\\midrule\n")
-
-        # Group features by category
-        categories = {
-            'HAR': ['RV_d', 'RV_w', 'RV_m'],
-            'LRD': ['d_hat', 'se_d', 'd_significant'],
-            'Memory Dynamics': ['delta_d', 'vol_d', 'trend_d'],
-            'Cross-Sectional': ['cs_mean_d', 'cs_std_d', 'cs_skew_d'],
-            'Market': ['mkt_VIX', 'mkt_Term_Spread', 'mkt_IG_Credit_Spread'],
-        }
-
-        for cat, feats in categories.items():
-            f.write(f"\\multicolumn{{6}}{{l}}{{\\textbf{{{cat}}}}} \\\\\n")
-            for feat in feats:
-                if feat in feature_stats.index:
-                    row = feature_stats.loc[feat]
-                    f.write(f"  & {feat.replace('_', '\\_')} & {row['mean']:.4f} & {row['std']:.4f} & ")
-                    f.write(f"{row['min']:.4f} & {row['max']:.4f} \\\\\n")
-            f.write("\\midrule\n")
-
-        f.write("\\bottomrule\n")
-        f.write("\\end{tabular}\n")
+def build_har(rv: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    return {
+        "har_d": rv.shift(HAR_DAILY),
+        "har_w": rv.rolling(HAR_WEEKLY).mean().shift(1),
+        "har_m": rv.rolling(HAR_MONTHLY).mean().shift(1),
+    }
+
+
+def liquidity_proxy(volume: pd.DataFrame, prices: pd.DataFrame) -> pd.DataFrame:
+    """Average daily dollar volume over a 22-day window, used both as a
+    descriptive feature and to construct the d × illiq interaction."""
+    dollar_vol = (volume * prices).rolling(22).mean()
+    return dollar_vol
+
+
+def export_table4(panels: dict[str, pd.DataFrame],
+                  cs: pd.DataFrame, mkt_axis: pd.DataFrame,
+                  fp: Path) -> None:
+    """Compact per-feature summary table grouped by category."""
+
+    def _stats_panel(df: pd.DataFrame) -> dict:
+        v = df.values.flatten()
+        v = v[~np.isnan(v)]
+        if v.size == 0:
+            return dict(mean=np.nan, std=np.nan, p1=np.nan, p99=np.nan, n=0)
+        return dict(mean=v.mean(), std=v.std(),
+                    p1=np.percentile(v, 1), p99=np.percentile(v, 99), n=int(v.size))
+
+    rows = []
+    rows.append(("LRD", "$\\hat d_{GPH,t}$ (rolling)", _stats_panel(panels["d_gph"])))
+    rows.append(("LRD", "$\\hat d_{LW,t}$ (rolling)", _stats_panel(panels["d_lw"])))
+    rows.append(("Roughness", "$H_t$ (rolling)", _stats_panel(panels["h"])))
+    rows.append(("Memory dyn.", "$\\Delta\\hat d_t$", _stats_panel(panels["delta_d_gph"])))
+    rows.append(("Memory dyn.", "$\\mathrm{Vol}(\\hat d)_t$", _stats_panel(panels["vol_d_gph"])))
+    rows.append(("Memory dyn.", "$\\mathrm{Trend}(\\hat d)_t$", _stats_panel(panels["trend_d_gph"])))
+    rows.append(("HAR", "$RV^d$", _stats_panel(panels["har_d"])))
+    rows.append(("HAR", "$RV^w$", _stats_panel(panels["har_w"])))
+    rows.append(("HAR", "$RV^m$", _stats_panel(panels["har_m"])))
+    rows.append(("Sector aggregate", "$\\bar d_{s(i),t}$", _stats_panel(panels["sector_mean_d"])))
+
+    cs_summary = cs.describe().T[["mean", "std"]]
+    cs_summary["p1"] = cs.quantile(0.01)
+    cs_summary["p99"] = cs.quantile(0.99)
+    cs_summary["n"] = cs.notna().sum()
+    cs_label_map = {
+        "cs_mean_d": "$\\bar d_t$ (cross-sectional mean)",
+        "cs_std_d": "$\\sigma_d^t$ (cross-sectional std)",
+        "cs_skew_d": "Skew of $d_t$ across stocks",
+        "cs_kurt_d": "Kurt of $d_t$ across stocks",
+        "cs_pct_above_30": "$P(\\hat d > 0.30)$",
+        "cs_range_d": "Range of $\\hat d$ across stocks",
+    }
+    for k in ["cs_mean_d", "cs_std_d", "cs_skew_d", "cs_kurt_d", "cs_pct_above_30", "cs_range_d"]:
+        if k in cs_summary.index:
+            r = cs_summary.loc[k]
+            rows.append(("Cross-sectional",
+                         cs_label_map[k],
+                         dict(mean=r["mean"], std=r["std"], p1=r["p1"], p99=r["p99"], n=int(r["n"]))))
+
+    mkt_summary = mkt_axis.describe().T
+    for k in ["VIX", "MOVE", "USYC2Y10"]:
+        if k in mkt_summary.index:
+            r = mkt_summary.loc[k]
+            rows.append(("Market",
+                         k,
+                         dict(mean=r["mean"], std=r["std"],
+                              p1=mkt_axis[k].quantile(0.01),
+                              p99=mkt_axis[k].quantile(0.99),
+                              n=int(mkt_axis[k].notna().sum()))))
+
+    rows.append(("Interaction", "$\\hat d_t \\cdot \\mathrm{VIX}_t$",
+                 _stats_panel(panels["d_x_vix"])))
+    rows.append(("Interaction", "$\\hat d_t \\cdot \\mathrm{MOVE}_t$",
+                 _stats_panel(panels["d_x_move"])))
+    rows.append(("Interaction", "$\\hat d_t / \\mathrm{Liq}_t$",
+                 _stats_panel(panels["d_x_illiq"])))
+
+    with open(fp, "w") as f:
+        f.write("% Table 4: Persistence Feature Vector — definitions and pooled statistics\n\n")
+        f.write("\\begin{table}[htbp]\n\\centering\n")
+        f.write("\\caption{Persistence Feature Vector: Definitions and Pooled Statistics}\n")
+        f.write("\\label{tab:features}\n\\small\n")
+        f.write("\\begin{tabular}{llcccc}\n\\toprule\n")
+        f.write("Category & Feature & Mean & Std & 1\\% & 99\\% \\\\\n\\midrule\n")
+        prev_cat = None
+        for cat, feat, s in rows:
+            if cat != prev_cat:
+                if prev_cat is not None:
+                    f.write("\\midrule\n")
+                f.write(f"\\multicolumn{{6}}{{l}}{{\\textbf{{{cat}}}}} \\\\\n")
+                prev_cat = cat
+            f.write(f"  & {feat} & {s['mean']:.4f} & {s['std']:.4f} & "
+                    f"{s['p1']:.4f} & {s['p99']:.4f} \\\\\n")
+        f.write("\\bottomrule\n\\end{tabular}\n")
         f.write("\\begin{tablenotes}\\small\n")
-        f.write("\\item Notes: Statistics computed from pooled sample across all stocks and dates. ")
-        f.write("RV = realized volatility (squared returns). ")
-        f.write("$\\hat{d}$ = GPH memory parameter estimate. ")
-        f.write("Cross-sectional features computed from distribution of $\\hat{d}$ across stocks.\n")
-        f.write("\\end{tablenotes}\n")
-        f.write("\\end{table}\n")
+        f.write("\\item Notes: Statistics are pooled across all stocks and dates "
+                "in the rolling-estimation panel. $\\hat d_t$ values are taken on a "
+                "weekly stride; HAR components are constructed from Parkinson realised "
+                "variance. Sector aggregates use GICS level-1; threshold indicators and "
+                "interaction terms (with VIX, MOVE, and inverse dollar-volume liquidity) "
+                "use the GPH estimate of $\\hat d_t$.\n")
+        f.write("\\end{tablenotes}\n\\end{table}\n")
 
 
-def main():
-    print("="*70)
-    print("   MODULE 3: FEATURE ENGINEERING")
-    print("="*70)
+def save_panels(panels: dict[str, pd.DataFrame], cs: pd.DataFrame,
+                mkt_axis: pd.DataFrame, thresholds: dict, dest: Path) -> None:
+    dest.mkdir(parents=True, exist_ok=True)
+    for name, df in panels.items():
+        df.to_csv(dest / f"feat_{name}.csv")
+    cs.to_csv(dest / "feat_cross_section.csv")
+    mkt_axis.to_csv(dest / "market_axes.csv")
+    for tau, flag in thresholds.items():
+        flag.to_csv(dest / f"feat_threshold_{int(tau*100):02d}.csv")
+    print(f"\nSaved feature panels to {dest}")
+    for fp in sorted(dest.glob("*.csv")):
+        print(f"  {fp.name}")
 
-    # Create directories
-    os.makedirs(TABLES_DIR, exist_ok=True)
-    os.makedirs(INTERMEDIATE_DIR, exist_ok=True)
 
-    # Load data
-    returns, vol_proxy, market, macro, lrd_data = load_data()
+def main() -> None:
+    print("=" * 70)
+    print("   MODULE 3: PERSISTENCE FEATURE ENGINEERING")
+    print("=" * 70)
+    TABLES_DIR.mkdir(parents=True, exist_ok=True)
+    FEAT_DIR.mkdir(parents=True, exist_ok=True)
 
-    # ========================================
-    # 1. HAR Components
-    # ========================================
-    har_features = compute_har_components(vol_proxy)
+    panel = build_clean_panel()
+    sectors = sector_map(panel.metadata)
+    print(f"  Panel: N={len(panel.kept)} T={len(panel.prices)}")
 
-    # ========================================
-    # 2. Rolling LRD Features (use fast mode)
-    # ========================================
-    d_hat_df, se_df = compute_rolling_lrd_fast(vol_proxy, window=ROLLING_WINDOW, sample_freq=5)
+    print("\n[1] Loading Phase 2 outputs...")
+    p2 = load_phase2()
+    d_gph, d_lw, h = p2["d_gph"], p2["d_lw"], p2["h"]
+    sample_dates = d_gph.index
 
-    # ========================================
-    # 3. Memory Dynamics
-    # ========================================
-    memory_dynamics = compute_memory_dynamics(d_hat_df)
+    print("\n[2] Memory dynamics on d_GPH and d_LW...")
+    dyn_gph = memory_dynamics(d_gph)
+    dyn_lw = memory_dynamics(d_lw)
+    dyn_h = memory_dynamics(h)
 
-    # ========================================
-    # 4. Cross-Sectional Features
-    # ========================================
-    cs_features = compute_cross_sectional_features(d_hat_df)
+    print("\n[3] HAR components on Parkinson RV (forward-aligned to forecast next-day)...")
+    har = build_har(panel.rv_parkinson)
+    har_on_stride = {k: v.reindex(sample_dates).ffill() for k, v in har.items()}
 
-    # ========================================
-    # 5. Market Features
-    # ========================================
-    mkt_features = compute_market_features(market, macro)
+    print("\n[4] Cross-sectional aggregates of d_GPH...")
+    cs = cross_sectional_features(d_gph)
 
-    # ========================================
-    # 6. Build Sample Feature Matrix (for one stock as example)
-    # ========================================
-    print("\nBuilding sample feature matrix for AAPL...")
-    sample_features = build_feature_matrix_single_stock(
-        'AAPL', vol_proxy, returns, d_hat_df, se_df, cs_features, mkt_features
-    )
+    print("\n[5] Sector-mean panel sector_mean_d_{s(i),t}...")
+    sector_mean_d = sector_mean_panel(d_gph, sectors)
 
-    # ========================================
-    # 7. Compute Feature Statistics
-    # ========================================
-    print("\nComputing feature statistics...")
-    feature_stats = sample_features.describe().T[['mean', 'std', 'min', 'max']]
+    print("\n[6] Threshold indicators 1{d_t > tau}...")
+    thresholds = threshold_flags(d_gph, THRESHOLDS)
 
-    # ========================================
-    # 8. Save Results
-    # ========================================
-    print("\nSaving results...")
+    print("\n[7] Market axis aligned to rolling stride...")
+    mkt_cols = ["VIX", "MOVE", "USYC2Y10", "USGG10YR", "CDX_IG_5Y", "CDX_HY_5Y"]
+    mkt_cols = [c for c in mkt_cols if c in panel.market.columns]
+    mkt_axis = panel.market[mkt_cols].reindex(sample_dates).ffill()
 
-    # Save feature matrices
-    d_hat_df.to_csv(os.path.join(INTERMEDIATE_DIR, "rolling_d_hat.csv"))
-    se_df.to_csv(os.path.join(INTERMEDIATE_DIR, "rolling_se_d.csv"))
-    cs_features.to_csv(os.path.join(INTERMEDIATE_DIR, "cross_sectional_features.csv"))
-    mkt_features.to_csv(os.path.join(INTERMEDIATE_DIR, "market_features.csv"))
-    sample_features.to_csv(os.path.join(INTERMEDIATE_DIR, "sample_features_AAPL.csv"))
+    print("\n[8] Liquidity proxy (rolling 22d dollar volume) and interactions...")
+    volume = pd.read_csv(BASE / "bloomberg_pull/processed/volume.csv",
+                         index_col=0, parse_dates=True)
+    volume = volume.reindex(panel.prices.index)[panel.kept]
+    illiq_proxy = liquidity_proxy(volume, panel.prices).reindex(sample_dates).ffill()
+    interactions = interaction_panels(d_gph, mkt_axis, illiq_proxy)
 
-    # Export Table 4
-    export_table4_latex(feature_stats, os.path.join(TABLES_DIR, "table4_features.tex"))
+    panels = {
+        "d_gph": d_gph, "d_lw": d_lw, "h": h,
+        "delta_d_gph": dyn_gph["delta"], "vol_d_gph": dyn_gph["vol"], "trend_d_gph": dyn_gph["trend"],
+        "delta_d_lw": dyn_lw["delta"],   "vol_d_lw": dyn_lw["vol"],   "trend_d_lw": dyn_lw["trend"],
+        "delta_h": dyn_h["delta"],
+        "har_d": har_on_stride["har_d"], "har_w": har_on_stride["har_w"], "har_m": har_on_stride["har_m"],
+        "sector_mean_d": sector_mean_d,
+        "d_x_vix": interactions["d_x_vix"],
+        "d_x_move": interactions["d_x_move"],
+        "d_x_illiq": interactions["d_x_illiq"],
+    }
 
-    # ========================================
-    # Summary
-    # ========================================
-    print("\n" + "="*70)
-    print("   MODULE 3 COMPLETE")
-    print("="*70)
+    print("\n[9] Saving panels and Table 4...")
+    save_panels(panels, cs, mkt_axis, thresholds, FEAT_DIR)
+    export_table4(panels, cs, mkt_axis, TABLES_DIR / "table4_features.tex")
 
-    print("\nFeature categories created:")
-    print(f"  - HAR components: 3 features per stock (RV_d, RV_w, RV_m)")
-    print(f"  - LRD features: {d_hat_df.shape[1]} stocks x rolling d_hat")
-    print(f"  - Memory dynamics: delta_d, vol_d, trend_d per stock")
-    print(f"  - Cross-sectional: {cs_features.shape[1]} market-level features")
-    print(f"  - Market features: {mkt_features.shape[1]} features")
+    print("\n" + "=" * 70)
+    print("Outputs:")
+    print(f"  {TABLES_DIR/'table4_features.tex'}")
+    print(f"  {FEAT_DIR}/  ({len(panels)+1+len(thresholds)+1} CSV panels)")
 
-    print(f"\nSample feature matrix (AAPL):")
-    print(f"  Shape: {sample_features.shape}")
-    print(f"  Date range: {sample_features.index.min()} to {sample_features.index.max()}")
-    print(f"  Non-null rows: {sample_features.dropna().shape[0]}")
-
-    print("\nKey feature statistics:")
-    key_features = ['d_hat', 'delta_d', 'cs_mean_d', 'cs_std_d', 'mkt_VIX']
-    for feat in key_features:
-        if feat in feature_stats.index:
-            row = feature_stats.loc[feat]
-            print(f"  {feat}: mean={row['mean']:.4f}, std={row['std']:.4f}")
-
-    print("\nOutputs created:")
-    print(f"  - {TABLES_DIR}/table4_features.tex")
-    print(f"  - {INTERMEDIATE_DIR}/rolling_d_hat.csv")
-    print(f"  - {INTERMEDIATE_DIR}/cross_sectional_features.csv")
-    print(f"  - {INTERMEDIATE_DIR}/market_features.csv")
+    print("\nFeature counts (per (T_sample x N) panel):")
+    for k, df in panels.items():
+        print(f"  {k:18s}  {df.shape}  non-null={df.notna().mean().mean()*100:.1f}%")
+    print(f"  cs (T_sample x F)   {cs.shape}")
+    print(f"  market axis         {mkt_axis.shape}")
+    print(f"  threshold flags     {len(thresholds)} panels of shape {next(iter(thresholds.values())).shape}")
 
 
 if __name__ == "__main__":

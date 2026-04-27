@@ -1,691 +1,390 @@
 """
-MODULE 2: LRD Estimation
-========================
-Implements GPH and Local Whittle estimators for the memory parameter d.
-Produces Table 3 and Figure 2 for the paper.
+MODULE 2: LRD and Roughness Estimation (v2)
+============================================
+Estimators implemented:
+  - Geweke-Porter-Hudak (GPH) log-periodogram estimator
+  - Local Whittle (LW) semiparametric estimator
+  - Roughness / Hurst exponent via the scaling method on log realized variance
 
 Outputs:
-- Table 3: LRD estimates by sector
-- Figure 2: (a) Distribution of d-hat, (b) Rolling d-hat, (c) Cross-sectional dispersion
-
-Author: Akash Deep, Nicholas Appiah
-Date: January 2025
+  - Cross-sectional one-shot estimates (Table 3, by sector)
+  - Rolling weekly panels of (d_GPH, d_LW, H) per stock — saved as
+    intermediate CSVs that feed Module 3 (feature engineering)
+  - Figure 2 with four panels: distribution of d, rolling d for sample stocks,
+    cross-sectional mean / dispersion of d over time, and d vs VIX.
 """
 
-import pandas as pd
-import numpy as np
+from __future__ import annotations
+
+import warnings
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 from scipy import stats
 from scipy.optimize import minimize_scalar
-import os
-import warnings
-warnings.filterwarnings('ignore')
 
-# ============================================
-# CONFIGURATION
-# ============================================
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PROCESSED_DIR = os.path.join(BASE_DIR, "processed")
-RESULTS_DIR = os.path.join(BASE_DIR, "results")
-TABLES_DIR = os.path.join(RESULTS_DIR, "tables")
-FIGURES_DIR = os.path.join(RESULTS_DIR, "figures")
-INTERMEDIATE_DIR = os.path.join(RESULTS_DIR, "intermediate")
+from modules.io_v2 import build_clean_panel, sector_map
 
-# Plotting style
-plt.style.use('seaborn-v0_8-whitegrid')
-plt.rcParams['figure.figsize'] = (12, 8)
-plt.rcParams['font.size'] = 11
-plt.rcParams['axes.labelsize'] = 12
-plt.rcParams['axes.titlesize'] = 13
-plt.rcParams['font.family'] = 'serif'
+warnings.filterwarnings("ignore")
 
-# LRD estimation parameters
-BANDWIDTH_POWER = 0.65  # m = T^0.65 (common choice between 0.5 and 0.8)
-ROLLING_WINDOW = 500    # Days for rolling estimation
-MIN_OBS = 250           # Minimum observations required
+BASE = Path(__file__).resolve().parent.parent
+TABLES_DIR = BASE / "results" / "tables"
+FIGURES_DIR = BASE / "results" / "figures"
+INTERMEDIATE_DIR = BASE / "results" / "intermediate"
 
-# Sector map (same as Module 1)
-SECTOR_MAP = {
-    'AAPL': 'Technology', 'MSFT': 'Technology', 'NVDA': 'Technology', 'GOOGL': 'Technology',
-    'INTC': 'Technology', 'CSCO': 'Technology', 'ORCL': 'Technology', 'ADBE': 'Technology',
-    'TXN': 'Technology', 'QCOM': 'Technology', 'AMD': 'Technology', 'IBM': 'Technology',
-    'JPM': 'Financials', 'BAC': 'Financials', 'GS': 'Financials', 'WFC': 'Financials',
-    'C': 'Financials', 'MS': 'Financials', 'AXP': 'Financials', 'BLK': 'Financials',
-    'SCHW': 'Financials', 'USB': 'Financials', 'PNC': 'Financials', 'TFC': 'Financials',
-    'COF': 'Financials',
-    'JNJ': 'Healthcare', 'PFE': 'Healthcare', 'UNH': 'Healthcare', 'MRK': 'Healthcare',
-    'LLY': 'Healthcare', 'TMO': 'Healthcare', 'ABT': 'Healthcare', 'DHR': 'Healthcare',
-    'BMY': 'Healthcare', 'AMGN': 'Healthcare', 'GILD': 'Healthcare', 'CVS': 'Healthcare',
-    'AMZN': 'Consumer Disc.', 'HD': 'Consumer Disc.', 'MCD': 'Consumer Disc.',
-    'NKE': 'Consumer Disc.', 'SBUX': 'Consumer Disc.', 'TJX': 'Consumer Disc.',
-    'LOW': 'Consumer Disc.', 'TGT': 'Consumer Disc.', 'BKNG': 'Consumer Disc.',
-    'MAR': 'Consumer Disc.', 'F': 'Consumer Disc.',
-    'PG': 'Consumer Staples', 'KO': 'Consumer Staples', 'PEP': 'Consumer Staples',
-    'WMT': 'Consumer Staples', 'COST': 'Consumer Staples', 'PM': 'Consumer Staples',
-    'MO': 'Consumer Staples', 'CL': 'Consumer Staples', 'KMB': 'Consumer Staples',
-    'GIS': 'Consumer Staples', 'K': 'Consumer Staples', 'SYY': 'Consumer Staples',
-    'ADM': 'Consumer Staples',
-    'XOM': 'Energy', 'CVX': 'Energy', 'COP': 'Energy', 'SLB': 'Energy',
-    'EOG': 'Energy', 'VLO': 'Energy', 'OXY': 'Energy', 'HAL': 'Energy', 'WMB': 'Energy',
-    'BA': 'Industrials', 'CAT': 'Industrials', 'UNP': 'Industrials', 'HON': 'Industrials',
-    'GE': 'Industrials', 'RTX': 'Industrials', 'LMT': 'Industrials', 'MMM': 'Industrials',
-    'DE': 'Industrials', 'EMR': 'Industrials', 'ITW': 'Industrials', 'ETN': 'Industrials',
-    'FDX': 'Industrials',
-    'NEE': 'Utilities', 'DUK': 'Utilities', 'SO': 'Utilities', 'D': 'Utilities',
-    'AEP': 'Utilities', 'EXC': 'Utilities', 'SRE': 'Utilities', 'XEL': 'Utilities',
-    'PEG': 'Utilities', 'ED': 'Utilities', 'WEC': 'Utilities', 'ES': 'Utilities',
-    'FCX': 'Materials', 'LIN': 'Materials', 'APD': 'Materials', 'SHW': 'Materials',
-    'ECL': 'Materials', 'NEM': 'Materials', 'NUE': 'Materials', 'VMC': 'Materials',
-    'MLM': 'Materials', 'DD': 'Materials', 'PPG': 'Materials',
-    'AMT': 'Real Estate', 'PLD': 'Real Estate', 'SPG': 'Real Estate', 'EQIX': 'Real Estate',
-    'PSA': 'Real Estate', 'O': 'Real Estate', 'WELL': 'Real Estate', 'AVB': 'Real Estate',
-    'EQR': 'Real Estate', 'DLR': 'Real Estate', 'VTR': 'Real Estate', 'BXP': 'Real Estate',
-    'DIS': 'Communication', 'CMCSA': 'Communication', 'NFLX': 'Communication',
-    'T': 'Communication', 'VZ': 'Communication', 'CHTR': 'Communication', 'EA': 'Communication',
-}
+plt.style.use("seaborn-v0_8-whitegrid")
+plt.rcParams.update({
+    "figure.figsize": (12, 8), "font.size": 11,
+    "axes.labelsize": 12, "axes.titlesize": 13, "font.family": "serif",
+})
+
+BANDWIDTH_POWER = 0.65
+ROLLING_WINDOW = 750
+MIN_OBS = 250
+ROLLING_STRIDE = 5
+HURST_LAGS = np.array([1, 2, 3, 5, 8, 13, 21], dtype=int)
+HURST_Q = 2.0
 
 
-# ============================================
-# GPH ESTIMATOR
-# ============================================
-def gph_estimator(x, m=None, return_details=False):
-    """
-    Geweke-Porter-Hudak (GPH) log-periodogram regression estimator.
+def _periodogram(x: np.ndarray, m: int) -> tuple[np.ndarray, np.ndarray]:
+    T = len(x)
+    xd = x - x.mean()
+    fft_x = np.fft.fft(xd)
+    j = np.arange(1, m + 1)
+    I = np.abs(fft_x[j]) ** 2 / (2 * np.pi * T)
+    lam = 2 * np.pi * j / T
+    return I, lam
 
-    Parameters:
-    -----------
-    x : array-like
-        Time series (should be stationary or weakly dependent)
-    m : int, optional
-        Number of Fourier frequencies to use. Default: T^0.65
-    return_details : bool
-        If True, return additional estimation details
 
-    Returns:
-    --------
-    d_hat : float
-        Estimated memory parameter
-    se : float
-        Standard error of the estimate
-    details : dict (if return_details=True)
-        Additional information including t-stat, p-value
-    """
-    x = np.asarray(x)
+def gph(x: np.ndarray, m: int | None = None) -> tuple[float, float, float]:
     x = x[~np.isnan(x)]
     T = len(x)
-
     if T < MIN_OBS:
-        return np.nan, np.nan
-
-    # Bandwidth selection
+        return np.nan, np.nan, np.nan
     if m is None:
         m = int(np.floor(T ** BANDWIDTH_POWER))
-
-    # Demean the series
-    x_demean = x - np.mean(x)
-
-    # Compute periodogram at Fourier frequencies
-    # I(lambda_j) = (1/2*pi*T) * |sum_{t=1}^T x_t * exp(i*lambda_j*t)|^2
-    fft_x = np.fft.fft(x_demean)
-    freq_idx = np.arange(1, m + 1)
-    I = np.abs(fft_x[freq_idx]) ** 2 / (2 * np.pi * T)
-
-    # Fourier frequencies
-    lambda_j = 2 * np.pi * freq_idx / T
-
-    # Log-periodogram regression
-    # ln(I(lambda_j)) = c - 2d * ln(lambda_j) + error
-    # Equivalent: ln(I) = c + d * ln(4*sin^2(lambda/2)) + error
-
-    y = np.log(I + 1e-10)  # Add small constant for numerical stability
-    X = np.log(4 * np.sin(lambda_j / 2) ** 2)
-
-    # OLS regression
-    X_demean = X - np.mean(X)
-    y_demean = y - np.mean(y)
-
-    beta = np.sum(X_demean * y_demean) / np.sum(X_demean ** 2)
-    d_hat = -beta / 2
-
-    # Standard error: se(d) = pi / sqrt(24 * m)
+    I, lam = _periodogram(x, m)
+    y = np.log(I + 1e-12)
+    X = np.log(4 * np.sin(lam / 2) ** 2)
+    Xd = X - X.mean()
+    yd = y - y.mean()
+    beta = (Xd * yd).sum() / (Xd ** 2).sum()
+    d_hat = -beta / 2.0
     se = np.pi / np.sqrt(24 * m)
-
-    if return_details:
-        t_stat = d_hat / se
-        p_value = 2 * (1 - stats.norm.cdf(np.abs(t_stat)))
-        residuals = y - (np.mean(y) + beta * X_demean)
-
-        details = {
-            'd_hat': d_hat,
-            'se': se,
-            't_stat': t_stat,
-            'p_value': p_value,
-            'm': m,
-            'T': T,
-            'residuals': residuals,
-        }
-        return d_hat, se, details
-
-    return d_hat, se
+    p = 2 * (1 - stats.norm.cdf(abs(d_hat / se)))
+    return d_hat, se, p
 
 
-# ============================================
-# LOCAL WHITTLE ESTIMATOR
-# ============================================
-def local_whittle_estimator(x, m=None, return_details=False):
-    """
-    Local Whittle (LW) semiparametric estimator.
-
-    More efficient than GPH (variance 1/4 vs pi^2/24).
-
-    Parameters:
-    -----------
-    x : array-like
-        Time series
-    m : int, optional
-        Bandwidth. Default: T^0.65
-
-    Returns:
-    --------
-    d_hat : float
-        Estimated memory parameter
-    se : float
-        Standard error (asymptotic: 1/(2*sqrt(m)))
-    """
-    x = np.asarray(x)
+def local_whittle(x: np.ndarray, m: int | None = None) -> tuple[float, float, float]:
     x = x[~np.isnan(x)]
     T = len(x)
-
     if T < MIN_OBS:
-        return np.nan, np.nan
-
+        return np.nan, np.nan, np.nan
     if m is None:
         m = int(np.floor(T ** BANDWIDTH_POWER))
+    I, lam = _periodogram(x, m)
+    log_lam = np.log(lam)
+    mean_log_lam = log_lam.mean()
 
-    # Demean
-    x_demean = x - np.mean(x)
+    def Q(d: float) -> float:
+        G = (lam ** (2 * d) * I).mean()
+        return np.inf if G <= 0 else np.log(G) - 2 * d * mean_log_lam
 
-    # Periodogram
-    fft_x = np.fft.fft(x_demean)
-    freq_idx = np.arange(1, m + 1)
-    I = np.abs(fft_x[freq_idx]) ** 2 / (2 * np.pi * T)
-
-    # Fourier frequencies
-    lambda_j = 2 * np.pi * freq_idx / T
-
-    # Log of frequencies for numerical stability
-    log_lambda = np.log(lambda_j)
-
-    # Local Whittle objective function (corrected)
-    def Q(d):
-        """Local Whittle objective to minimize"""
-        # G_hat(d) = (1/m) * sum(lambda_j^{2d} * I(lambda_j))
-        G_hat = np.mean(lambda_j ** (2 * d) * I)
-        if G_hat <= 0:
-            return np.inf
-        return np.log(G_hat) - 2 * d * np.mean(log_lambda)
-
-    # Grid search + refinement for robustness
-    d_grid = np.linspace(-0.4, 0.8, 50)
-    Q_values = [Q(d) for d in d_grid]
-    d_init = d_grid[np.argmin(Q_values)]
-
-    # Refine with bounded optimization
+    grid = np.linspace(-0.4, 0.8, 50)
+    d0 = grid[int(np.argmin([Q(d) for d in grid]))]
     try:
-        result = minimize_scalar(Q, bounds=(max(-0.49, d_init - 0.2), min(0.99, d_init + 0.2)),
-                                 method='bounded')
-        d_hat = result.x
-    except:
-        d_hat = d_init
-
-    # Standard error: se(d) = 1 / (2 * sqrt(m))
-    se = 1 / (2 * np.sqrt(m))
-
-    if return_details:
-        t_stat = d_hat / se
-        p_value = 2 * (1 - stats.norm.cdf(np.abs(t_stat)))
-
-        details = {
-            'd_hat': d_hat,
-            'se': se,
-            't_stat': t_stat,
-            'p_value': p_value,
-            'm': m,
-            'T': T,
-            'objective': Q(d_hat),
-        }
-        return d_hat, se, details
-
-    return d_hat, se
+        d_hat = minimize_scalar(
+            Q, bounds=(max(-0.49, d0 - 0.2), min(0.99, d0 + 0.2)),
+            method="bounded").x
+    except Exception:
+        d_hat = d0
+    se = 1.0 / (2 * np.sqrt(m))
+    p = 2 * (1 - stats.norm.cdf(abs(d_hat / se)))
+    return d_hat, se, p
 
 
-# ============================================
-# ROLLING WINDOW ESTIMATION
-# ============================================
-def rolling_lrd_estimate(x, window=ROLLING_WINDOW, method='gph'):
-    """
-    Compute rolling window LRD estimates.
-
-    Parameters:
-    -----------
-    x : pd.Series
-        Time series with datetime index
-    window : int
-        Rolling window size
-    method : str
-        'gph' or 'lw' (local whittle)
-
-    Returns:
-    --------
-    pd.DataFrame with columns: d_hat, se
-    """
-    estimator = gph_estimator if method == 'gph' else local_whittle_estimator
-
-    results = []
-    dates = []
-
-    for i in range(window, len(x)):
-        window_data = x.iloc[i-window:i].values
-        d_hat, se = estimator(window_data)
-        results.append({'d_hat': d_hat, 'se': se})
-        dates.append(x.index[i])
-
-    df = pd.DataFrame(results, index=dates)
-    return df
+def hurst_scaling(x: np.ndarray, lags: np.ndarray = HURST_LAGS,
+                  q: float = HURST_Q) -> float:
+    """Estimate Hurst exponent of x via the scaling of qth absolute moments
+    of increments. For a self-similar process,
+        m(q, Δ) = E|x(t+Δ) - x(t)|^q ∝ Δ^{qH}.
+    Slope of log m vs log Δ divided by q gives H. Used here on log RV."""
+    x = x[~np.isnan(x)]
+    if len(x) < lags.max() + MIN_OBS:
+        return np.nan
+    log_lags, log_m = [], []
+    for lag in lags:
+        diff = np.abs(x[lag:] - x[:-lag])
+        if len(diff) == 0:
+            continue
+        log_lags.append(np.log(lag))
+        log_m.append(np.log((diff ** q).mean() + 1e-30))
+    if len(log_lags) < 3:
+        return np.nan
+    slope, _ = np.polyfit(log_lags, log_m, 1)
+    return slope / q
 
 
-# ============================================
-# CROSS-SECTIONAL ESTIMATION
-# ============================================
-def cross_sectional_lrd(data, method='gph'):
-    """
-    Estimate d for all stocks in the cross-section.
-
-    Parameters:
-    -----------
-    data : pd.DataFrame
-        Returns or volatility proxy (columns = tickers)
-    method : str
-        'gph' or 'lw'
-
-    Returns:
-    --------
-    pd.DataFrame with d_hat, se, t_stat for each stock
-    """
-    estimator = gph_estimator if method == 'gph' else local_whittle_estimator
-
-    results = {}
+def cross_sectional_estimates(data: pd.DataFrame,
+                              estimator: callable) -> pd.DataFrame:
+    rows = {}
     for col in data.columns:
-        x = data[col].dropna()
-        if len(x) >= MIN_OBS:
-            d_hat, se, details = estimator(x, return_details=True)
-            results[col] = {
-                'd_hat': d_hat,
-                'se': se,
-                't_stat': details['t_stat'],
-                'p_value': details['p_value'],
-                'T': details['T'],
-                'm': details['m'],
-            }
-
-    return pd.DataFrame(results).T
+        x = data[col].dropna().values
+        if len(x) < MIN_OBS:
+            continue
+        d, se, p = estimator(x)
+        rows[col] = {"d_hat": d, "se": se, "p_value": p, "T": len(x)}
+    return pd.DataFrame(rows).T
 
 
-# ============================================
-# MAIN ANALYSIS
-# ============================================
-def load_data():
-    """Load processed data"""
-    print("Loading data...")
-
-    returns = pd.read_csv(os.path.join(PROCESSED_DIR, "returns.csv"),
-                          index_col=0, parse_dates=True)
-    vol_proxy = pd.read_csv(os.path.join(PROCESSED_DIR, "volatility_proxy.csv"),
-                            index_col=0, parse_dates=True)
-    market = pd.read_csv(os.path.join(PROCESSED_DIR, "market.csv"),
-                         index_col=0, parse_dates=True)
-
-    print(f"  Returns: {returns.shape}")
-    print(f"  Volatility proxy: {vol_proxy.shape}")
-
-    return returns, vol_proxy, market
+def cross_sectional_hurst(data: pd.DataFrame) -> pd.Series:
+    return pd.Series({c: hurst_scaling(data[c].dropna().values)
+                      for c in data.columns}, name="H")
 
 
-def estimate_all_lrd(returns, vol_proxy):
-    """
-    Estimate LRD parameters for returns and volatility.
-    """
-    print("\n" + "="*60)
-    print("   ESTIMATING LRD PARAMETERS")
-    print("="*60)
-
-    # 1. Returns - GPH
-    print("\n[1/4] GPH estimates for returns...")
-    returns_gph = cross_sectional_lrd(returns, method='gph')
-    returns_gph['Sector'] = returns_gph.index.map(lambda x: SECTOR_MAP.get(x, 'Other'))
-
-    # 2. Returns - Local Whittle
-    print("[2/4] Local Whittle estimates for returns...")
-    returns_lw = cross_sectional_lrd(returns, method='lw')
-    returns_lw['Sector'] = returns_lw.index.map(lambda x: SECTOR_MAP.get(x, 'Other'))
-
-    # 3. Volatility proxy - GPH
-    print("[3/4] GPH estimates for volatility...")
-    vol_gph = cross_sectional_lrd(vol_proxy, method='gph')
-    vol_gph['Sector'] = vol_gph.index.map(lambda x: SECTOR_MAP.get(x, 'Other'))
-
-    # 4. Volatility proxy - Local Whittle
-    print("[4/4] Local Whittle estimates for volatility...")
-    vol_lw = cross_sectional_lrd(vol_proxy, method='lw')
-    vol_lw['Sector'] = vol_lw.index.map(lambda x: SECTOR_MAP.get(x, 'Other'))
-
-    return {
-        'returns_gph': returns_gph,
-        'returns_lw': returns_lw,
-        'vol_gph': vol_gph,
-        'vol_lw': vol_lw,
-    }
+def rolling_panel(data: pd.DataFrame, estimator: callable,
+                  window: int = ROLLING_WINDOW,
+                  stride: int = ROLLING_STRIDE,
+                  label: str = "") -> pd.DataFrame:
+    """Rolling cross-sectional estimates. Returns (T_sample x N) DataFrame."""
+    T, N = data.shape
+    end_indices = np.arange(window, T, stride)
+    sample_dates = data.index[end_indices]
+    out = np.full((len(end_indices), N), np.nan)
+    print(f"  {label}: {len(end_indices)} windows x {N} stocks "
+          f"(window={window}, stride={stride})")
+    for k, end in enumerate(end_indices):
+        if k % 50 == 0 and k > 0:
+            print(f"    {k}/{len(end_indices)}  ({sample_dates[k].date()})")
+        block = data.iloc[end - window:end].values
+        for j in range(N):
+            x = block[:, j]
+            x = x[~np.isnan(x)]
+            if len(x) < MIN_OBS:
+                continue
+            try:
+                if estimator is hurst_scaling:
+                    out[k, j] = hurst_scaling(x)
+                else:
+                    out[k, j], _, _ = estimator(x)
+            except Exception:
+                pass
+    return pd.DataFrame(out, index=sample_dates, columns=data.columns)
 
 
-def compute_rolling_estimates(returns, vol_proxy, sample_tickers=None):
-    """
-    Compute rolling window LRD estimates for selected stocks.
-    """
-    if sample_tickers is None:
-        sample_tickers = ['AAPL', 'JPM', 'XOM', 'JNJ', 'PG']
+def export_table3(returns_gph: pd.DataFrame, returns_lw: pd.DataFrame,
+                  rv_gph: pd.DataFrame, rv_lw: pd.DataFrame,
+                  hurst: pd.Series, sectors: dict, fp: Path) -> None:
+    for df, _ in [(returns_gph, "rg"), (returns_lw, "rl"),
+                  (rv_gph, "vg"), (rv_lw, "vl")]:
+        df["Sector"] = df.index.map(lambda t: sectors.get(t, "Other"))
 
-    print("\n" + "="*60)
-    print("   COMPUTING ROLLING LRD ESTIMATES")
-    print("="*60)
+    sec_index = sorted(set(returns_gph["Sector"]))
 
-    rolling_results = {}
+    def by_sector(df: pd.DataFrame) -> pd.DataFrame:
+        return df.groupby("Sector")["d_hat"].agg(["mean", "std"]).round(3)
 
-    for ticker in sample_tickers:
-        if ticker in vol_proxy.columns:
-            print(f"  {ticker}...")
-            rolling_results[ticker] = rolling_lrd_estimate(
-                vol_proxy[ticker].dropna(),
-                window=ROLLING_WINDOW,
-                method='gph'
+    rg = by_sector(returns_gph); rl = by_sector(returns_lw)
+    vg = by_sector(rv_gph); vl = by_sector(rv_lw)
+    sig_v = rv_gph.groupby("Sector").apply(
+        lambda g: (g["p_value"] < 0.05).mean() * 100, include_groups=False)
+    n_per_sector = rv_gph.groupby("Sector").size()
+
+    hurst_with_sec = pd.DataFrame({"H": hurst})
+    hurst_with_sec["Sector"] = hurst_with_sec.index.map(
+        lambda t: sectors.get(t, "Other"))
+    h_by = hurst_with_sec.groupby("Sector")["H"].agg(["mean", "std"]).round(3)
+
+    with open(fp, "w") as f:
+        f.write("% Table 3: LRD and Roughness Estimates by GICS Sector\n\n")
+        f.write("\\begin{table}[htbp]\n\\centering\n")
+        f.write("\\caption{Long-Range Dependence and Roughness Estimates by Sector}\n")
+        f.write("\\label{tab:lrd_estimates}\n\\small\n")
+        f.write("\\begin{tabular}{lccccccc}\n\\toprule\n")
+        f.write(" & \\multicolumn{2}{c}{Returns} "
+                "& \\multicolumn{3}{c}{Parkinson RV} "
+                "& Roughness & \\\\\n")
+        f.write("\\cmidrule(lr){2-3} \\cmidrule(lr){4-6}\n")
+        f.write("Sector & $\\bar d_{GPH}$ & $\\bar d_{LW}$ "
+                "& $\\bar d_{GPH}$ & $\\bar d_{LW}$ & \\% Sig "
+                "& $\\bar H$ & N \\\\\n\\midrule\n")
+
+        for s in sec_index:
+            n = int(n_per_sector.get(s, 0))
+            f.write(
+                f"{s} & {rg.loc[s,'mean']:.3f} & {rl.loc[s,'mean']:.3f} "
+                f"& {vg.loc[s,'mean']:.3f} & {vl.loc[s,'mean']:.3f} "
+                f"& {sig_v.loc[s]:.0f}\\% "
+                f"& {h_by.loc[s,'mean']:.3f} & {n} \\\\\n"
             )
 
-    return rolling_results
-
-
-def compute_cross_sectional_dispersion(vol_proxy, window=ROLLING_WINDOW):
-    """
-    Compute time series of cross-sectional d-hat dispersion.
-    """
-    print("\nComputing cross-sectional dispersion over time...")
-
-    # We'll compute d for each stock in rolling windows, then cross-sectional stats
-    dates = vol_proxy.index[window:]
-    n_dates = len(dates)
-
-    # Sample every 22 days (monthly) for computational efficiency
-    sample_freq = 22
-    sample_dates = dates[::sample_freq]
-
-    results = []
-
-    for i, date in enumerate(sample_dates):
-        if i % 10 == 0:
-            print(f"  Processing {date.strftime('%Y-%m')} ({i+1}/{len(sample_dates)})")
-
-        # Get window ending at this date
-        end_idx = vol_proxy.index.get_loc(date)
-        start_idx = end_idx - window
-
-        window_data = vol_proxy.iloc[start_idx:end_idx]
-
-        # Estimate d for each stock
-        d_estimates = []
-        for col in window_data.columns:
-            x = window_data[col].dropna()
-            if len(x) >= MIN_OBS:
-                d_hat, _ = gph_estimator(x)
-                if not np.isnan(d_hat):
-                    d_estimates.append(d_hat)
-
-        if len(d_estimates) > 10:
-            results.append({
-                'date': date,
-                'mean_d': np.mean(d_estimates),
-                'std_d': np.std(d_estimates),
-                'median_d': np.median(d_estimates),
-                'skew_d': stats.skew(d_estimates),
-                'n_stocks': len(d_estimates),
-            })
-
-    return pd.DataFrame(results).set_index('date')
-
-
-def print_summary(estimates):
-    """Print summary of LRD estimates"""
-    print("\n" + "="*60)
-    print("   LRD ESTIMATION SUMMARY")
-    print("="*60)
-
-    for name, df in estimates.items():
-        print(f"\n{name.upper()}:")
-        print(f"  Mean d-hat: {df['d_hat'].mean():.4f}")
-        print(f"  Std d-hat:  {df['d_hat'].std():.4f}")
-        print(f"  Min d-hat:  {df['d_hat'].min():.4f}")
-        print(f"  Max d-hat:  {df['d_hat'].max():.4f}")
-        print(f"  % significant (5%): {100*(df['p_value'] < 0.05).mean():.1f}%")
-
-
-def export_table3_latex(estimates, filepath):
-    """Export Table 3: LRD estimates by sector"""
-    print(f"\nExporting Table 3 to {filepath}")
-
-    vol_gph = estimates['vol_gph']
-    vol_lw = estimates['vol_lw']
-
-    # Sector aggregation - compute separately to avoid lambda naming issues
-    sector_d_stats = vol_gph.groupby('Sector')['d_hat'].agg(['mean', 'std', 'count']).round(3)
-
-    # Compute % significant separately
-    def pct_significant(group):
-        return (group['p_value'] < 0.05).mean() * 100
-
-    sector_sig = vol_gph.groupby('Sector').apply(pct_significant, include_groups=False)
-
-    sector_lw = vol_lw.groupby('Sector')['d_hat'].agg(['mean', 'std']).round(3)
-
-    with open(filepath, 'w') as f:
-        f.write("% Table 3: Long-Range Dependence Estimates by Sector\n")
-        f.write("% Generated by module2_lrd_estimation.py\n\n")
-
-        f.write("\\begin{table}[htbp]\n")
-        f.write("\\centering\n")
-        f.write("\\caption{Long-Range Dependence Estimates for Volatility by Sector}\n")
-        f.write("\\label{tab:lrd_estimates}\n")
-        f.write("\\small\n")
-        f.write("\\begin{tabular}{lccccccc}\n")
-        f.write("\\toprule\n")
-        f.write(" & \\multicolumn{3}{c}{GPH Estimator} & \\multicolumn{2}{c}{Local Whittle} & \\\\\n")
-        f.write("\\cmidrule(lr){2-4} \\cmidrule(lr){5-6}\n")
-        f.write("Sector & $\\bar{d}$ & Std($d$) & \\% Sig. & $\\bar{d}$ & Std($d$) & N \\\\\n")
         f.write("\\midrule\n")
-
-        for sector in sector_d_stats.index:
-            gph_mean = sector_d_stats.loc[sector, 'mean']
-            gph_std = sector_d_stats.loc[sector, 'std']
-            gph_sig = sector_sig.loc[sector]
-            gph_n = int(sector_d_stats.loc[sector, 'count'])
-            lw_mean = sector_lw.loc[sector, 'mean']
-            lw_std = sector_lw.loc[sector, 'std']
-
-            f.write(f"{sector} & {gph_mean:.3f} & {gph_std:.3f} & {gph_sig:.0f}\\% ")
-            f.write(f"& {lw_mean:.3f} & {lw_std:.3f} & {gph_n} \\\\\n")
-
-        # Overall
-        f.write("\\midrule\n")
-        overall_gph_mean = vol_gph['d_hat'].mean()
-        overall_gph_std = vol_gph['d_hat'].std()
-        overall_gph_sig = (vol_gph['p_value'] < 0.05).mean() * 100
-        overall_lw_mean = vol_lw['d_hat'].mean()
-        overall_lw_std = vol_lw['d_hat'].std()
-        n_total = len(vol_gph)
-
-        f.write(f"\\textbf{{Overall}} & {overall_gph_mean:.3f} & {overall_gph_std:.3f} & {overall_gph_sig:.0f}\\% ")
-        f.write(f"& {overall_lw_mean:.3f} & {overall_lw_std:.3f} & {n_total} \\\\\n")
-
-        f.write("\\bottomrule\n")
-        f.write("\\end{tabular}\n")
+        f.write(
+            f"\\textbf{{Overall}} "
+            f"& {returns_gph['d_hat'].mean():.3f} & {returns_lw['d_hat'].mean():.3f} "
+            f"& {rv_gph['d_hat'].mean():.3f} & {rv_lw['d_hat'].mean():.3f} "
+            f"& {(rv_gph['p_value']<0.05).mean()*100:.0f}\\% "
+            f"& {hurst.mean():.3f} & {len(rv_gph)} \\\\\n"
+        )
+        f.write("\\bottomrule\n\\end{tabular}\n")
         f.write("\\begin{tablenotes}\\small\n")
-        f.write("\\item Notes: $d$ is the fractional differencing parameter estimated from squared returns (volatility proxy). ")
-        f.write("GPH is the Geweke-Porter-Hudak log-periodogram estimator; Local Whittle is the semiparametric estimator. ")
-        f.write(f"Bandwidth $m = T^{{{BANDWIDTH_POWER}}}$. \\% Sig. is the percentage of stocks with $d$ significantly different from zero at 5\\%.\n")
-        f.write("\\end{tablenotes}\n")
-        f.write("\\end{table}\n")
+        f.write(
+            "\\item Notes: $d$ is the fractional differencing parameter. "
+            "GPH is the Geweke--Porter--Hudak log-periodogram estimator "
+            f"(bandwidth $m = T^{{{BANDWIDTH_POWER}}}$); "
+            "LW is the local-Whittle semiparametric estimator. "
+            "Returns are daily log returns; Parkinson RV is the range-based "
+            "realized variance from daily H/L. $H$ is the Hurst exponent of "
+            "$\\log\\mathrm{RV}^{PK}$ estimated by the scaling of the $q=2$ "
+            "moment of increments over lags $\\{1,2,3,5,8,13,21\\}$. "
+            "$H<0.5$ indicates rough behaviour. \\% Sig reports the share of "
+            "stocks whose volatility $d_{GPH}$ is significant at 5\\%.\n"
+        )
+        f.write("\\end{tablenotes}\n\\end{table}\n")
 
 
-def create_figure2(estimates, rolling_results, cs_dispersion, market, filepath):
-    """
-    Create Figure 2: LRD Estimation Results
-    (a) Distribution of d-hat
-    (b) Rolling d-hat for sample stocks
-    (c) Cross-sectional dispersion over time
-    """
-    print(f"\nCreating Figure 2...")
-
+def figure2(rv_gph: pd.DataFrame, rolling_d: pd.DataFrame,
+            rolling_h: pd.DataFrame, market: pd.DataFrame, fp: Path) -> None:
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
-    # (a) Distribution of d-hat (volatility)
+    # (a) cross-sectional distribution of d (volatility, GPH)
     ax = axes[0, 0]
-    vol_d = estimates['vol_gph']['d_hat'].dropna()
-    ax.hist(vol_d, bins=30, density=True, alpha=0.7, color='darkred', edgecolor='black')
-    ax.axvline(x=vol_d.mean(), color='black', linestyle='--', linewidth=2,
-               label=f'Mean = {vol_d.mean():.3f}')
-    ax.axvline(x=0, color='gray', linestyle=':', linewidth=1)
-    ax.axvline(x=0.5, color='gray', linestyle=':', linewidth=1)
-    ax.set_xlabel('$\\hat{d}$ (Memory Parameter)')
-    ax.set_ylabel('Density')
-    ax.set_title('(a) Distribution of $\\hat{d}$ for Volatility (GPH)', fontweight='bold')
-    ax.legend()
-    ax.set_xlim(-0.1, 0.7)
+    d = rv_gph["d_hat"].dropna()
+    ax.hist(d, bins=30, density=True, alpha=0.7, color="darkred", edgecolor="black")
+    ax.axvline(d.mean(), color="black", linestyle="--", linewidth=2,
+               label=f"Mean = {d.mean():.3f}")
+    ax.axvline(0, color="gray", linestyle=":", linewidth=1)
+    ax.axvline(0.5, color="gray", linestyle=":", linewidth=1)
+    ax.set_xlabel(r"$\hat d$ (memory parameter)")
+    ax.set_ylabel("Density")
+    ax.set_title(r"(a) Distribution of $\hat d$ for Parkinson RV (GPH)",
+                 fontweight="bold")
+    ax.legend(); ax.set_xlim(-0.1, 0.7)
 
-    # (b) Rolling d-hat for sample stocks
+    # (b) rolling d for a few stocks
     ax = axes[0, 1]
-    colors = plt.cm.tab10(np.linspace(0, 1, len(rolling_results)))
-    for (ticker, df), color in zip(rolling_results.items(), colors):
-        ax.plot(df.index, df['d_hat'], label=ticker, alpha=0.8, linewidth=1)
+    sample = [t for t in ["AAPL", "JPM", "XOM", "JNJ", "PG"] if t in rolling_d.columns]
+    for t in sample:
+        ax.plot(rolling_d.index, rolling_d[t], label=t, alpha=0.85, linewidth=1)
+    ax.axhline(0, color="gray", linestyle=":", linewidth=1)
+    ax.axhline(0.5, color="gray", linestyle=":", linewidth=1)
+    ax.set_ylabel(r"$\hat d_t$")
+    ax.set_title(f"(b) Rolling $\\hat d$ on Parkinson RV "
+                 f"(window {ROLLING_WINDOW}, stride {ROLLING_STRIDE})",
+                 fontweight="bold")
+    ax.legend(loc="upper right", ncol=3)
+    ax.axvspan(pd.Timestamp("2007-12-01"), pd.Timestamp("2009-06-30"),
+               alpha=0.15, color="gray")
+    ax.axvspan(pd.Timestamp("2020-02-01"), pd.Timestamp("2020-04-30"),
+               alpha=0.15, color="gray")
 
-    ax.axhline(y=0, color='gray', linestyle=':', linewidth=1)
-    ax.axhline(y=0.5, color='gray', linestyle=':', linewidth=1, label='d=0.5 (nonstationary)')
-    ax.set_xlabel('')
-    ax.set_ylabel('$\\hat{d}$')
-    ax.set_title(f'(b) Rolling $\\hat{{d}}$ (Window = {ROLLING_WINDOW} days)', fontweight='bold')
-    ax.legend(loc='upper right', ncol=2)
-    ax.set_xlim(list(rolling_results.values())[0].index.min(),
-                list(rolling_results.values())[0].index.max())
-
-    # Add recession shading
-    ax.axvspan(pd.Timestamp('2007-12-01'), pd.Timestamp('2009-06-30'), alpha=0.2, color='gray')
-    ax.axvspan(pd.Timestamp('2020-02-01'), pd.Timestamp('2020-04-30'), alpha=0.2, color='gray')
-
-    # (c) Cross-sectional dispersion over time
+    # (c) cross-sectional mean and dispersion of d over time
     ax = axes[1, 0]
-    ax.plot(cs_dispersion.index, cs_dispersion['mean_d'], 'b-', linewidth=1.5, label='Mean $\\hat{d}$')
-    ax.fill_between(cs_dispersion.index,
-                    cs_dispersion['mean_d'] - cs_dispersion['std_d'],
-                    cs_dispersion['mean_d'] + cs_dispersion['std_d'],
-                    alpha=0.3, color='blue', label='$\\pm$ 1 Std')
-    ax.axhline(y=0.5, color='gray', linestyle=':', linewidth=1)
-    ax.set_xlabel('')
-    ax.set_ylabel('Cross-sectional $\\hat{d}$')
-    ax.set_title('(c) Cross-Sectional Memory Dispersion Over Time', fontweight='bold')
+    cs_mean = rolling_d.mean(axis=1)
+    cs_std = rolling_d.std(axis=1)
+    ax.plot(cs_mean.index, cs_mean, color="navy", linewidth=1.5,
+            label=r"Mean $\hat d_t$")
+    ax.fill_between(cs_mean.index, cs_mean - cs_std, cs_mean + cs_std,
+                    alpha=0.25, color="navy", label=r"$\pm 1$ std")
+    ax.axhline(0.5, color="gray", linestyle=":", linewidth=1)
+    ax.set_ylabel(r"Cross-sectional $\hat d_t$")
+    ax.set_title("(c) Cross-Sectional Memory Mean and Dispersion",
+                 fontweight="bold")
     ax.legend()
-    ax.axvspan(pd.Timestamp('2007-12-01'), pd.Timestamp('2009-06-30'), alpha=0.2, color='gray')
-    ax.axvspan(pd.Timestamp('2020-02-01'), pd.Timestamp('2020-04-30'), alpha=0.2, color='gray')
+    ax.axvspan(pd.Timestamp("2007-12-01"), pd.Timestamp("2009-06-30"),
+               alpha=0.15, color="gray")
+    ax.axvspan(pd.Timestamp("2020-02-01"), pd.Timestamp("2020-04-30"),
+               alpha=0.15, color="gray")
 
-    # (d) d-hat vs VIX correlation
+    # (d) cross-sectional mean d vs VIX
     ax = axes[1, 1]
-    # Use cross-sectional mean d
-    merged = cs_dispersion[['mean_d', 'std_d']].copy()
-    merged['VIX'] = market['VIX'].reindex(merged.index).values
-
-    ax.scatter(merged['VIX'], merged['mean_d'], alpha=0.5, s=20, c='darkred')
-    # Add regression line
-    mask = ~(merged['VIX'].isna() | merged['mean_d'].isna())
+    vix = market["VIX"].reindex(cs_mean.index)
+    mask = vix.notna() & cs_mean.notna()
+    ax.scatter(vix[mask], cs_mean[mask], alpha=0.5, s=20, c="darkred")
     if mask.sum() > 10:
-        z = np.polyfit(merged.loc[mask, 'VIX'], merged.loc[mask, 'mean_d'], 1)
-        p = np.poly1d(z)
-        x_line = np.linspace(merged['VIX'].min(), merged['VIX'].max(), 100)
-        ax.plot(x_line, p(x_line), 'b--', linewidth=2)
-        corr = merged.loc[mask, ['VIX', 'mean_d']].corr().iloc[0, 1]
-        ax.text(0.05, 0.95, f'Corr = {corr:.3f}', transform=ax.transAxes,
-                fontsize=11, verticalalignment='top')
-
-    ax.set_xlabel('VIX')
-    ax.set_ylabel('Cross-sectional Mean $\\hat{d}$')
-    ax.set_title('(d) Memory Parameter vs VIX', fontweight='bold')
+        z = np.polyfit(vix[mask], cs_mean[mask], 1)
+        xs = np.linspace(vix[mask].min(), vix[mask].max(), 100)
+        ax.plot(xs, np.poly1d(z)(xs), "b--", linewidth=2)
+        rho = np.corrcoef(vix[mask], cs_mean[mask])[0, 1]
+        ax.text(0.05, 0.95, fr"$\rho$ = {rho:.3f}", transform=ax.transAxes,
+                fontsize=11, verticalalignment="top",
+                bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.6))
+    ax.set_xlabel("VIX")
+    ax.set_ylabel(r"Cross-sectional mean $\hat d_t$")
+    ax.set_title(r"(d) Memory Parameter vs VIX", fontweight="bold")
 
     plt.tight_layout()
-    plt.savefig(filepath, dpi=300, bbox_inches='tight')
-    plt.savefig(filepath.replace('.pdf', '.png'), dpi=150, bbox_inches='tight')
+    plt.savefig(fp, dpi=300, bbox_inches="tight")
+    plt.savefig(str(fp).replace(".pdf", ".png"), dpi=150, bbox_inches="tight")
     plt.close()
 
-    print(f"  Saved: {filepath}")
 
+def main() -> None:
+    print("=" * 70)
+    print("   MODULE 2: LRD AND ROUGHNESS ESTIMATION")
+    print("=" * 70)
+    TABLES_DIR.mkdir(parents=True, exist_ok=True)
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    INTERMEDIATE_DIR.mkdir(parents=True, exist_ok=True)
 
-def main():
-    print("="*70)
-    print("   MODULE 2: LRD ESTIMATION")
-    print("="*70)
+    panel = build_clean_panel()
+    sectors = sector_map(panel.metadata)
+    print(f"  N={len(panel.kept)}  T={len(panel.prices)}")
 
-    # Create directories
-    os.makedirs(TABLES_DIR, exist_ok=True)
-    os.makedirs(FIGURES_DIR, exist_ok=True)
-    os.makedirs(INTERMEDIATE_DIR, exist_ok=True)
+    print("\n[1/5] Cross-sectional GPH on returns...")
+    returns_gph = cross_sectional_estimates(panel.returns, gph)
+    print(f"   mean d = {returns_gph['d_hat'].mean():.3f}, "
+          f"% sig = {(returns_gph['p_value']<0.05).mean()*100:.1f}%")
 
-    # Load data
-    returns, vol_proxy, market = load_data()
+    print("[2/5] Cross-sectional Local Whittle on returns...")
+    returns_lw = cross_sectional_estimates(panel.returns, local_whittle)
+    print(f"   mean d = {returns_lw['d_hat'].mean():.3f}, "
+          f"% sig = {(returns_lw['p_value']<0.05).mean()*100:.1f}%")
 
-    # Estimate LRD parameters
-    estimates = estimate_all_lrd(returns, vol_proxy)
+    print("[3/5] Cross-sectional GPH on Parkinson RV...")
+    rv_gph = cross_sectional_estimates(panel.rv_parkinson, gph)
+    print(f"   mean d = {rv_gph['d_hat'].mean():.3f}, "
+          f"% sig = {(rv_gph['p_value']<0.05).mean()*100:.1f}%")
 
-    # Print summary
-    print_summary(estimates)
+    print("[4/5] Cross-sectional Local Whittle on Parkinson RV...")
+    rv_lw = cross_sectional_estimates(panel.rv_parkinson, local_whittle)
+    print(f"   mean d = {rv_lw['d_hat'].mean():.3f}, "
+          f"% sig = {(rv_lw['p_value']<0.05).mean()*100:.1f}%")
 
-    # Rolling estimates for sample stocks
-    rolling_results = compute_rolling_estimates(returns, vol_proxy)
+    print("[5/5] Roughness (Hurst) on log Parkinson RV...")
+    hurst = cross_sectional_hurst(panel.log_rv)
+    print(f"   mean H = {hurst.mean():.3f}, std = {hurst.std():.3f}, "
+          f"share H<0.5 = {(hurst<0.5).mean()*100:.1f}%")
 
-    # Cross-sectional dispersion
-    cs_dispersion = compute_cross_sectional_dispersion(vol_proxy)
+    print("\n[Rolling] panels (this is the slow part)...")
+    rolling_d_gph = rolling_panel(panel.rv_parkinson, gph, label="d_GPH on RV_PK")
+    rolling_d_lw = rolling_panel(panel.rv_parkinson, local_whittle, label="d_LW on RV_PK")
+    rolling_h = rolling_panel(panel.log_rv, hurst_scaling, label="H on log_RV")
 
-    # Export Table 3
-    export_table3_latex(estimates, os.path.join(TABLES_DIR, "table3_lrd_estimates.tex"))
+    print("\nSaving intermediate panels...")
+    returns_gph.to_csv(INTERMEDIATE_DIR / "lrd_returns_gph.csv")
+    returns_lw.to_csv(INTERMEDIATE_DIR / "lrd_returns_lw.csv")
+    rv_gph.to_csv(INTERMEDIATE_DIR / "lrd_rv_gph.csv")
+    rv_lw.to_csv(INTERMEDIATE_DIR / "lrd_rv_lw.csv")
+    hurst.to_csv(INTERMEDIATE_DIR / "hurst_rv_log.csv")
+    rolling_d_gph.to_csv(INTERMEDIATE_DIR / "rolling_d_gph.csv")
+    rolling_d_lw.to_csv(INTERMEDIATE_DIR / "rolling_d_lw.csv")
+    rolling_h.to_csv(INTERMEDIATE_DIR / "rolling_hurst.csv")
 
-    # Create Figure 2
-    create_figure2(estimates, rolling_results, cs_dispersion, market,
-                   os.path.join(FIGURES_DIR, "fig2_lrd_estimates.pdf"))
+    print("\nExporting Table 3 + Figure 2...")
+    export_table3(returns_gph, returns_lw, rv_gph, rv_lw, hurst, sectors,
+                  TABLES_DIR / "table3_lrd_estimates.tex")
+    figure2(rv_gph, rolling_d_gph, rolling_h, panel.market,
+            FIGURES_DIR / "fig2_lrd_estimates.pdf")
 
-    # Save intermediate results
-    print("\nSaving intermediate results...")
-    for name, df in estimates.items():
-        df.to_csv(os.path.join(INTERMEDIATE_DIR, f"lrd_{name}.csv"))
-
-    cs_dispersion.to_csv(os.path.join(INTERMEDIATE_DIR, "lrd_cs_dispersion.csv"))
-
-    # Save rolling results
-    for ticker, df in rolling_results.items():
-        df.to_csv(os.path.join(INTERMEDIATE_DIR, f"lrd_rolling_{ticker}.csv"))
-
-    print("\n" + "="*70)
-    print("   MODULE 2 COMPLETE")
-    print("="*70)
-    print("\nKey findings:")
-    print(f"  - Mean d (volatility, GPH): {estimates['vol_gph']['d_hat'].mean():.3f}")
-    print(f"  - Mean d (volatility, LW):  {estimates['vol_lw']['d_hat'].mean():.3f}")
-    print(f"  - Mean d (returns, GPH):    {estimates['returns_gph']['d_hat'].mean():.3f}")
-    print(f"  - % significant (vol):      {100*(estimates['vol_gph']['p_value'] < 0.05).mean():.1f}%")
-
-    print("\nOutputs created:")
-    print(f"  - {TABLES_DIR}/table3_lrd_estimates.tex")
-    print(f"  - {FIGURES_DIR}/fig2_lrd_estimates.pdf")
+    print("\n" + "=" * 70)
+    print("Outputs:")
+    print(f"  {TABLES_DIR/'table3_lrd_estimates.tex'}")
+    print(f"  {FIGURES_DIR/'fig2_lrd_estimates.pdf'} (+ .png)")
+    print(f"  intermediate panels: rolling_d_gph.csv, rolling_d_lw.csv, "
+          "rolling_hurst.csv (+ static cross-sectional CSVs)")
 
 
 if __name__ == "__main__":
