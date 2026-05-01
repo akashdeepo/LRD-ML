@@ -1,0 +1,30 @@
+% Table 9: Robustness summary -- Model C vs Model A at h=5
+
+\begin{table}[htbp]
+\centering
+\caption{Robustness Summary: Model C vs Model A, $h=5$}
+\label{tab:robustness}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccc}
+\toprule
+Variant & MSE & \%$\Delta$ vs A & HLN DM-$t$ \\
+\midrule
+Headline (Model C, full panel) & 0.3334 & +8.24\% & $+3.87$ \\
+Inference: plain DM (illustrative) & 0.3334 & +8.24\% & $+3.87$ (plain $+23.97$) \\
+Liquidity: low-liquidity half & 0.3342 & +8.95\% & $+4.26$ \\
+Liquidity: high-liquidity half & 0.3327 & +7.51\% & $+3.33$ \\
+Estimator: $\hat d_{LW}$ replaces $\hat d_{GPH}$ & 0.3336 & +8.21\% & $+3.85$ \\
+Rolling window: 500 days & 0.3302 & +9.13\% & $+4.00$ \\
+Rolling window: 1000 days & 0.3319 & +8.67\% & $+3.63$ \\
+Target: log mean future squared returns & 0.9102 & +4.16\% & $+3.10$ \\
+Regime: high VIX (Q4) & -- & +17.94\% & -- \\
+Regime: low VIX (Q1) & -- & +6.57\% & -- \\
+Regime: COVID 2020 & -- & +18.88\% & -- \\
+\bottomrule
+\end{tabular}%
+}
+\begin{tablenotes}\small
+\item Notes: Robustness checks for Model C against Model A at $h=5$ on $\log RV^{PK}$. Liquidity halves are formed from the static median of mean inverse dollar volume across the sample. $\hat d_{LW}$ replaces $\hat d_{GPH}$ in the entire feature block (including memory dynamics and interactions). Window variants refit the rolling LRD estimation at the alternative window before regenerating the full feature stack. The target variant replaces $\log RV^{PK}$ with log mean future squared returns (Models A and C both refit). Regime rows come from the Table 7 split at $h=5$. The plain-DM stat is the unscaled iid pooled-cell statistic; the HLN stat is the panel-aware Harvey-Leybourne-Newbold finite-sample-corrected version.
+\end{tablenotes}
+\end{table}

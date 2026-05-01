@@ -32,20 +32,34 @@ FEAT = BASE / "results" / "intermediate" / "features"
 
 HORIZONS = (1, 5, 22)
 
+_HAR_CORE = [
+    "har_d_log", "har_w_log", "har_m_log",
+    "ret_lag1", "ret_lag1_abs",
+]
+
 MODEL_FEATURES: dict[str, list[str]] = {
-    "A": [
-        "har_d_log", "har_w_log", "har_m_log",
-        "ret_lag1", "ret_lag1_abs",
-    ],
-    "B": [
-        "har_d_log", "har_w_log", "har_m_log",
-        "ret_lag1", "ret_lag1_abs",
+    # Baseline
+    "A":  _HAR_CORE.copy(),
+    # HAR-X: adds market-state controls only
+    "A1": _HAR_CORE + ["vix", "move"],
+    # Own-stock persistence block (== legacy B)
+    "A2": _HAR_CORE + [
         "d_gph", "delta_d_gph", "vol_d_gph", "trend_d_gph",
         "h", "delta_h",
     ],
-    "C": [
-        "har_d_log", "har_w_log", "har_m_log",
-        "ret_lag1", "ret_lag1_abs",
+    # Cross-sectional persistence aggregates
+    "A3": _HAR_CORE + ["cs_mean_d", "cs_std_d"],
+    # Sector persistence aggregate
+    "A4": _HAR_CORE + ["sector_mean_d"],
+    # Persistence-by-stress interactions (must include main effects to identify
+    # the interaction cleanly, per standard regression practice).
+    "A5": _HAR_CORE + [
+        "d_gph",
+        "vix", "move",
+        "d_x_vix", "d_x_move",
+    ],
+    # Full structural model (union of A1..A5 blocks)
+    "C": _HAR_CORE + [
         "d_gph", "delta_d_gph", "vol_d_gph", "trend_d_gph",
         "h", "delta_h",
         "cs_mean_d", "cs_std_d", "sector_mean_d",
@@ -53,7 +67,10 @@ MODEL_FEATURES: dict[str, list[str]] = {
         "d_x_vix", "d_x_move",
     ],
 }
-MODEL_FEATURES["D"] = MODEL_FEATURES["C"]  # same predictors, non-linear estimator
+# Legacy alias: B == A2
+MODEL_FEATURES["B"] = MODEL_FEATURES["A2"]
+# ML estimators: same predictor set as C
+MODEL_FEATURES["D"] = MODEL_FEATURES["C"]
 
 
 @dataclass
