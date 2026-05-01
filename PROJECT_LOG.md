@@ -666,3 +666,99 @@ Diebold–Mariano tests, regime/sector/size splits).
 ---
 
 *Last updated: 2026-04-25*
+
+---
+
+## Session: 2026-05-01 — Layered ablation, HLN-DM, robustness, vol-managed portfolio
+
+### Why
+Nicholas (NA) and ChatGPT review surfaced 12 concerns/extensions. Headline:
+the previous Model A/B/C ladder conflated "market state" (VIX/MOVE) with
+"persistence as state variable", and the plain pooled-cell DM stat was
+inflated relative to a panel-aware test. We addressed all 12 items
+systematically.
+
+### What changed
+1. **Layered model ladder** (`modules/forecast_io.py`,
+   `modules/module4_benchmarks.py`):
+   `A -> A1 (HAR-X) -> A2 (own d) -> A3 (cross-sec d) -> A4 (sector d) ->
+   A5 (d × stress + main effects) -> C -> D`. Refit A1, A3, A4, A5 across
+   115 stocks × 1078 dates × {h=1,5,22}. A2 == legacy B numerically; we
+   read legacy B forecast files under the new A2 label.
+
+2. **HLN-corrected DM** (`modules/module6_forecast_eval.py`): replaced
+   pooled iid DM with Harvey-Leybourne-Newbold (1997) finite-sample-corrected
+   DM computed on the cross-sectional mean loss differential per date,
+   Newey-West HAC with bandwidth `ceil(h/5) - 1`, Student-t(T-1) reference.
+   Plain DM-t at h=5 was +24.0; HLN-DM-t is +3.87. The 6× shrinkage is
+   correct — old t-stats ignored within-date cross-sectional dependence.
+
+3. **Robustness summary Table 9** (`modules/module9_robustness.py`):
+   refits Model C at h=5 under estimator (LW), window (500/1000), target
+   (squared returns), and liquidity-bucket perturbations. All variants
+   confirm Model C beats A by 4–9% with HLN-DM > 3. Window 500 → +9.13%,
+   window 1000 → +8.68%, LW estimator → +8.21%, target squared returns →
+   +4.16%, low-liquidity half → +8.95%, high-liquidity half → +7.51%.
+
+4. **Five new figures** (`modules/module10_plots.py`):
+   - fig4 cumulative loss differential of A vs C, faceted by horizon
+   - fig5 layered ablation MSE bar chart (with non-additivity caveat)
+   - fig6 per-stock improvement histogram + boxplot
+   - fig7 lead-lag CCF of cross-sectional mean d̂ vs VIX (±60 days)
+   - fig8 sector × horizon heatmap
+
+5. **Vol-managed portfolio Table 10 + fig9** (`modules/module11_economic.py`):
+   Moreira-Muir (2017) construction with weekly rebalancing on h=5
+   forecasts. Sharpe in COVID: unmanaged 0.65, A-managed 0.91,
+   A1-managed 1.06, **C-managed 1.37**. CER (γ=5) in COVID: unmanaged
+   −3.0%, **C-managed +12.3%**. Persistence aggregates pay an
+   incremental Sharpe over HAR-X precisely in stress regimes.
+
+6. **Manuscript edits** (`paper_overleaf/Memory_Roughness_Persistence.tex`):
+   - §6: rewrote model ladder definition around A → A1...A5 → C → D
+   - §6: added HLN-DM methodology paragraph
+   - §7.2: wording — replaced "Parkinson realised variance" with
+     "Parkinson range-based variance proxy" globally
+   - §8.2: rewrote forecast-comparison narrative to attribute most of
+     C's gain to A1 (HAR-X), with the persistence story as a small
+     incremental gain at h=22 and in stress regimes
+   - §8.4: added regime label, lead-lag plot
+   - §8.5: added sector heatmap
+   - §8.6: replaced robustness paragraph with Table 9 reference
+   - §9: added vol-managed portfolio subsection with Table 10 + fig9
+   - refs.bib: added harvey1997testing, moreira2017volatility,
+     bollerslev2009common
+
+### Headline narrative shift
+The old Section 8.2 attributed Model C's 4–8% MSE reduction to "persistence
+as a system-wide state variable." The layered ablation shows that VIX/MOVE
+alone (HAR-X = A1) capture most of that gain at all three horizons. The
+*incremental* contribution of the persistence vector beyond HAR-X is:
+modest at h=1 (under 1pp), modest at h=5 (under 1pp), but +1.82pp at h=22.
+In stress regimes the incremental gain is larger: +1.89pp at h=5 in
+high-VIX, +1.68pp at h=22 in COVID. The vol-managed portfolio exercise
+makes this economically tangible — C-managed Sharpe in COVID is 1.37 vs
+A1-managed 1.06 vs unmanaged 0.65.
+
+This is a more honest, more nuanced result. The persistence story is not
+"d̂ is the headline variable" but "d̂ aggregates carry incremental signal
+at long horizons and in stress, with measurable economic value in
+volatility-managed portfolios."
+
+### Outputs
+- 6 new figures: `results/figures/fig{4,5,6,7,8,9}*.pdf`
+- 2 new tables: `results/tables/table{9,10}*.tex`
+- 4 rebuilt tables: `results/tables/table{5,6,7,8}*.tex` with new layered ladder + HLN-DM
+- 3 new modules: `modules/module{9_robustness,10_plots,11_economic}.py`
+- Per-stock panel: `results/intermediate/per_stock_improvement.csv`
+- Robustness raw: `results/intermediate/table9_raw.csv`
+- Vol-managed raw: `results/intermediate/table10_raw.csv`
+- All bundled into `paper_overleaf/`
+
+### What's next
+- Compile Overleaf, read and revise the prose around the new findings
+- Consider: full Shapley decomposition (would need 2^5 = 32 model fits) — currently we report layered marginals as the principled alternative
+- Consider: ELW (Shimotsu-Phillips) as a third estimator — currently we report GPH and LW
+- Consider: extend vol-managed exercise to include a tail-risk metric (CVaR backtest)
+
+*Last updated: 2026-05-01*

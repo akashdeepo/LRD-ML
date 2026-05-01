@@ -212,7 +212,7 @@ def export_table4(panels: dict[str, pd.DataFrame],
                  _stats_panel(panels["d_x_illiq"])))
 
     with open(fp, "w") as f:
-        f.write("% Table 4: Persistence Feature Vector — definitions and pooled statistics\n\n")
+        f.write("% Table 4: Persistence Feature Vector -- definitions and pooled statistics\n\n")
         f.write("\\begin{table}[htbp]\n\\centering\n")
         f.write("\\caption{Persistence Feature Vector: Definitions and Pooled Statistics}\n")
         f.write("\\label{tab:features}\n\\small\n")

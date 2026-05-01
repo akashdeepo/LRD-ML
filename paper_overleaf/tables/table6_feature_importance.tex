@@ -1,0 +1,35 @@
+% Table 6: Pooled-Lasso standardised coefficients per horizon
+
+\begin{table}[htbp]
+\centering
+\caption{Standardised Lasso Coefficients on the Full Pooled Sample}
+\label{tab:importance}
+\small
+\begin{tabular}{lccc}
+\toprule
+Feature & $h=1$ & $h=5$ & $h=22$ \\
+\midrule
+har\_d\_log & +0.1330 & +0.0991 & +0.0675 \\
+har\_w\_log & +0.2106 & +0.1840 & +0.1460 \\
+har\_m\_log & +0.3540 & +0.4047 & +0.4499 \\
+ret\_lag1 & -0.0387 & -0.0474 & -0.0424 \\
+ret\_lag1\_abs & +0.0241 & +0.0153 & +0.0177 \\
+d\_gph & +0.0879 & +0.0837 & +0.0527 \\
+delta\_d\_gph & +0.0113 & +0.0069 & +0.0029 \\
+vol\_d\_gph & -0.0253 & -0.0394 & -0.0465 \\
+trend\_d\_gph & -0.0076 & -0.0076 & -0.0000 \\
+h & -0.0169 & -0.0091 & -0.0060 \\
+delta\_h & +0.0043 & +0.0153 & +0.0094 \\
+cs\_mean\_d & -0.0672 & -0.0474 & -0.0148 \\
+cs\_std\_d & -0.0067 & -0.0058 & -0.0222 \\
+sector\_mean\_d & +0.0147 & +0.0085 & +0.0095 \\
+vix & +0.2784 & +0.2247 & +0.1132 \\
+move & -0.0315 & +0.0000 & +0.0214 \\
+d\_x\_vix & -0.1453 & -0.1432 & -0.1151 \\
+d\_x\_move & +0.0227 & +0.0239 & +0.0381 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item Notes: Pooled-Lasso fit on standardised features (full sample, all stocks, all out-of-sample dates), one fit per horizon. Coefficients are on standardised inputs and so are directly comparable in magnitude. Zero coefficients indicate features dropped by Lasso.
+\end{tablenotes}
+\end{table}

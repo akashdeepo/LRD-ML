@@ -4,13 +4,18 @@ MODULE 6: Forecast Evaluation
 Reads all forecast panels under results/intermediate/forecasts/ and produces:
 
   Table 5 — model x horizon comparison (MSE, QLIKE, % improvement vs A,
-            Diebold-Mariano stat vs A) pooled across stocks
+            HLN-corrected Diebold-Mariano stat vs A) pooled across stocks
   Table 6 — feature-importance summary (Lasso non-zero coefficients per
             horizon + Random Forest / GBM permutation-style ranking)
   Table 7 — regime split: VIX-quartile + GFC + COVID windows, MSE per
             (model, horizon, regime), % improvement vs A
   Table 8 — horizon-by-sector breakdown for the leading model
             (Model C and best D variant)
+
+The DM test is the panel-aware HLN-corrected version: cross-sectional mean of
+loss differentials per date, Newey-West HAC variance with bandwidth tied to
+h/stride, and the Harvey-Leybourne-Newbold finite-sample correction with
+Student-t(T-1) reference distribution.
 """
 
 from __future__ import annotations
@@ -20,6 +25,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 
 from modules.forecast_io import HORIZONS, load_bundle
 
@@ -30,8 +36,18 @@ FCST_DIR = BASE / "results" / "intermediate" / "forecasts"
 TABLES_DIR = BASE / "results" / "tables"
 INTERMEDIATE_DIR = BASE / "results" / "intermediate"
 
-LINEAR_MODELS = ("A", "B", "C")
+# Legacy label B == A2 (same predictor set, identical fits). We expose it as
+# A2 in tables and the loader renames B files transparently.
+LEGACY_RENAME = {"B": "A2"}
+
+LINEAR_LADDER = ("A", "A1", "A2", "A3", "A4", "A5", "C")
 ML_MODELS = ("D_lasso", "D_ridge", "D_en", "D_rf", "D_gbm")
+DISPLAY_ORDER = LINEAR_LADDER + ML_MODELS
+
+# Sample-date stride (weekly = 5 trading days). Used to translate the
+# trading-day forecast horizon into the effective sample-date overlap that
+# governs HAC bandwidth and HLN correction.
+SAMPLE_STRIDE = 5
 
 
 # --------------------------------------------------------------- loss functions
@@ -48,78 +64,148 @@ def qlike_loss(yhat_log: pd.DataFrame, y_log: pd.DataFrame) -> pd.DataFrame:
         return yhat_log + sig2 / sig2_hat
 
 
-def diebold_mariano(loss_a: pd.DataFrame, loss_b: pd.DataFrame) -> tuple[float, float, int]:
-    """Pooled DM statistic for H0: mean(loss_a - loss_b) = 0. Returns
-    (mean_d, t_stat, n_obs). HAC adjustment is omitted because the panel is
-    on a weekly stride so serial correlation is modest."""
-    d = (loss_a - loss_b).values.flatten()
-    d = d[~np.isnan(d)]
-    if len(d) == 0:
-        return np.nan, np.nan, 0
-    return float(d.mean()), float(d.mean() / (d.std() / np.sqrt(len(d)))), int(len(d))
+def diebold_mariano(loss_a: pd.DataFrame, loss_b: pd.DataFrame,
+                    h: int = 1, stride: int = SAMPLE_STRIDE
+                    ) -> tuple[float, float, float, int]:
+    """Panel-aware HLN-corrected Diebold-Mariano test.
+
+    H_0: E[loss_a - loss_b] = 0.
+
+    Construction:
+        d_t = mean over stocks of (loss_a_{i,t} - loss_b_{i,t})
+        var(d_bar) via Newey-West (Bartlett) HAC with bandwidth h_eff - 1
+            where h_eff = ceil(h / stride) is the forecast horizon expressed
+            in sample-date units (so non-overlapping forecasts give bw=0).
+        DM = mean(d) / sqrt(var_hac / T)
+        HLN correction: DM* = DM * sqrt((T + 1 - 2 h_eff + h_eff (h_eff - 1) / T) / T)
+        Reference: Student-t(T - 1).
+
+    Returns (mean_d, t_HLN, p_two_sided, T_dates).
+    """
+    diff = (loss_a - loss_b)
+    d = diff.mean(axis=1).dropna().values  # cross-sectional mean per date
+    T = int(len(d))
+    if T < 5:
+        return np.nan, np.nan, np.nan, T
+
+    mean_d = float(d.mean())
+    centered = d - mean_d
+
+    h_eff = max(int(np.ceil(h / stride)), 1)
+    bandwidth = h_eff - 1
+    gamma0 = float((centered ** 2).mean())
+    var_hac = gamma0
+    for k in range(1, bandwidth + 1):
+        gamma_k = float((centered[k:] * centered[:-k]).mean())
+        weight = 1.0 - k / (bandwidth + 1)  # Bartlett kernel
+        var_hac += 2.0 * weight * gamma_k
+
+    if var_hac <= 0 or T <= 1:
+        return mean_d, np.nan, np.nan, T
+
+    se = float(np.sqrt(var_hac / T))
+    t_dm = mean_d / se
+    correction_arg = (T + 1 - 2 * h_eff + h_eff * (h_eff - 1) / T) / T
+    correction = float(np.sqrt(max(correction_arg, 1e-10)))
+    t_hln = float(t_dm * correction)
+    p_two = float(2 * (1 - stats.t.cdf(abs(t_hln), df=T - 1)))
+    return mean_d, t_hln, p_two, T
 
 
 # --------------------------------------------------------------- table 5
+def _stars(p: float) -> str:
+    if pd.isna(p):
+        return ""
+    if p < 0.01:
+        return "^{***}"
+    if p < 0.05:
+        return "^{**}"
+    if p < 0.10:
+        return "^{*}"
+    return ""
+
+
 def table5_main_comparison(loss_panels: dict[str, dict[int, pd.DataFrame]],
                            qlike_panels: dict[str, dict[int, pd.DataFrame]],
-                           fp: Path) -> None:
+                           fp: Path) -> pd.DataFrame:
     rows = []
-    for model in list(LINEAR_MODELS) + list(ML_MODELS):
+    for model in DISPLAY_ORDER:
         if model not in loss_panels:
             continue
         for h in HORIZONS:
             if h not in loss_panels[model]:
                 continue
             mse = loss_panels[model][h].values
-            mse = mse[~np.isnan(mse)].mean()
+            mse = float(np.nanmean(mse))
             ql = qlike_panels[model][h].values
-            ql = ql[~np.isnan(ql)].mean()
+            ql = float(np.nanmean(ql))
             base_mse = loss_panels["A"][h].values
-            base_mse = base_mse[~np.isnan(base_mse)].mean()
+            base_mse = float(np.nanmean(base_mse))
             imp_pct = 100 * (1 - mse / base_mse)
             if model == "A":
-                dm_t = np.nan
+                dm_t, dm_p = np.nan, np.nan
             else:
-                _, dm_t, _ = diebold_mariano(loss_panels["A"][h], loss_panels[model][h])
+                _, dm_t, dm_p, _ = diebold_mariano(
+                    loss_panels["A"][h], loss_panels[model][h], h=h
+                )
             rows.append({
                 "model": model, "h": h,
                 "MSE_logRV": mse, "QLIKE": ql,
-                "imp_vs_A_pct": imp_pct, "DM_t": dm_t,
+                "imp_vs_A_pct": imp_pct,
+                "DM_t_HLN": dm_t, "DM_p": dm_p,
             })
     df = pd.DataFrame(rows)
     df.to_csv(INTERMEDIATE_DIR / "table5_raw.csv", index=False)
 
     with open(fp, "w") as f:
-        f.write("% Table 5: Out-of-sample forecast comparison\n\n")
+        f.write("% Table 5: Out-of-sample forecast comparison (HLN-corrected DM)\n\n")
         f.write("\\begin{table}[htbp]\n\\centering\n")
-        f.write("\\caption{Out-of-Sample Forecast Comparison: Models A--D, Horizons "
+        f.write("\\caption{Out-of-Sample Forecast Comparison: Layered Ladder "
+                "$A \\to A_1\\dots A_5 \\to C \\to D$, Horizons "
                 "$h \\in \\{1,5,22\\}$}\n")
         f.write("\\label{tab:model_comparison}\n\\small\n")
         f.write("\\begin{tabular}{llcccc}\n\\toprule\n")
-        f.write("Model & $h$ & MSE($\\log RV$) & QLIKE & \\%$\\Delta$ vs A & DM-$t$ vs A \\\\\n")
+        f.write("Model & $h$ & MSE($\\log RV^{PK}$) & QLIKE & "
+                "\\%$\\Delta$ vs A & HLN DM-$t$ vs A \\\\\n")
         f.write("\\midrule\n")
         prev = None
         for _, r in df.iterrows():
             if r["model"] != prev:
                 if prev is not None:
                     f.write("\\midrule\n")
-                f.write(f"\\textbf{{{r['model']}}} ")
+                model_label = r["model"].replace("_", "\\_")
+                f.write(f"\\textbf{{{model_label}}} ")
                 prev = r["model"]
             else:
                 f.write(" ")
-            dm_str = "--" if pd.isna(r["DM_t"]) else f"{r['DM_t']:+.2f}"
+            if pd.isna(r["DM_t_HLN"]):
+                dm_str = "--"
+            else:
+                stars = _stars(r["DM_p"])
+                dm_str = f"${r['DM_t_HLN']:+.2f}{stars}$"
             f.write(f"& {int(r['h']):2d} & {r['MSE_logRV']:.4f} & "
-                    f"{r['QLIKE']:.4f} & {r['imp_vs_A_pct']:+.2f}\\% & {dm_str} \\\\\n")
+                    f"{r['QLIKE']:.4f} & {r['imp_vs_A_pct']:+.2f}\\% & "
+                    f"{dm_str} \\\\\n")
         f.write("\\bottomrule\n\\end{tabular}\n")
         f.write("\\begin{tablenotes}\\small\n")
         f.write(
             "\\item Notes: pooled across all stocks and out-of-sample dates "
-            "(post 40\\% warm-up). MSE on $\\log RV^{PK}$ scale; QLIKE on the "
-            "variance scale. DM-$t$ tests $H_0: E[\\ell_A - \\ell_{model}] = 0$ "
-            "with positive values indicating that the model beats the HAR baseline. "
-            "Models: A (HAR core), B (A + own-stock persistence), C (B + cross-"
-            "sectional + market + interactions), D (same predictors as C estimated "
-            "with shrinkage / tree-based ML).\n"
+            "(post 40\\% warm-up). MSE on $\\log RV^{PK}$ scale "
+            "(range-based variance proxy); QLIKE on the variance scale. "
+            "HLN DM-$t$ is the Harvey-Leybourne-Newbold finite-sample-corrected "
+            "Diebold-Mariano statistic, computed on the cross-sectional mean "
+            "loss differential per date with Newey-West HAC variance "
+            "(bandwidth tied to $\\lceil h / 5 \\rceil - 1$ to handle "
+            "overlapping multi-step forecasts on a weekly sample stride) and "
+            "Student-$t(T-1)$ reference. Positive values indicate the model "
+            "beats Model A. Significance: $^{*}$ $p<0.10$, "
+            "$^{**}$ $p<0.05$, $^{***}$ $p<0.01$. "
+            "Layered ladder: $A$ (HAR core), $A_1$ ($+$ VIX, MOVE; HAR-X), "
+            "$A_2$ ($+$ own-stock persistence block), $A_3$ ($+$ cross-sectional "
+            "mean and dispersion of $\\hat d$), $A_4$ ($+$ sector-mean $\\hat d$), "
+            "$A_5$ ($+$ $\\hat d$, VIX, MOVE, $\\hat d \\times$ VIX, "
+            "$\\hat d \\times$ MOVE), $C$ (full union), $D$ (predictors of $C$ "
+            "estimated by shrinkage / tree-based ML).\n"
         )
         f.write("\\end{tablenotes}\n\\end{table}\n")
     return df
@@ -142,7 +228,7 @@ def table7_regimes(loss_panels: dict, market: pd.DataFrame, fp: Path) -> None:
     masks = regime_masks(idx, market)
     rows = []
     for regime, mask in masks.items():
-        for model in list(LINEAR_MODELS) + list(ML_MODELS):
+        for model in DISPLAY_ORDER:
             if model not in loss_panels:
                 continue
             for h in HORIZONS:
@@ -170,7 +256,8 @@ def table7_regimes(loss_panels: dict, market: pd.DataFrame, fp: Path) -> None:
         f.write("\\begin{table}[htbp]\n\\centering\n")
         f.write("\\caption{Regime-Conditioned MSE Improvement (\\%) vs Model A}\n")
         f.write("\\label{tab:regime_split}\n\\small\n")
-        cols = [m for m in (list(LINEAR_MODELS) + list(ML_MODELS)) if m in pivot.columns]
+        cols = [m for m in DISPLAY_ORDER if m in pivot.columns]
+        f.write("\\resizebox{\\textwidth}{!}{%\n")
         f.write("\\begin{tabular}{ll" + "c" * len(cols) + "}\n\\toprule\n")
         f.write("Regime & $h$")
         for m in cols:
@@ -187,7 +274,7 @@ def table7_regimes(loss_panels: dict, market: pd.DataFrame, fp: Path) -> None:
             if reg != prev_reg and prev_reg is not None:
                 pass
             prev_reg = reg
-        f.write("\\bottomrule\n\\end{tabular}\n")
+        f.write("\\bottomrule\n\\end{tabular}%\n}\n")
         f.write("\\begin{tablenotes}\\small\n")
         f.write(
             "\\item Notes: Out-of-sample MSE improvement on $\\log RV^{PK}$ "
@@ -203,7 +290,8 @@ def table7_regimes(loss_panels: dict, market: pd.DataFrame, fp: Path) -> None:
 # --------------------------------------------------------------- table 8 (sector)
 def table8_sectors(loss_panels: dict, sectors: dict, fp: Path) -> None:
     rows = []
-    leading_models = ["A", "B", "C", "D_lasso", "D_rf", "D_gbm"]
+    leading_models = ["A", "A1", "A2", "A3", "A4", "A5", "C",
+                      "D_lasso", "D_rf", "D_gbm"]
     leading_models = [m for m in leading_models if m in loss_panels]
     sec_per = pd.Series(sectors)
     sectors_list = sorted(set(sec_per.dropna()))
@@ -243,6 +331,7 @@ def table8_sectors(loss_panels: dict, sectors: dict, fp: Path) -> None:
         f.write("\\caption{Sector-Level MSE Improvement (\\%) vs Model A at $h=5$}\n")
         f.write("\\label{tab:sector_split}\n\\small\n")
         cols = [m for m in leading_models if m in df5.columns]
+        f.write("\\resizebox{\\textwidth}{!}{%\n")
         f.write("\\begin{tabular}{l" + "c" * len(cols) + "}\n\\toprule\n")
         f.write("Sector")
         for m in cols:
@@ -254,7 +343,7 @@ def table8_sectors(loss_panels: dict, sectors: dict, fp: Path) -> None:
                 v = row.get(m, np.nan)
                 f.write(" & --" if pd.isna(v) else f" & {v:+.2f}\\%")
             f.write(" \\\\\n")
-        f.write("\\bottomrule\n\\end{tabular}\n")
+        f.write("\\bottomrule\n\\end{tabular}%\n}\n")
         f.write("\\begin{tablenotes}\\small\n")
         f.write(
             "\\item Notes: Out-of-sample MSE improvement on $\\log RV^{PK}$ at "
@@ -328,24 +417,56 @@ def table6_feature_importance(bundle, fp: Path) -> None:
 
 # --------------------------------------------------------------- main
 def load_forecast_panels() -> tuple[dict, dict]:
+    """Load forecast panels from disk. Legacy 'B' files are exposed under the
+    new label 'A2' (identical predictor set). If both B and A2 files exist,
+    the explicit A2 file wins."""
     loss = {}; ql = {}
-    for fp in sorted(FCST_DIR.glob("*_yhat.csv")):
-        name = fp.stem.replace("_yhat", "")
-        # parse "{model}_h{HH}"
+    files = sorted(FCST_DIR.glob("*_yhat.csv"))
+
+    def _parse(name: str) -> tuple[str, int] | None:
         if "_h" not in name:
-            continue
+            return None
         model, _, hstr = name.rpartition("_h")
         try:
-            h = int(hstr)
+            return model, int(hstr)
         except ValueError:
+            return None
+
+    # Pass 1: native names except legacy B
+    for fp in files:
+        parsed = _parse(fp.stem.replace("_yhat", ""))
+        if parsed is None:
             continue
-        yhat = pd.read_csv(fp, index_col=0, parse_dates=True)
-        y_fp = FCST_DIR / f"{name}_y.csv"
+        model, h = parsed
+        if model == "B":
+            continue
+        y_fp = FCST_DIR / f"{model}_h{h:02d}_y.csv"
         if not y_fp.exists():
             continue
+        yhat = pd.read_csv(fp, index_col=0, parse_dates=True)
         y = pd.read_csv(y_fp, index_col=0, parse_dates=True)
         loss.setdefault(model, {})[h] = squared_loss(yhat, y)
         ql.setdefault(model, {})[h] = qlike_loss(yhat, y)
+
+    # Pass 2: fill A2 from legacy B if no native A2 fit on disk
+    for fp in files:
+        parsed = _parse(fp.stem.replace("_yhat", ""))
+        if parsed is None:
+            continue
+        model, h = parsed
+        if model != "B":
+            continue
+        new = LEGACY_RENAME["B"]
+        if new in loss and h in loss[new]:
+            continue  # native fit already loaded
+        y_fp = FCST_DIR / f"B_h{h:02d}_y.csv"
+        if not y_fp.exists():
+            continue
+        yhat = pd.read_csv(fp, index_col=0, parse_dates=True)
+        y = pd.read_csv(y_fp, index_col=0, parse_dates=True)
+        loss.setdefault(new, {})[h] = squared_loss(yhat, y)
+        ql.setdefault(new, {})[h] = qlike_loss(yhat, y)
+
     return loss, ql
 
 
