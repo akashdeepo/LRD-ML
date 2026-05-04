@@ -40,6 +40,18 @@ import pandas as pd
 
 from modules.forecast_io import load_bundle
 
+plt.style.use("seaborn-v0_8-whitegrid")
+plt.rcParams.update({
+    "figure.dpi": 110,
+    "font.size": 12.5,
+    "axes.labelsize": 13.5,
+    "axes.titlesize": 14.5,
+    "xtick.labelsize": 12,
+    "ytick.labelsize": 12,
+    "legend.fontsize": 11.5,
+    "font.family": "serif",
+})
+
 warnings.filterwarnings("ignore")
 
 BASE = Path(__file__).resolve().parent.parent
@@ -263,7 +275,7 @@ def main() -> None:
     ax.set_xlabel("Date")
     ax.set_ylabel("Cumulative wealth (log scale, $1 invested at OOS start)")
     ax.set_title("Volatility-managed portfolios vs buy-and-hold (115 stocks, EW)")
-    ax.legend(loc="upper left", fontsize=9.5)
+    ax.legend(loc="upper left", fontsize=11)
     fig.tight_layout()
     fig_fp = FIG_DIR / "fig9_volmanaged_cumulative.pdf"
     fig.savefig(fig_fp, bbox_inches="tight")

@@ -762,3 +762,59 @@ volatility-managed portfolios."
 - Consider: extend vol-managed exercise to include a tail-risk metric (CVaR backtest)
 
 *Last updated: 2026-05-01*
+
+---
+
+## Session: 2026-05-04 — Phase 8 polish (GARCH benchmark, figure fonts, arXiv prep)
+
+### Why
+Rachev's 2 May review approved the manuscript as "very good shape, close to
+ready", with a final pre-arXiv polish list. Nicholas is handling prose
+edits (positioning, abstract trimming, the new "Why persistence adds
+beyond HAR-X" subsection, captions); this session covers the technical
+items.
+
+### What changed
+1. **GARCH(1,1) benchmark** (`modules/module4b_garch.py`): per-stock
+   constant-mean GARCH(1,1) on log returns, walk-forward at the same
+   weekly sample-date grid, refit every 20 sample steps with the variance
+   recursion advanced forward between refits. Forecasts saved as
+   `forecasts/G_h{01,05,22}_{yhat,y}.csv`.
+2. **Table 9 row added** via `module9_robustness.variant_garch` and the
+   surgical `modules/_append_garch_row.py` helper. Result: GARCH(1,1) MSE
+   = 0.703 vs HAR's 0.363 at h=5, HLN-DM-t = -20.3. The negative gap
+   reflects both (a) the level mismatch between returns variance and
+   range-based variance, and (b) the standard finding that GARCH-on-
+   returns is a weak forecaster of RV. Caption note added explaining
+   both.
+3. **Figure font sizes** bumped in `module10_plots.py` and
+   `module11_economic.py`: rcParams base 11→12.5, axes labels 12→13.5,
+   ticks 10→12, legend 10→11.5, plus inline value-label fonts on
+   fig5/fig6/fig7/fig8 raised to 10–11.5. Regenerated figures 4–9 and
+   re-bundled into `paper_overleaf/figures/`.
+4. **Section 8.6 prose** got two factual sentences: "stable across every
+   perturbation internal to the persistence framework" (qualifier added)
+   and an explicit GARCH(1,1) benchmark sentence with MSE/HLN-DM
+   numbers. Nicholas can polish further.
+5. **Cleanup**: deleted `paper_overleaf.zip` (stale archive) and
+   `results/figures/fig5_interpretation.pdf` (legacy Phase-3 artifact
+   not referenced by the current manuscript).
+
+### Outputs
+- New module: `modules/module4b_garch.py`
+- New helpers: `modules/_regen_table9.py` (kept from Phase 7),
+  `modules/_append_garch_row.py`
+- Refreshed: `results/figures/fig{4,5,6,7,8,9}*.pdf`,
+  `results/tables/table9_robustness.tex`, and corresponding
+  `paper_overleaf/` copies
+- `bloomberg_pull/processed/forecasts/G_h*_{yhat,y}.csv` (gitignored
+  via the `*.csv` rule)
+
+### Status before arXiv
+Technical revisions complete. Pending Nicholas's prose polish (intro
+contribution bullets, "Why persistence adds beyond HAR-X" subsection,
+Section 5 streamline, Section 6 streamline, abstract trim, interpretive
+caption sentences). After his prose lands the recompiled PDF goes to
+Rachev for the final pre-arXiv check.
+
+*Last updated: 2026-05-04*

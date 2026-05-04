@@ -12,6 +12,7 @@ Variant & MSE & \%$\Delta$ vs A & HLN DM-$t$ \\
 \midrule
 Headline (Model C, full panel) & 0.3334 & +8.24\% & $+3.87$ \\
 Inference: plain DM (illustrative) & 0.3334 & +8.24\% & $+3.87$ (plain $+23.97$) \\
+Benchmark: GARCH(1,1) on returns & 0.7033 & -93.54\% & $-20.30$ \\
 Liquidity: low-liquidity half & 0.3342 & +8.95\% & $+4.26$ \\
 Liquidity: high-liquidity half & 0.3327 & +7.51\% & $+3.33$ \\
 Estimator: $\hat d_{LW}$ replaces $\hat d_{GPH}$ & 0.3336 & +8.21\% & $+3.85$ \\
@@ -25,6 +26,6 @@ Regime: COVID 2020 & -- & +18.88\% & -- \\
 \end{tabular}%
 }
 \begin{tablenotes}\small
-\item Notes: Robustness checks for Model C against Model A at $h=5$ on $\log RV^{PK}$. Liquidity halves are formed from the static median of mean inverse dollar volume across the sample. $\hat d_{LW}$ replaces $\hat d_{GPH}$ in the entire feature block (including memory dynamics and interactions). Window variants refit the rolling LRD estimation at the alternative window before regenerating the full feature stack. The target variant replaces $\log RV^{PK}$ with log mean future squared returns (Models A and C both refit). Regime rows come from the Table 7 split at $h=5$. The plain-DM stat is the unscaled iid pooled-cell statistic; the HLN stat is the panel-aware Harvey-Leybourne-Newbold finite-sample-corrected version.
+\item Notes: Robustness checks for Model C against Model A at $h=5$ on $\log RV^{PK}$. Liquidity halves are formed from the static median of mean inverse dollar volume across the sample. $\hat d_{LW}$ replaces $\hat d_{GPH}$ in the entire feature block (including memory dynamics and interactions). Window variants refit the rolling LRD estimation at the alternative window before regenerating the full feature stack. The target variant replaces $\log RV^{PK}$ with log mean future squared returns (Models A and C both refit). The GARCH(1,1) row fits a constant-mean GARCH(1,1) on log returns with refit every 20 sample steps and reports the resulting log mean conditional variance forecast against the same Parkinson target; its forecast scale differs from the Parkinson RV target (returns variance vs.\ range-based variance proxy), so the negative $\%\Delta$ vs A reflects both this level mismatch and the well-known limitation of returns-only GARCH for forecasting realised variance. Regime rows come from the Table 7 split at $h=5$. The plain-DM stat is the unscaled iid pooled-cell statistic; the HLN stat is the panel-aware Harvey-Leybourne-Newbold finite-sample-corrected version.
 \end{tablenotes}
 \end{table}
