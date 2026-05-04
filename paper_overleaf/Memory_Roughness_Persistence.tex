@@ -1213,7 +1213,8 @@ gain. Cell colour and label give the percentage improvement.}
 
 Table~\ref{tab:robustness} summarises a battery of robustness checks
 for the headline result, Model~$C$ versus Model~$A$ at $h=5$. The
-percentage MSE improvement is stable across every perturbation. Using
+percentage MSE improvement is stable across every perturbation
+internal to the persistence framework. Using
 the local-Whittle estimator $\dhat^{LW}$ in place of the GPH
 $\dhat^{GPH}$ throughout the persistence block (own, dynamics,
 sectoral, cross-sectional, interactions) yields $+8.21\%$, essentially
@@ -1225,7 +1226,14 @@ the log of mean future squared returns (a much noisier proxy) yields a
 smaller but still significant gain of $+4.16\%$, indicating that the
 result is not driven by Parkinson-specific measurement features.
 Splitting the panel into the high- and low-illiquidity halves produces
-gains of $+8.95\%$ and $+7.51\%$ respectively, both significant. The
+gains of $+8.95\%$ and $+7.51\%$ respectively, both significant. As an
+external benchmark we also report a constant-mean GARCH(1,1) fitted on
+log returns, which produces a substantially worse forecast of log
+$\RVPK$ than HAR (MSE $0.703$ versus $0.363$, HLN-DM-$t = -20.3$). This
+confirms the standard finding that GARCH on returns is a poor predictor
+of realised-variance proxies; the level mismatch between returns
+variance and range-based variance accounts for part of the gap, but
+HAR's direct use of past $\RVPK$ remains the dominant advantage. The
 regime rows reproduce the headline regime split for completeness. The
 final row contrasts the panel-aware HLN-corrected DM ($+3.87$) with
 the iid pooled-cell DM ($+23.97$): the latter is inflated by ignoring

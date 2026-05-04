@@ -38,9 +38,12 @@ FIG_DIR = BASE / "results" / "figures"
 plt.style.use("seaborn-v0_8-whitegrid")
 plt.rcParams.update({
     "figure.dpi": 110,
-    "font.size": 11,
-    "axes.labelsize": 12,
-    "axes.titlesize": 13,
+    "font.size": 12.5,
+    "axes.labelsize": 13.5,
+    "axes.titlesize": 14.5,
+    "xtick.labelsize": 12,
+    "ytick.labelsize": 12,
+    "legend.fontsize": 11.5,
     "font.family": "serif",
 })
 
@@ -139,7 +142,7 @@ def fig5_mse_improvement(fp: Path) -> None:
                     f"{v:+.1f}%",
                     ha="center",
                     va="bottom" if v >= 0 else "top",
-                    fontsize=8.2,
+                    fontsize=10,
                     fontweight="medium")
     ax.axhline(0, color="black", lw=0.7)
     ax.set_xticks(xs)
@@ -180,7 +183,7 @@ def fig6_stock_distribution(fp: Path) -> None:
     ax.set_xlabel(r"% MSE improvement vs A (per stock, $h=5$)")
     ax.set_ylabel("Number of stocks")
     ax.set_title("Per-stock improvement distribution")
-    ax.legend(loc="upper left", fontsize=9)
+    ax.legend(loc="upper left", fontsize=10.5)
 
     ax = axes[1]
     plot_models = ["A1", "A2", "A3", "A4", "A5", "C", "D_lasso", "D_rf", "D_gbm"]
@@ -253,9 +256,9 @@ def fig7_leadlag_d_vix(fp: Path) -> None:
     )
     txt = ("Caveat: $\\hat d_t$ uses a 750-day backward-looking window, "
            "so persistence at small lags reflects window smoothing.")
-    ax.text(0.99, -0.20, txt, transform=ax.transAxes, ha="right", va="top",
-            fontsize=8.5, style="italic", color="#555")
-    ax.legend(loc="upper right", fontsize=9)
+    ax.text(0.99, -0.22, txt, transform=ax.transAxes, ha="right", va="top",
+            fontsize=10, style="italic", color="#555")
+    ax.legend(loc="upper right", fontsize=11)
     fig.tight_layout()
     fig.savefig(fp, bbox_inches="tight")
     plt.close(fig)
@@ -288,7 +291,7 @@ def fig8_sector_heatmap(fp: Path) -> None:
             if pd.isna(v):
                 continue
             ax.text(j, i, f"{v:+.1f}%", ha="center", va="center",
-                    fontsize=10,
+                    fontsize=11.5,
                     color="white" if abs(v) > 8 else "black")
     cbar = fig.colorbar(im, ax=ax)
     cbar.set_label("% MSE improvement vs Model A")

@@ -247,6 +247,18 @@ def variant_liquidity(bundle, base_yhat, base_y, half: str = "low") -> dict:
     return out
 
 
+def variant_garch(bundle, base_yhat, base_y) -> dict:
+    """GARCH(1,1) on log returns, fitted by Module 4b. Compares its h=5 log
+    mean variance forecast against the same HAR baseline."""
+    fp_yhat = FCST / f"G_h{H:02d}_yhat.csv"
+    fp_y = FCST / f"G_h{H:02d}_y.csv"
+    if not fp_yhat.exists() or not fp_y.exists():
+        return {"MSE": np.nan, "imp_pct": np.nan, "HLN_DM_t": np.nan}
+    yhat = pd.read_csv(fp_yhat, index_col=0, parse_dates=True)
+    y = pd.read_csv(fp_y, index_col=0, parse_dates=True)
+    return _evaluate(yhat, y, base_yhat, base_y, H)
+
+
 def variant_inference_plain(bundle, base_yhat, base_y) -> dict:
     """Same headline pooled MSE, but the 'plain' iid (cell-level) DM stat for
     illustrative comparison with HLN-DM."""
@@ -303,6 +315,10 @@ def main() -> None:
     rows.append({"variant": "inference_plain",
                  **variant_inference_plain(None, base_yhat, base_y)})
 
+    print("\n[2b] benchmark: GARCH(1,1) on returns")
+    rows.append({"variant": "benchmark_garch11",
+                 **variant_garch(None, base_yhat, base_y)})
+
     print("\n[3] liquidity: high-illiq half (low-liquidity stocks)")
     rows.append({"variant": "liquidity_high_illiq",
                  **variant_liquidity(load_bundle(), base_yhat, base_y, half="low")})
@@ -350,6 +366,7 @@ def main() -> None:
         labels = {
             "headline": "Headline (Model C, full panel)",
             "inference_plain": "Inference: plain DM (illustrative)",
+            "benchmark_garch11": "Benchmark: GARCH(1,1) on returns",
             "liquidity_high_illiq": "Liquidity: low-liquidity half",
             "liquidity_low_illiq": "Liquidity: high-liquidity half",
             "estimator_LW": "Estimator: $\\hat d_{LW}$ replaces $\\hat d_{GPH}$",
@@ -384,9 +401,17 @@ def main() -> None:
             "variants refit the rolling LRD estimation at the alternative "
             "window before regenerating the full feature stack. The target "
             "variant replaces $\\log RV^{PK}$ with log mean future squared "
-            "returns (Models A and C both refit). Regime rows come from the "
-            "Table 7 split at $h=5$. The plain-DM stat is the unscaled iid "
-            "pooled-cell statistic; the HLN stat is the panel-aware "
+            "returns (Models A and C both refit). The GARCH(1,1) row fits a "
+            "constant-mean GARCH(1,1) on log returns with refit every 20 "
+            "sample steps and reports the resulting log mean conditional "
+            "variance forecast against the same Parkinson target; its "
+            "forecast scale differs from the Parkinson RV target (returns "
+            "variance vs.\\ range-based variance proxy), so the negative "
+            "$\\%\\Delta$ vs A reflects both this level mismatch and the "
+            "well-known limitation of returns-only GARCH for forecasting "
+            "realised variance. Regime rows come from the Table 7 split at "
+            "$h=5$. The plain-DM stat is the unscaled iid pooled-cell "
+            "statistic; the HLN stat is the panel-aware "
             "Harvey-Leybourne-Newbold finite-sample-corrected version.\n"
         )
         f.write("\\end{tablenotes}\n\\end{table}\n")
