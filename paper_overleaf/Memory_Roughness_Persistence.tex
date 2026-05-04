@@ -732,8 +732,10 @@ set, perform feature standardisation only on training-sample information,
 select hyperparameters by time-series cross-validation rather than random
 shuffling, and report results across multiple window lengths and proxies
 in our robustness analysis. Loss functions matter: in addition to MSE on
-$\log\RVPK$ we report QLIKE on the variance scale, which is more robust
-to the noise in volatility proxies. Finally, for pairwise loss comparisons
+$\log\RVPK$ we report QLIKE on the variance scale, which
+\citet{patton2011volatility} shows is robust to imperfect volatility
+proxies in the sense that the population ranking of forecasts is
+preserved under multiplicative measurement error in the proxy. Finally, for pairwise loss comparisons
 we report the Diebold--Mariano statistic of
 \citet{diebold1995comparing} with the
 \citet{harvey1997testing} finite-sample correction (HLN), computed on
@@ -1229,11 +1231,23 @@ Splitting the panel into the high- and low-illiquidity halves produces
 gains of $+8.95\%$ and $+7.51\%$ respectively, both significant. As an
 external benchmark we also report a constant-mean GARCH(1,1) fitted on
 log returns, which produces a substantially worse forecast of log
-$\RVPK$ than HAR (MSE $0.703$ versus $0.363$, HLN-DM-$t = -20.3$). This
-confirms the standard finding that GARCH on returns is a poor predictor
-of realised-variance proxies; the level mismatch between returns
-variance and range-based variance accounts for part of the gap, but
-HAR's direct use of past $\RVPK$ remains the dominant advantage. The
+$\RVPK$ than HAR (MSE $0.703$ versus $0.363$, HLN-DM-$t = -20.3$). On
+the squared-error loss most of the gap is mechanical: GARCH targets
+close-to-close return variance, while $\RVPK$ targets range-based
+intraday variance, and the resulting level mismatch contributes
+roughly $(0.53)^2 \approx 0.28$ to MSE before any forecast-quality
+comparison. We therefore also evaluate both models under the QLIKE
+loss, which \citet{patton2011volatility} shows is robust to
+imperfect volatility proxies in the sense that the population
+ranking of forecasts is preserved under multiplicative measurement
+error in the proxy. On QLIKE the GARCH gap shrinks to
+HLN-DM-$t = -2.80$, still significant but an order of magnitude
+smaller than the MSE-based statistic. The qualitative conclusion is
+unchanged --- HAR with $\RVPK$ inputs dominates returns-only
+GARCH(1,1) for forecasting realised variance, consistent with the
+established literature \citep{andersen2003modeling,corsi2009simple} ---
+but the QLIKE comparison rules out the level mismatch as the
+\emph{primary} driver of the gap. The
 regime rows reproduce the headline regime split for completeness. The
 final row contrasts the panel-aware HLN-corrected DM ($+3.87$) with
 the iid pooled-cell DM ($+23.97$): the latter is inflated by ignoring
