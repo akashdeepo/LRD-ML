@@ -818,3 +818,38 @@ caption sentences). After his prose lands the recompiled PDF goes to
 Rachev for the final pre-arXiv check.
 
 *Last updated: 2026-05-04*
+
+---
+
+## Session: 2026-05-04 (continued) — Patton-QLIKE refinement + figs 1/2/diag fonts
+
+Two follow-ups in the same arXiv-prep window.
+
+**Patton-QLIKE refinement.** The raw GARCH(1,1) MSE gap (−93.5% vs HAR)
+conflated a measurement-units artefact (close-to-close return variance vs
+range-based Parkinson variance, contributing roughly $0.28$ to the
+$0.34$ MSE gap) with actual forecasting quality. Patton (2011, JoE)
+shows QLIKE on the variance scale is robust to imperfect volatility
+proxies whereas MSE on log RV is not. Computed both: GARCH HLN-DM-$t$
+under MSE = $-20.30$, under QLIKE = $-2.80$. The qualitative
+conclusion is unchanged (HAR dominates returns-only GARCH for
+forecasting realised variance, consistent with the established
+literature) but the QLIKE comparison rules out the level mismatch as
+the primary driver of the gap. Section 8.6 now reports both losses with
+explicit Patton 2011 citation; Section 6 methodology cites Patton 2011
+for the proxy-robustness property; refs.bib gains the entry.
+
+**Figures 1, 2, preliminary diagnostics fonts.** Phase 8.2 only touched
+figs 4–9. Bumped rcParams in modules 1, 1b, 2 to match (font 11→12.5,
+labels 12→13.5, ticks 10→12, legend 10→11.5). For module 2 the heavy
+rolling-LRD estimation was skipped via a small `_regen_fig2.py` helper
+that calls `figure2()` directly with cached intermediate panels. All 9
+manuscript figures now share consistent typography.
+
+**For Nicholas's prose pass.** Wrote `paper_overleaf/PROSE_PASS_NOTES.md`
+that summarises what's new in v2 (layered ladder, HLN-DM, GARCH+QLIKE,
+vol-managed, terminology), Rachev's checklist with location pointers,
+suggested figure-caption sentences, and a "do not remove during
+streamlining" list.
+
+*Last updated: 2026-05-04*

@@ -36,8 +36,14 @@ INTERMEDIATE_DIR = BASE / "results" / "intermediate"
 
 plt.style.use("seaborn-v0_8-whitegrid")
 plt.rcParams.update({
-    "figure.figsize": (12, 8), "font.size": 11,
-    "axes.labelsize": 12, "axes.titlesize": 13, "font.family": "serif",
+    "figure.figsize": (12, 8),
+    "font.size": 12.5,
+    "axes.labelsize": 13.5,
+    "axes.titlesize": 14.5,
+    "xtick.labelsize": 12,
+    "ytick.labelsize": 12,
+    "legend.fontsize": 11.5,
+    "font.family": "serif",
 })
 
 BANDWIDTH_POWER = 0.65
