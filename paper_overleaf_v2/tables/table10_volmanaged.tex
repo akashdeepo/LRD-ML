@@ -1,0 +1,37 @@
+% Table 10: Vol-managed portfolio metrics by regime
+
+\begin{table}[htbp]
+\centering
+\caption{Volatility-Managed Portfolios: Risk-Adjusted Performance (Moreira-Muir 2017 Construction)}
+\label{tab:volmanaged}
+\small
+\begin{tabular}{llccccc}
+\toprule
+Regime & Portfolio & Ann.\ Ret. & Ann.\ Vol. & Sharpe & Max DD & CER \\
+\midrule
+Full sample & Unmanaged (buy-and-hold) & +10.94\% & +14.89\% & +0.73 & -28.45\% & +5.40\% \\
+ & A-managed & +9.13\% & +12.91\% & +0.71 & -19.89\% & +4.96\% \\
+ & A1-managed & +9.22\% & +12.84\% & +0.72 & -18.56\% & +5.10\% \\
+ & C-managed & +9.27\% & +12.72\% & +0.73 & -17.92\% & +5.23\% \\
+\midrule
+Low VIX (Q1) & Unmanaged (buy-and-hold) & +6.71\% & +7.69\% & +0.87 & -13.19\% & +5.23\% \\
+ & A-managed & +9.29\% & +11.65\% & +0.80 & -20.54\% & +5.90\% \\
+ & A1-managed & +10.65\% & +12.12\% & +0.88 & -20.18\% & +6.98\% \\
+ & C-managed & +11.37\% & +12.41\% & +0.92 & -20.21\% & +7.52\% \\
+\midrule
+High VIX (Q4) & Unmanaged (buy-and-hold) & +21.02\% & +23.19\% & +0.91 & -24.12\% & +7.58\% \\
+ & A-managed & +11.63\% & +13.55\% & +0.86 & -16.71\% & +7.04\% \\
+ & A1-managed & +10.87\% & +12.39\% & +0.88 & -14.68\% & +7.04\% \\
+ & C-managed & +11.23\% & +12.08\% & +0.93 & -14.35\% & +7.58\% \\
+\midrule
+COVID 2020 & Unmanaged (buy-and-hold) & +19.62\% & +30.07\% & +0.65 & -11.96\% & -2.98\% \\
+ & A-managed & +11.03\% & +12.09\% & +0.91 & -4.22\% & +7.38\% \\
+ & A1-managed & +11.48\% & +10.82\% & +1.06 & -4.33\% & +8.55\% \\
+ & C-managed & +15.54\% & +11.39\% & +1.36 & -5.04\% & +12.30\% \\
+\midrule
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item Notes: Equal-weight portfolio of 115 stocks, weekly ($h=5$ trading days) rebalancing aligned to the forecast sample stride. The volatility-managed portfolio uses position weight $w_{m,i,t} = c_{m,i} / \hat\sigma^2_{m,i,t}$ where $\hat\sigma^2_{m,i,t} = \exp(\hat y_{m,i,t})$ is the model-$m$ forecast of mean $RV^{PK}$ over $[t+1, t+5]$. The constant $c_{m,i}$ is set so that $\mathrm{Var}(f_{m,i}) = \mathrm{Var}(r_i)$ at the stock level. Annualized assuming $252/5$ five-day periods per year. CER computed for a mean-variance investor with risk aversion $\gamma = 5$.
+\end{tablenotes}
+\end{table}

@@ -1,0 +1,205 @@
+
+
+1. Hi Akash, The structure for the project is perfectly fine together with the timeline.
+
+2. Have you already collected the data?
+AD: Not yet--i can try to prepare a script to download the data but we may have to go to the terminal to get it later on!
+
+Reply: I will get the data and share with you this weekend  
+
+AD: Got it ill try to prepare some scripts too
+
+3. I have shared the data collected with you. Do we have to meet in zoom for further discussion?
+
+AD: I saw the data, i will try to look into it this weekend and maybe start writting some initial scripts for prepreocessing.
+
+NA: Alright
+
+4. I will add some more literature to the introduction part.
+
+AD: Awesome, Here is the code repo if you want to take a closer look--https://github.com/akashdeepo/LRD-ML
+
+NA: Okay, great job done.
+
+5.Akash, I have read the draft twice, and its very good. i was also thinking if we can have Preliminary Diagnostics and Model Illustration- with plots for, Log- return , a Correlation map , ARIMA–FIGARCH fitted volatility, etc or we can check with Zari for his input and take it from there
+
+AD: Yes that sounds good--i can try generating some of plots and other diagnostics you list above over this weekend and then discuss with dr rachev and proceed from there!
+
+AD: Added section 3.4 Preliminary Diagnostics
+
+NA: Great 
+
+6. do you think we should meet zari at his office hour or just send an email
+
+AD: Ill prepare an email draft for the research proposal in a few days-i have some other projects that im waiting for finalizing-.
+
+NA: Alright
+
+NA: I have sent the zoom meeting link.
+
+
+AD: Adding an updated Tasklist to work from as tasklist.tex
+
+AD: Some Issues Fixed
+AAPL sheet had AAP data by mistake → replaced with real Apple from yfinance
+JMP sheet renamed to JPM (typo)
+TXN sheet was empty → pulled from yfinance
+Sector ETFs and market-level files reformatted into clean panels
+Built Parkinson range-based RV for all 125 stocks (primary vol target)
+
+NA: I just realised the JPM was a typo
+   and Yes yeah the AAPL had wrong data 
+
+NA: I see the main_V2.tex,GREAT JOB done!!!!. I have a presentation today, after I will go through read through the entire. Then probably call you to discuss the next step. 
+
+
+NA: Additional Check List (sought ChatGPT concerns too)   
+
+1). Add model build-up table
+
+Put in: Section 6
+Table layers:
+A = HAR only
+A1 = HAR + VIX + MOVE
+A2 = HAR + own-stock d
+A3 = HAR + cross-sectional mean d
+A4 = HAR + sector mean d
+A5 = HAR + d×VIX and d×MOVE
+C = Full structural model
+D = ML versions of C: Lasso, Ridge, Elastic Net, Random Forest, Gradient Boosting
+
+2). Add ablation results table
+Put in: Section 8.2
+Rows: A, A1, A2, A3, A4, A5, C, D
+Columns: Horizon, MSE, QLIKE, % improvement over HAR, corrected DM statistic
+Horizons: h=1, h=5, h=22
+
+3). Add HAR-X benchmark
+Put in: Section 8.2
+HAR-X = HAR + VIX + MOVE
+Purpose: show Model C is not only winning because of VIX/MOVE.
+
+4). Plot cumulative loss difference
+
+Put in: Section 8.2 or 8.4
+
+Plot:
+
+HAR loss minus Model C loss over time.
+
+If the line rises, Model C beats HAR consistently.
+
+5). Plot MSE improvement bar chart
+
+Put in: Section 8.2
+Bars for:
+
+A1, A2, A3, A4, A5, C, D
+
+Separate by:
+
+h=1, h=5, h=22
+
+6). Plot ablation contribution chart
+
+Put in: Section 8.2
+Show which block contributes most:
+
+VIX/MOVE
+own-stock d
+cross-sectional d
+sector d
+d×VIX
+full Model C
+
+7). Plot stock-level improvement distribution
+Put in: Section 8.2
+Histogram or boxplot of % MSE improvement across 115 stocks.
+
+Also report:
+“Model C improves forecasts for X out of 115 stocks.”
+
+8). Plot lead-lag memory and VIX
+
+Put in: Section 8.1 or 8.4
+
+Plot:
+
+Correlation between d_t and VIX_t+k
+
+Use lags/leads like:
+
+−60 to +60 trading days.
+
+9). Plot sector heatmap
+Put in: Section 8.5
+
+Rows: sectors
+Columns: h=1, h=5, h=22
+Values: % MSE improvement
+
+10). Add robustness summary table
+
+Put in: Section 8.6
+
+Rows should include:
+
+Alternative volatility proxy
+Alternative memory estimator
+Alternative rolling window
+Corrected inference method
+Stress/calm subsample
+Sector subsample
+Liquidity subsample
+
+11). Add economic significance table
+
+Put in: Section 9, or new subsection after 8.6
+
+Choose one:
+
+VaR backtest
+Expected Shortfall backtest
+Volatility-managed portfolio
+Risk-targeting exercise
+
+12). Fix wording
+
+Put in: Section 7.2 and throughout
+
+Use:
+
+“Parkinson range-based variance”
+
+or
+
+“range-based realized variance proxy”
+
+Do not keep saying only “realized variance.”
+
+
+=============
+AD: Hey Nicholas, worked through all 12 items from your checklist + ChatGPT review (new commit pushed as Phase 7; Overleaf bundle in paper_overleaf/ is current). Big flag: the layered ablation you asked for produced a more honest result than what we had before — Model C still beats HAR by 4.6–8.2% pooled, but most of that gain comes from VIX/MOVE alone (HAR-X = A1), and the persistence aggregates only add ~0.5 pp at h=1, h=5 pooled, with the real incremental gains showing up at h=22 (+1.8 pp beyond HAR-X) and in stress regimes (+1.9 pp at h=5 high-VIX, +1.7 pp at h=22 COVID), so the "persistence as system-wide state variable" headline isn't dead but it's smaller and more conditional than we were claiming. The save is the vol-managed portfolio (Moreira-Muir, item 11): C-managed Sharpe in COVID = 1.37 vs unmanaged 0.65, CER +12.3% vs −3.0%, with persistence aggregates paying an incremental Sharpe of ~0.31 over HAR-X-managed in stress — so economic significance compensates for the weaker statistical headline. Two other things worth flagging: I switched DM to HLN-corrected panel-aware (the old plain DM stats of 15–24 were inflated ~6× by ignoring within-date cross-sectional dependence; real HLN-DM is +3.15/+3.87/+2.33, still all significant), and the robustness Table 9 confirms +4–9% across the LW estimator, windows 500/1000, squared-returns target, and liquidity halves — nothing fragile. 
+
+https://github.com/akashdeepo/LRD-ML
+
+
+AD: I saw Prof Rachev's email correspondence-If you can please feel free to update the paper, If any coding parts need updates Ill be able to work on it after this week as ill be travelling
+
+NA: I will update the paper into a main_V4.tex soon..In the meantime can you increase the fonts of the figures for most of them. 
+
+AD: garch done, plot text font size increased
+
+https://github.com/akashdeepo/LRD-ML
+
+https://github.com/akashdeepo/LRD-ML/blob/main/paper_overleaf/PROSE_PASS_NOTES.md
+--a list of all changes made that you can update in the paper
+
+the github has all the updates(alongside updated figures(they are not yet updated here))--this is all I can do until the 10th 
+Email me any issues(i dont think my US number will work in India)
+
+NA: Alright brother , and safe travel.
+
+NA: I will check all the details you have on github
+
+NA Check main_V4

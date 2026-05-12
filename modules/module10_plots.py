@@ -23,6 +23,7 @@ import warnings
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import numpy as np
 import pandas as pd
 
@@ -101,16 +102,22 @@ def fig4_cumulative_loss(fp: Path) -> None:
         ax.set_xlabel("Date")
         if ax is axes[0]:
             ax.set_ylabel(r"$\sum_t \left[ L_{A,t} - L_{C,t} \right]$")
+        # Year-spaced ticks rotated 45° so labels don't collide across the
+        # three side-by-side panels.
+        ax.xaxis.set_major_locator(mdates.YearLocator(base=2))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+        plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+                 rotation_mode="anchor")
 
     # one shared legend at the bottom — does not collide with any line
     fig.legend(handles=handles_for_legend, labels=["GFC", "COVID"],
                loc="lower center", ncol=2, frameon=True, fontsize=10,
-               bbox_to_anchor=(0.5, -0.02))
+               bbox_to_anchor=(0.5, -0.06))
     fig.suptitle(
         "Cumulative loss differential of Model C against Model A "
         "(rising line = C beats A)", y=1.02
     )
-    fig.tight_layout(rect=[0, 0.04, 1, 1])
+    fig.tight_layout(rect=[0, 0.08, 1, 1])
     fig.savefig(fp, bbox_inches="tight")
     plt.close(fig)
     print(f"  saved {fp.name}")

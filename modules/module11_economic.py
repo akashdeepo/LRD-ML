@@ -273,7 +273,7 @@ def main() -> None:
                    color=c, label=lab)
     ax.set_yscale("log")
     ax.set_xlabel("Date")
-    ax.set_ylabel("Cumulative wealth (log scale, $1 invested at OOS start)")
+    ax.set_ylabel("Cumulative wealth (log scale)")
     ax.set_title("Volatility-managed portfolios vs buy-and-hold (115 stocks, EW)")
     ax.legend(loc="upper left", fontsize=11)
     fig.tight_layout()
