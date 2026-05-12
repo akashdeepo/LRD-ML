@@ -1,0 +1,546 @@
+% =============================================================================
+% LRD-ML Paper -- Revision Plan (post Rachev feedback, 2026-04-19)
+% Authors: Akash Deep, Nicholas Appiah
+% Advisor / Co-author: Svetlozar T. Rachev
+% =============================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{parskip}
+\usepackage{setspace}
+
+\geometry{margin=1in}
+\hypersetup{colorlinks=true,linkcolor=blue!60!black,urlcolor=blue!60!black}
+\setlist[itemize]{leftmargin=1.6em,itemsep=0.15em,topsep=0.2em}
+\setlist[enumerate]{leftmargin=1.8em,itemsep=0.15em,topsep=0.2em}
+
+\newcommand{\todo}[1]{\textcolor{red!70!black}{\textbf{[TODO]}} #1}
+\newcommand{\done}[1]{\textcolor{green!40!black}{\textbf{[DONE]}} #1}
+\newcommand{\partial}[1]{\textcolor{orange!80!black}{\textbf{[PARTIAL]}} #1}
+
+\title{\textbf{Revision Plan}\\[4pt]
+\emph{Memory, Roughness, and Information Persistence in Financial Markets:\\
+A Structural and Machine Learning Approach to Volatility Forecasting}}
+\author{Akash Deep \and Nicholas Appiah \\[4pt]
+\small (Advisor / Co-author: Prof.\ Svetlozar T.\ Rachev)}
+\date{Plan date: 2026-04-20}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent This document is the internal working plan for revising our manuscript in line
+with Prof.\ Rachev's 19 April 2026 feedback and his extended framework
+\emph{Memory, Roughness, and Information Persistence in Financial Markets}.
+It lists, in execution order, (i) the reframing of the research question,
+(ii) the data and code work still required, (iii) the paper-by-section
+rewrite, (iv) the bibliography consolidation, and (v) the deliverable format.
+Every task is cross-referenced to the section of Rachev's framework it
+serves so we can track coverage end-to-end.
+\end{abstract}
+
+\tableofcontents
+
+% =============================================================================
+\section{Rachev's directives (what we must satisfy)}
+% =============================================================================
+
+\begin{enumerate}
+  \item \textbf{Reframe} the paper from a feature-engineering exercise to a
+  \emph{structural} study of persistence, information flow, and market
+  dynamics.
+  \item \textbf{Broaden the literature review} to cover long memory, rough
+  volatility, regime-switching persistence, and structural econometric modelling.
+  \item \textbf{Elevate the methodological contribution} beyond a HAR extension
+  into a framework that integrates long memory, rough volatility, and
+  structured machine learning.
+  \item \textbf{Sharpen the economic interpretation}: link $\hat d$ to market
+  microstructure, information diffusion, liquidity, stress, and behavioural
+  mechanisms.
+  \item \textbf{Study his extended document carefully} and focus our effort on
+  completing Sections 7 (Data \& Empirical Design) and 8 (Numerical Analysis
+  and Forecasting Results) in \emph{his} paper format.
+  \item \textbf{Unify the bibliography} (no per-section reference lists).
+  Every in-text citation must appear in the final list; no entry may appear
+  that is not cited.
+  \item \textbf{Return both \texttt{.tex} and \texttt{.pdf}} of the revised
+  manuscript.
+  \item No Zoom / meeting until the revision is in place; batch questions in a
+  single written document.
+\end{enumerate}
+
+% =============================================================================
+\section{Target structure (Rachev's 10 sections)}
+% =============================================================================
+
+The revised paper must adopt the following top-level layout. The right-hand
+column records the status of what we currently have and what is missing.
+
+\begin{longtable}{@{}p{0.04\linewidth}p{0.34\linewidth}p{0.56\linewidth}@{}}
+\toprule
+\textbf{\#} & \textbf{Section title} & \textbf{Status / gap} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Section title} & \textbf{Status / gap} \\
+\midrule
+\endhead
+1 & Introduction &
+Reframe around information persistence and roughness; present dual objective
+(forecasting \emph{and} economic interpretation of persistence). \\
+2 & Literature Review: Persistence, Roughness, and Volatility &
+Expand from $\sim$10 references to 20+; add rough-vol, Mikosch-St\u aric\u a,
+Gu--Kelly--Xiu, B\'enedsen-Lunde-Pakkanen, M\"uller et al. \\
+3 & Theoretical Foundations of Long Memory and Information Persistence &
+New section. Derive autocovariance/spectral definitions; reinterpret $d$ as
+information-persistence half-life. \\
+4 & Econometric Modelling of Fractional and Rough Volatility &
+Extend current methodology section with rough-vol, long-memory SV, and
+identification discussion (breaks vs.\ true LM). \\
+5 & Structural Interpretation of Memory Parameters &
+New section. Link $d$ to information diffusion, horizon heterogeneity,
+liquidity, systemic stress, regimes, sectors, behavioural channels. \\
+6 & Machine Learning with Persistence-Based Features &
+Rework our feature-engineering section as a disciplined, theory-informed ML
+framework (Lasso/Ridge/EN $\to$ RF/GBM $\to$ optional NN). \\
+7 & Data and Empirical Design &
+\textbf{Priority focus.} Rewrite in Rachev's 15-step protocol. See \S~\ref{sec:data}
+and \S~\ref{sec:paper-7}. \\
+8 & Numerical Analysis and Forecasting Results &
+\textbf{Priority focus.} Nested Models A/B/C/D, horizons $h\in\{1,5,22\}$,
+MSE+QLIKE, DM tests, regime and sector splits. See \S~\ref{sec:paper-8}. \\
+9 & Economic Interpretation and Implications &
+New, substantive section on risk management, margining, allocation,
+volatility trading, macroprudential monitoring, model governance. \\
+10 & Conclusion &
+Rewrite: persistence as a core state variable of financial economics;
+future-research directions. \\
+-- & References (unified) &
+Consolidate; audit every citation. \\
+\bottomrule
+\end{longtable}
+
+% =============================================================================
+\section{Gap analysis: what we already have}
+% =============================================================================
+
+\begin{longtable}{@{}p{0.35\linewidth}p{0.18\linewidth}p{0.42\linewidth}@{}}
+\toprule
+\textbf{Artifact} & \textbf{Status} & \textbf{Reusable in which target section} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Artifact} & \textbf{Status} & \textbf{Reusable in which target section} \\
+\midrule
+\endhead
+125-stock panel, 2000--2025, VIX, FRED macro, indices (\texttt{processed/}) & Done &
+Sec.\ 7 (Data) \\
+Module~1 data description (Tab.\ 1--2, Fig.\ 1) & Done & Sec.\ 7 \\
+Module~1b preliminary diagnostics + FIGARCH(1,$d$,1) & Done &
+Sec.\ 4 (Econometric) and Sec.\ 7 \\
+Module~2: GPH + Local Whittle; rolling $\hat d$; cross-sectional
+dispersion & Done &
+Sec.\ 4, Sec.\ 7, Sec.\ 8 \\
+Module~3 feature engineering: $\hat d$, $\Delta\hat d$, Vol($\hat d$),
+Trend($\hat d$), $\overline{d}_t$, $\sigma_d^t$ & Done &
+Sec.\ 6, Sec.\ 7, Sec.\ 8 \\
+Module~4 HAR-RV benchmark & Done & Sec.\ 8 (Model~A baseline) \\
+Module~7 interpretation; Module~8 robustness & Partial &
+Sec.\ 8 (will be split and rebuilt for regime / sector / DM tests) \\
+Draft \texttt{LRD\_ML\_Paper.tex}, \texttt{main\_sections.tex} & Partial &
+Rewritten into 10-section target layout. \\
+\bottomrule
+\end{longtable}
+
+% =============================================================================
+\section{Data tasks}\label{sec:data}
+% =============================================================================
+
+\subsection{Volatility-proxy decision (blocking for Sections 7--8)}
+\begin{enumerate}
+  \item \emph{Ideal:} 5-minute intraday prices from Bloomberg
+  (\texttt{INTRADAY\_BAR}) for the full panel, 2010--2025, to build
+  $\mathrm{RV}_t=\sum_{i=1}^{M}r_{t,i}^2$.
+  \item \emph{Fallback:} Parkinson range-based estimator from daily
+  \texttt{PX\_HIGH}, \texttt{PX\_LOW} for all 125 stocks (fast; no intraday
+  dependency):
+  \[
+    \widehat{\mathrm{RV}}^{\mathrm{PK}}_t \;=\;
+    \frac{1}{4\ln 2}\bigl(\ln H_t-\ln L_t\bigr)^2.
+  \]
+  \item \emph{Hybrid (recommended):} RV from 5-min data for SPX and a liquid
+  subset ($\approx 20$ names) + Parkinson on the full 125-stock panel;
+  all forecasts reported on both tracks for robustness.
+\end{enumerate}
+
+\subsection{Bloomberg pulls still required}
+\begin{itemize}
+  \item \texttt{PX\_HIGH}, \texttt{PX\_LOW} daily, 2000--2025, all 125
+  tickers -- required now.
+  \item \texttt{INTRADAY\_BAR} 5-min, 2010--2025, SPX Index + $\sim$20 names
+  (AAPL, MSFT, JPM, XOM, JNJ, PG, BAC, GS, AMZN, V, CVX, KO, PEP, WMT, HD,
+  UNH, INTC, CSCO, MRK, T) -- required for Sec.~8 premium track.
+  \item Sector tags and GICS classification (\texttt{GICS\_SECTOR},
+  \texttt{GICS\_INDUSTRY}) -- required for sector splits.
+  \item Market cap history (\texttt{CUR\_MKT\_CAP}) -- required for
+  size-group analysis.
+  \item Daily dollar-volume (already have \texttt{volume\_data.csv}) --
+  define liquidity buckets from it.
+\end{itemize}
+
+\subsection{Derived panels to build}
+\begin{itemize}
+  \item \texttt{processed/rv\_parkinson.csv} -- Parkinson estimator, (T$\times$125).
+  \item \texttt{processed/rv\_5min.csv} -- 5-min realised volatility,
+  subset panel.
+  \item \texttt{processed/log\_rv.csv} -- $\log$ of the chosen proxy
+  (primary forecast target).
+  \item \texttt{processed/metadata.csv} -- ticker, sector, size bucket,
+  liquidity bucket, sample-coverage flag.
+\end{itemize}
+
+% =============================================================================
+\section{Code / module tasks}\label{sec:code}
+% =============================================================================
+
+\begin{longtable}{@{}p{0.28\linewidth}p{0.16\linewidth}p{0.50\linewidth}@{}}
+\toprule
+\textbf{Module} & \textbf{Status} & \textbf{Purpose / change} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Module} & \textbf{Status} & \textbf{Purpose / change} \\
+\midrule
+\endhead
+\texttt{module2\_lrd\_estimation.py} & Extend &
+Add rolling \emph{local Whittle} estimates to match GPH (two-estimator
+robustness). Add rolling Hurst / roughness estimator on RV (scaling method). \\
+\texttt{module3\_feature\_engineering.py} & Extend &
+Add roughness $H_t$, sector aggregates $\overline{d}_{s,t}$, threshold
+indicators $\mathbf{1}\{\hat d_t>\tau\}$, and interaction terms
+($\hat d_t\cdot\mathrm{VIX}_t$, $\hat d_t\cdot\mathrm{Jump}_t$,
+$\hat d_t\cdot\mathrm{Illiq}_t$). \\
+\texttt{module4\_benchmarks.py} & Extend &
+Extend benchmark set: AR($p$) on $\log \mathrm{RV}$, HAR-RV, ARFIMA
+on $\log \mathrm{RV}$, FIGARCH(1,$d$,1) on returns (subset). \\
+\texttt{module5\_ml\_models.py} (new) & To build &
+Implements Models A (lags) $\to$ B (+$\hat d$, $\Delta\hat d$, $H$) $\to$ C
+(+ $\overline{d}_t$, $\sigma_d^t$, sector contrasts) $\to$ D (nonlinear:
+RF, GBM). Lasso/Ridge/EN baseline. Rolling-window re-estimation. \\
+\texttt{module6\_forecast\_eval.py} (new) & To build &
+Horizon loop $h\in\{1,5,22\}$; MSE and QLIKE; Diebold-Mariano tests;
+regime split (VIX quartile, crisis windows); sector and size splits;
+model-confidence-set (Hansen-Lunde-Nason) optional. \\
+\texttt{module7\_interpretation.py} & Rework &
+Convert to SHAP / partial-dependence plots and feature-importance tables
+aligned with economic interpretation in Sec.\ 9. \\
+\texttt{module8\_robustness.py} & Rework &
+Alternative windows (500/750/1000), alternative proxies (Parkinson vs.\ RV),
+alternative estimators (GPH vs.\ LW), subsample and liquidity robustness. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Nested-model design (Section 8 of Rachev's framework)}
+\[
+\begin{array}{lll}
+\text{Model A} & : & y_{t+h}=f\bigl(\mathrm{RV}_d,\mathrm{RV}_w,
+\mathrm{RV}_m,\text{returns, vol controls}\bigr) \\
+\text{Model B} & : & \text{A} + (\hat d_t,\;\Delta\hat d_t,\;
+\mathrm{Vol}(\hat d)_t,\;H_t) \\
+\text{Model C} & : & \text{B} + (\overline{d}_t,\;\sigma_d^t,\;
+\overline{d}_{s,t}\text{ contrasts}) \\
+\text{Model D} & : & \text{C estimated by random forest / GBM (nonlinear)}.
+\end{array}
+\]
+
+\subsection{Evaluation}
+\begin{itemize}
+  \item Losses: $\mathrm{MSE}=T^{-1}\sum_t(y_t-\hat y_t)^2$ and
+  $\mathrm{QLIKE}=T^{-1}\sum_t\bigl(\log\hat y_t+y_t/\hat y_t\bigr)$.
+  \item Diebold-Mariano tests of $E[d_t]=0$ where
+  $d_t=\ell(y_t,\hat y_t^{A})-\ell(y_t,\hat y_t^{\text{B/C/D}})$.
+  \item Regime split: high-VIX = top quartile; crisis windows = 2008-Q3
+  to 2009-Q2 (GFC) and 2020-Q1 to 2020-Q3 (COVID).
+  \item Sector and size splits on metadata buckets.
+\end{itemize}
+
+% =============================================================================
+\section{Paper rewrite: section by section}
+% =============================================================================
+
+\subsection{Section 1 -- Introduction}
+\begin{itemize}
+  \item Reopen with persistence vs.\ roughness vs.\ market efficiency
+  framing (not ``$\hat d$ as feature'').
+  \item Two paragraphs on arrival vs.\ digestion of information.
+  \item State dual objective: (i) forecasting gain, (ii) structural meaning
+  of persistence.
+  \item End with 10-section roadmap mirroring Rachev's framework.
+\end{itemize}
+
+\subsection{Section 2 -- Literature Review}
+\begin{itemize}
+  \item Long memory: Granger-Joyeux~(1980), Hosking~(1981),
+  Ding-Granger-Engle~(1993), Baillie-Bollerslev-Mikkelsen~(1996).
+  \item Realised volatility: Andersen et al.~(2003),
+  Barndorff-Nielsen-Shephard~(2002), Corsi~(2009), M\"uller et al.~(1997).
+  \item Rough volatility: Gatheral-Jaisson-Rosenbaum~(2018),
+  B\'enedsen-Lunde-Pakkanen~(2021).
+  \item Regime-switching critique: Mikosch-St\u aric\u a~(2004).
+  \item ML in finance: Gu-Kelly-Xiu~(2020); Breiman~(2001);
+  Friedman~(2001); Hastie-Tibshirani-Friedman~(2009).
+  \item Close with the ``gap between statistical fit and economic
+  interpretation'' as our entry point.
+\end{itemize}
+
+\subsection{Section 3 -- Theoretical Foundations}
+\begin{itemize}
+  \item Short-memory vs.\ long-memory: autocovariance summability,
+  hyperbolic vs.\ exponential decay.
+  \item Spectral characterisation near the origin,
+  $f(\lambda)\sim c_f\lambda^{-2d}$.
+  \item Fractional differencing $(1-L)^d$ and ARFIMA representation.
+  \item Reinterpret $d$ as information-persistence half-life; aggregation
+  of heterogeneous-agent micro-processes as origin of macro long memory.
+  \item Cross-sectional formulation: $I_{i,t}=\sum w_k(d)\,\varepsilon_{i,t-k}$.
+\end{itemize}
+
+\subsection{Section 4 -- Econometric Modelling}
+\begin{itemize}
+  \item ARFIMA; GARCH; FIGARCH (Baillie-Bollerslev-Mikkelsen); long-memory SV.
+  \item HAR-RV as a multi-horizon approximation to long memory.
+  \item Rough volatility: log-vol driven by fBm with $H<1/2$.
+  \item GPH and Local Whittle estimators; identification between
+  near-integrated GARCH and true FIGARCH.
+  \item Transformations and distributional robustness: squared returns,
+  abs returns, Parkinson, log RV.
+\end{itemize}
+
+\subsection{Section 5 -- Structural Interpretation of Memory Parameters}
+\begin{itemize}
+  \item Seven channels: (i) information arrival/diffusion,
+  (ii) horizon heterogeneity, (iii) liquidity, (iv) systemic stress,
+  (v) regime dependence, (vi) sectoral differentiation,
+  (vii) behavioural.
+  \item Stress that $\hat d$ is a \emph{composite} reduced-form index,
+  not a single-mechanism identifier.
+  \item Address Mikosch-St\u aric\u a critique: structural breaks can mimic
+  long memory; either way the economic content is ``slow-moving uncertainty''.
+\end{itemize}
+
+\subsection{Section 6 -- ML with Persistence-Based Features}
+\begin{itemize}
+  \item Define persistence feature vector
+  $\mathbf{Z}_t=(\hat d_t,\Delta\hat d_t,H_t,\overline{d}_t,\sigma_d^t,
+  \overline{d}_{s,t},\hat d_t\cdot\mathrm{VIX}_t,\ldots)$.
+  \item Forecasting problem $y_{t+h}=F(\mathbf{X}_t,\mathbf{Z}_t)+u_{t+h}$.
+  \item Estimator ladder: Lasso $\to$ Ridge $\to$ Elastic Net $\to$ Random
+  Forest $\to$ Gradient Boosting $\to$ (optional) Feed-forward NN.
+  \item Interpretability: SHAP, partial dependence, variable importance;
+  discuss stability and time-series cross-validation.
+  \item Horizon dependence: separate model per $h$.
+\end{itemize}
+
+\subsection{Section 7 -- Data and Empirical Design}\label{sec:paper-7}
+Follow Rachev's 15-step protocol verbatim, anchored to our data:
+
+\begin{enumerate}[label=\textbf{Step \arabic*.}]
+  \item Universe: 125 S\&P-500 stocks + SPX, DJIA, NDX, RUT, sector ETFs,
+  VIX. Acknowledge survivorship bias.
+  \item Bloomberg pulls: adjusted close, OHLC, volume, market cap, GICS
+  sector for each stock; indices and VIX; 5-min intraday for index + liquid
+  subset.
+  \item Intraday data for RV (subset track).
+  \item Cleaning and alignment (6{,}296 trading days currently).
+  \item Volatility proxies: squared return, absolute return, Parkinson,
+  realised volatility.
+  \item Descriptive diagnostics and ACFs (Module~1 already done; refresh
+  with RV).
+  \item Metadata table: ticker $\times$ sector $\times$ size bucket
+  $\times$ liquidity bucket.
+  \item Rolling persistence estimates: GPH and Local Whittle on 500/750/1000
+  windows; ARFIMA on log RV for subset; FIGARCH on representative names.
+  \item Cross-sectional aggregates: $\overline{d}_t$, $\sigma_d^t$,
+  $\overline{d}_{s,t}$ for each day.
+  \item Forecast targets: $y_{t+h}=\log\mathrm{RV}_{t+1:t+h}$ for
+  $h\in\{1,5,22\}$.
+  \item Benchmarks: AR, HAR-RV, ARFIMA.
+  \item Persistence-augmented linear models (Model B, C).
+  \item ML models (Model D): Lasso, Ridge, EN, RF, GBM.
+  \item Forecast evaluation: MSE, QLIKE, DM, regime and sector splits.
+  \item Robustness: alternative windows, proxies, estimators, subsamples,
+  horizons.
+\end{enumerate}
+
+\subsection{Section 8 -- Numerical Analysis and Forecasting Results}\label{sec:paper-8}
+\begin{itemize}
+  \item \textbf{Main table.} Nested A/B/C/D $\times$ horizons
+  $h\in\{1,5,22\}$ $\times$ losses $\{$MSE, QLIKE$\}$, with DM $p$-values.
+  \item \textbf{Regime table.} Same grid, split by high- vs.\
+  low-VIX-quartile and by crisis windows (GFC, COVID).
+  \item \textbf{Sector / size / liquidity tables.} Average loss and
+  $\Delta$ loss (B--A, C--B, D--C) within each bucket.
+  \item \textbf{Feature importance.} SHAP decomposition and
+  partial-dependence plots for $\hat d_t$, $\overline{d}_t$, $\sigma_d^t$,
+  $H_t$.
+  \item \textbf{Time-series figures.} $\overline{d}_t$, $\sigma_d^t$, and
+  VIX overlay; shaded crisis windows.
+  \item \textbf{Forecast combination (optional).} Convex combination of
+  HAR and Model D.
+\end{itemize}
+
+\subsection{Section 9 -- Economic Interpretation and Implications}
+\begin{itemize}
+  \item Level vs.\ persistence of volatility.
+  \item Risk management: VaR, ES, margining, horizon-sensitive stress.
+  \item Portfolio allocation: persistence-aware dynamic weights.
+  \item Volatility trading: term-structure positioning under
+  high-persistence regimes.
+  \item Macroprudential monitoring: aggregate $\overline{d}_t$ and
+  dispersion $\sigma_d^t$ as fragility signals.
+  \item Model governance: persistence as a regime indicator triggering
+  model-selection rules.
+  \item Limits: composite nature of $\hat d$; no one-to-one structural ID.
+\end{itemize}
+
+\subsection{Section 10 -- Conclusion}
+\begin{itemize}
+  \item Recap: persistence is a state variable, not a nuisance parameter.
+  \item Multi-scale view: roughness + long memory, not competitors.
+  \item Method: disciplined integration of econometrics and ML via
+  interpretable feature engineering.
+  \item Future research directions (FX, fixed income, options, multivariate
+  persistence).
+\end{itemize}
+
+% =============================================================================
+\section{Bibliography consolidation}
+% =============================================================================
+
+\begin{itemize}
+  \item Delete all per-section \texttt{thebibliography} blocks in the
+  current draft.
+  \item Consolidate into a single \texttt{thebibliography} at the end of
+  the manuscript (or switch to \texttt{natbib} + \texttt{.bib} file
+  \texttt{paper/refs.bib}).
+  \item Minimum citation list (consistent with Rachev's framework):
+  \begin{itemize}\small
+    \item Andersen, Bollerslev, Diebold \& Labys (2003).
+    \item Baillie, Bollerslev \& Mikkelsen (1996).
+    \item Barndorff-Nielsen \& Shephard (2002).
+    \item B\'enedsen, Lunde \& Pakkanen (2021).
+    \item Bollerslev (1986).
+    \item Breiman (2001).
+    \item Corsi (2009).
+    \item Ding, Granger \& Engle (1993).
+    \item Engle (1982).
+    \item Friedman (2001).
+    \item Gatheral, Jaisson \& Rosenbaum (2018).
+    \item Geweke \& Porter-Hudak (1983).
+    \item Granger \& Joyeux (1980).
+    \item Gu, Kelly \& Xiu (2020).
+    \item Hastie, Tibshirani \& Friedman (2009).
+    \item Hosking (1981).
+    \item Mikosch \& St\u aric\u a (2004).
+    \item M\"uller, Dacorogna, Dav\'e, Olsen, Pictet \& von Weizs\"acker (1997).
+    \item Robinson (1995).
+    \item Diebold \& Mariano (1995).
+    \item Hansen, Lunde \& Nason (2011) -- Model Confidence Set (optional).
+    \item Chen \& Guestrin (2016) -- XGBoost (optional, for Model D).
+  \end{itemize}
+  \item Citation audit script: grep all \verb|\cite| keys from the
+  consolidated \texttt{.tex} against the bib entries; fail build on
+  mismatch.
+\end{itemize}
+
+% =============================================================================
+\section{Sequencing and milestones}
+% =============================================================================
+
+\begin{longtable}{@{}p{0.07\linewidth}p{0.45\linewidth}p{0.43\linewidth}@{}}
+\toprule
+\textbf{Wk} & \textbf{Deliverable} & \textbf{Dependency / notes} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Wk} & \textbf{Deliverable} & \textbf{Dependency / notes} \\
+\midrule
+\endhead
+1 & Bloomberg pull: \texttt{PX\_HIGH}, \texttt{PX\_LOW}, GICS, market cap &
+Unblocks Parkinson RV and sector splits. \\
+1 & \texttt{processed/rv\_parkinson.csv}, \texttt{processed/metadata.csv} &
+Feeds Sec.\ 7 tables. \\
+1 & Bibliography consolidation (\S~7) & Independent of numerical work. \\
+2 & 5-min intraday pull (SPX + 20 names) and
+\texttt{processed/rv\_5min.csv} & Premium track for Sec.\ 8. \\
+2 & Rolling Local Whittle estimator (\texttt{module2}) and roughness
+$H_t$ estimator (\texttt{module3}) &
+Needed before Model B/C can be built. \\
+3 & \texttt{module5\_ml\_models.py} -- Lasso/Ridge/EN, RF, GBM, rolling
+re-estimation at $h\in\{1,5,22\}$ & Models A--D. \\
+3 & \texttt{module6\_forecast\_eval.py} -- MSE, QLIKE, DM, regime and
+sector splits & Produces Sec.\ 8 tables. \\
+4 & First full draft of Sec.\ 7 (Data \& Empirical Design) & Rachev's
+priority section. \\
+4 & First full draft of Sec.\ 8 (Numerical Analysis) including tables and
+figures & Rachev's priority section. \\
+5 & Draft Sec.\ 1--6 using Rachev's framework text + our anchors &
+Parallelisable with Sec.\ 7--8. \\
+6 & Draft Sec.\ 9 (Economic Interpretation) and Sec.\ 10 (Conclusion) &
+Depends on Sec.\ 8 results. \\
+6 & Unified bibliography, citation audit, proofread & Before submission. \\
+7 & Compile \texttt{.tex} $\to$ \texttt{.pdf}; send both to Rachev with a
+short cover note & Rachev's explicit request. \\
+\bottomrule
+\end{longtable}
+
+% =============================================================================
+\section{Open questions for Prof.\ Rachev (single written batch)}
+% =============================================================================
+
+\begin{enumerate}
+  \item Is Parkinson an acceptable \emph{primary} volatility proxy for the
+  full 125-stock panel if we restrict the 5-min RV track to SPX and
+  $\sim$20 liquid names?
+  \item Should the rough-volatility component be estimated on daily RV
+  (scaling method) or should we insist on high-frequency-based $H$ for a
+  subset only?
+  \item Preferred stance on survivorship bias: historically consistent
+  index membership, or present constituents with an explicit caveat?
+  \item Target journal(s) for the 20-page reduction (guides abstract and
+  contribution wording).
+  \item For the final list of sectors/size/liquidity buckets, is GICS
+  level-1 sufficient or should we use level-2 (industry group)?
+  \item Should the forecast-combination exercise be in the main text or an
+  appendix?
+  \item Is he comfortable being listed as co-author on the title page, as
+  in the extended framework document he sent?
+\end{enumerate}
+
+% =============================================================================
+\section{File deliverables}
+% =============================================================================
+
+\begin{itemize}
+  \item \texttt{paper/LRD\_ML\_Paper.tex} -- revised single-file manuscript
+  in the 10-section structure.
+  \item \texttt{paper/refs.bib} -- consolidated bibliography.
+  \item \texttt{paper/LRD\_ML\_Paper.pdf} -- compiled output.
+  \item \texttt{results/tables/} and \texttt{results/figures/} -- all
+  tables and figures referenced by the manuscript.
+  \item \texttt{REVISION\_PLAN.tex / .pdf} -- this plan, kept
+  up-to-date.
+\end{itemize}
+
+\end{document}

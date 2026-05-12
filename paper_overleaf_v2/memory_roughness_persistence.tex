@@ -1,0 +1,524 @@
+\documentclass[12pt]{article}
+
+%--------------------------------------------------
+% Packages
+%--------------------------------------------------
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{setspace}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\doublespacing
+
+\title{\textbf{Memory, Roughness, and Information Persistence in Financial Markets:
+A Structural and Machine Learning Approach to Volatility Forecasting}}
+
+\author{Akash Deep\thanks{Correspondence: Akash Deep.} \and
+        Nicholas Appiah\thanks{niappiah@ttu.edu} \and
+        Svetlozar T.\ Rachev\thanks{Zari.Rachev@ttu.edu}}
+
+\date{April 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This paper develops a unified framework for modeling persistence in financial volatility by integrating long-memory econometrics, rough volatility theory, and machine learning. Rather than treating the fractional differencing parameter as a purely statistical artifact, we interpret it as a structural measure of information persistence and market frictions. We propose a multi-scale framework in which memory parameters evolve dynamically across assets and regimes, and we embed these structural features into predictive models. Using a large panel of equity data, we demonstrate that persistence measures contain economically meaningful information linked to volatility clustering, cross-sectional dependence, and regime transitions. The results show that combining structural persistence measures with data-driven methods leads to improved forecasting performance and deeper economic interpretation.
+\end{abstract}
+
+\noindent\textbf{Keywords:} Long memory; rough volatility; persistence; volatility forecasting; machine learning; financial econometrics; regime dynamics
+
+\noindent\textbf{JEL Classification:} C22, C45, C53, G17, G12
+
+\bigskip
+
+\tableofcontents
+\newpage
+
+%==================================================
+\section{Introduction}
+%==================================================
+
+The problem of volatility forecasting lies at the center of financial econometrics because volatility enters asset pricing, risk management, option valuation, portfolio allocation, margining, and macro-financial surveillance. Although a vast literature has studied volatility dynamics, one empirical fact has persisted across decades of research: measures of volatility exhibit much stronger persistence than raw returns. Classical long-memory analysis formalized this observation by allowing dependence to decay at a hyperbolic rather than exponential rate, thereby extending the standard weak-dependence paradigm of ARMA and GARCH models \citep{GrangerJoyeux1980, Hosking1981, Ding1993}. In practice, this means that shocks to volatility could remain statistically relevant over long horizons, a feature with direct consequences for forecasting and risk measurement. The FIGARCH model of \citet{Baillie1996} gave this intuition a parametric volatility framework, while the realized-volatility literature later provided measurement tools that made persistent volatility dynamics empirically more transparent \citep{Andersen2003, BarndorffNielsen2002, Corsi2009}.
+
+Yet the interpretation of persistence is not straightforward. One strand of the literature treats long memory as a genuine structural characteristic of volatility, possibly induced by heterogeneous market participants, aggregation across horizons, or slow information diffusion \citep{Muller1997, Corsi2009}. Another strand argues that some empirical signatures traditionally attributed to long memory can also arise from regime changes, structural breaks, nonlinearities, or stochastic volatility with very rough sample paths \citep{MikoschStarica2004, Gatheral2018}. From this perspective, the relevant issue is not simply whether one obtains an estimate of a fractional parameter $d$ or a Hurst-type exponent $H$, but whether these objects capture stable economic information and whether they improve inference and prediction in a robust way. The problem is therefore both econometric and economic. Persistence is not merely a statistical regularity to be fitted; it may reflect deeper features of market organization, trading behavior, and the way information propagates through financial systems.
+
+This paper takes the view that persistence measures should not be reduced to technical nuisance parameters. Instead, they should be interpreted as state variables that summarize how quickly information dissipates in financial markets, how strongly volatility shocks propagate through time, and how market conditions shift across regimes. In this sense, memory and roughness are not merely alternative parameterizations of dependence. They are empirical summaries of market organization, trader heterogeneity, institutional frictions, and crisis dynamics. Once treated in this way, they naturally become candidates for inclusion in forecasting systems, not only as filters embedded in a model, but as directly informative covariates.
+
+Such a perspective is especially relevant in contemporary financial markets, where volatility is shaped by multiple layers of interaction. At high frequencies, market microstructure frictions, order flow imbalance, and episodic liquidity shortages can generate irregular volatility bursts and apparent roughness. At medium horizons, heterogeneous agents, portfolio rebalancing, and slow-moving capital may produce persistence that is difficult to reconcile with short-memory benchmark models. At lower frequencies, macroeconomic announcements, policy uncertainty, and financial stress regimes may alter the entire persistence structure of volatility. A realistic forecasting framework should therefore allow for the possibility that memory and roughness vary over time and interact with broader market conditions.
+
+The rise of rough-volatility models has made this issue even more pressing. Recent work has shown that volatility paths often appear much rougher than previously assumed, with estimated Hurst exponents far below the classical Brownian benchmark of $1/2$ \citep{Gatheral2018, Bennedsen2021}. This finding has generated a productive debate about whether roughness and long-range dependence are competing explanations, complementary dimensions, or manifestations of a deeper underlying mechanism.
+
+A further challenge is methodological. The interaction between persistence, market volatility, cross-sectional dependence, leverage effects, and macro-financial state variables is likely to be nonlinear and regime dependent. The more promising direction is to combine structural econometric measurement with flexible predictive learning. In such a design, econometric procedures are used to estimate interpretable persistence and roughness indicators, while machine-learning algorithms are employed to map these indicators into volatility forecasts. This retains interpretability where it matters and flexibility where it is needed.
+
+The contribution of the paper is thus conceptual as well as empirical. Conceptually, it argues that persistence measures should be viewed as economically meaningful descriptors of the financial information environment rather than as isolated technical coefficients. Empirically, it proposes a forecasting architecture that integrates long-memory econometrics, rough-volatility insights, and structured machine learning.
+
+The remainder of the paper is organized as follows. Section~\ref{sec:lit} reviews the literature on long memory, roughness, volatility modeling, and machine-learning-based forecasting. Section~\ref{sec:theory} develops the theoretical foundations of long memory and reinterprets persistence as a measure of information transmission. Section~\ref{sec:econometric} presents the econometric framework, reviewing ARFIMA, FIGARCH, and rough-volatility specifications. Section~\ref{sec:structural} gives a structural economic interpretation of memory parameters. Section~\ref{sec:ml} introduces the machine-learning framework. Section~\ref{sec:data} describes the data and empirical design. Section~\ref{sec:results} reports the numerical forecasting results. Section~\ref{sec:econ} interprets the empirical findings. Section~\ref{sec:conclusion} concludes.
+
+%==================================================
+\section{Literature Review: Persistence, Roughness, and Volatility}
+\label{sec:lit}
+%==================================================
+
+The literature on volatility persistence originates with foundational work on fractional integration and ARFIMA processes, which extended classical time-series analysis by allowing dependence to decay at a hyperbolic rather than exponential rate \citep{GrangerJoyeux1980, Hosking1981}. This development was motivated by empirical findings that many economic and financial time series exhibit long-range dependence, meaning that shocks have effects that persist over long horizons.
+
+Early contributions linking persistence to financial volatility include the work of \citet{Ding1993}, who documented long-memory behavior in transformed return series. Their results highlighted that nonlinear functions of returns exhibit slow decay in autocorrelations, providing strong empirical motivation for extending volatility models beyond the standard ARCH/GARCH framework. In response, \citet{Baillie1996} introduced the FIGARCH model, which incorporates fractional integration directly into the conditional variance equation.
+
+Subsequent advances emphasized improved measurement of volatility. The realized-volatility literature demonstrated that high-frequency data can be used to construct more accurate proxies for latent volatility \citep{Andersen2003, BarndorffNielsen2002}. In parallel, \citet{Corsi2009} introduced the heterogeneous autoregressive (HAR) model, which approximates long-memory behavior through a multi-horizon structure combining daily, weekly, and monthly components.
+
+Despite strong empirical support for persistence, its interpretation remains contested. \citet{MikoschStarica2004} showed that apparent long-range dependence can be generated by changes in volatility regimes rather than by true fractional dynamics.
+
+More recent research has introduced rough-volatility models. \citet{Gatheral2018} demonstrated that volatility paths exhibit rough behavior, characterized by a Hurst exponent significantly below one-half. Understanding the relationship between roughness and long memory is an active area of research.
+
+In parallel, machine learning has emerged as a powerful tool for volatility forecasting. Empirical evidence shows that machine-learning models often improve forecasting performance relative to classical benchmarks, particularly in complex environments with rich data structures \citep{Gu2020}.
+
+This paper builds on these insights by proposing a unified perspective. It treats persistence and roughness as measurable characteristics of the financial information environment and incorporates them into forecasting systems in an explicit and interpretable way. By combining long-memory econometrics, rough-volatility insights, and structured machine-learning techniques, the analysis aims to bridge the gap between statistical fit and economic meaning.
+
+%==================================================
+\section{Theoretical Foundations of Long Memory and Information Persistence}
+\label{sec:theory}
+%==================================================
+
+The concept of long memory enters financial econometrics through the attempt to describe dependence structures that cannot be captured by conventional short-memory models. The classical formalization begins with the behavior of the autocovariance function. Let $X_t$ denote a covariance-stationary stochastic process with autocovariance function $\gamma(k) = \mathrm{Cov}(X_t, X_{t+k})$. In a short-memory setting,
+\[
+\sum_{k=-\infty}^{\infty} |\gamma(k)| < \infty.
+\]
+In a long-memory process, the autocovariance function decays much more slowly:
+\[
+\gamma(k) \sim C k^{2d-1} \quad \text{as } k \to \infty,
+\]
+where $C > 0$ and $d \in (0, 1/2)$ is the memory parameter \citep{GrangerJoyeux1980, Hosking1981}. An equivalent characterization is given in the frequency domain. If $f(\lambda)$ denotes the spectral density, long memory implies
+\[
+f(\lambda) \sim C |\lambda|^{-2d} \quad \text{as } \lambda \to 0,
+\]
+so that the process contains a concentration of power at low frequencies \citep{Robinson1995}.
+
+The fractional-difference operator provides the usual bridge between these probabilistic properties and an estimable model:
+\[
+(1-L)^d X_t = \varepsilon_t.
+\]
+The binomial expansion
+\[
+(1-L)^d = \sum_{j=0}^{\infty} \binom{d}{j} (-L)^j
+\]
+makes clear that the current value of the process depends on an infinite sequence of lagged values with coefficients that decay only gradually.
+
+The theoretical foundations also address the heterogeneous-market view. Financial markets are populated by agents who differ in information sets, objectives, capital constraints, trading frequencies, and reaction speeds. When many such layers interact, the observed volatility process may inherit a multi-scale dependence structure. This idea is closely connected to the heterogeneous market hypothesis and to the empirical success of multi-horizon volatility models such as HAR \citep{Corsi2009, Muller1997}.
+
+A related argument arises from delayed information processing. Even when returns themselves are difficult to predict, the conditional second moment may remain highly persistent because information about risk, disagreement, and uncertainty diffuses more gradually. A memory parameter estimated from volatility data is interpretable as a compact summary of the decay structure of unresolved uncertainty.
+
+The above discussion clarifies why machine learning can enter the framework without displacing theory. If persistence measures such as $d_t$, local roughness estimates, rolling Hurst exponents, or cross-sectional dispersion statistics are treated as proxies for latent information conditions, then they become economically interpretable features rather than arbitrary inputs. Formally, the forecasting problem may be written as
+\[
+\sigma_{t+h}^2 = F(Z_t, d_t, H_t, R_t, X_t),
+\]
+where $Z_t$ is a vector of conventional volatility predictors, $d_t$ is a memory measure, $H_t$ a roughness measure, $R_t$ a regime indicator, and $X_t$ additional market covariates.
+
+This position aligns well with the emergence of rough-volatility theory. The rough-volatility literature shows that volatility can be locally jagged and irregular even while displaying substantial predictability over longer horizons. The theoretical implication is that the market may combine very rapid local fluctuation with slow global information dissipation. These are not contradictory features; they are different temporal dimensions of the same uncertainty process.
+
+%==================================================
+\section{Econometric Modeling of Fractional and Rough Volatility}
+\label{sec:econometric}
+%==================================================
+
+The econometric modeling of volatility persistence has developed along two related but conceptually distinct lines. The first line studies long memory through fractional integration, emphasizing slow hyperbolic decay in dependence over medium and long horizons. The second line studies roughness, emphasizing the highly irregular local behavior of volatility at short horizons.
+
+\subsection{ARFIMA Models}
+
+A natural starting point is the ARFIMA framework. An ARFIMA$(p,d,q)$ model may be written as
+\[
+\phi(L)(1-L)^d X_t = \theta(L) \varepsilon_t,
+\]
+where $\phi(L)$ and $\theta(L)$ are finite-order lag polynomials, $d$ is the fractional integration parameter, and $\varepsilon_t$ is a white-noise innovation process \citep{GrangerJoyeux1980, Hosking1981}.
+
+\subsection{FIGARCH Models}
+
+The conditional heteroskedasticity tradition addresses persistence through models of the evolving conditional variance. Starting from the ARCH model of \citet{Engle1982} and the GARCH model of \citet{Bollerslev1986}, the FIGARCH model of \citet{Baillie1996} incorporates fractional integration directly into the conditional variance equation. In simplified operator notation:
+\[
+\phi(L)(1-L)^d r_t^2 = \omega + [1 - \beta(L)] v_t,
+\]
+where $v_t = r_t^2 - \sigma_t^2$ is the volatility innovation, and $d \in [0,1]$ controls the degree of long memory in the conditional variance.
+
+\subsection{HAR Models}
+
+\citet{Corsi2009} introduced the heterogeneous autoregressive (HAR) model:
+\[
+\mathrm{RV}_{t+1} = \beta_0 + \beta_d \mathrm{RV}_t^d + \beta_w \mathrm{RV}_t^w + \beta_m \mathrm{RV}_t^m + u_{t+1},
+\]
+where $\mathrm{RV}_t^d$, $\mathrm{RV}_t^w$, and $\mathrm{RV}_t^m$ denote daily, weekly, and monthly realized-volatility components.
+
+\subsection{Rough Volatility Models}
+
+\citet{Gatheral2018} showed that volatility paths exhibit rough behavior characterized by a Hurst exponent significantly below one-half. A canonical rough-volatility representation is:
+\[
+X_t = \int_0^t K(t-s)\, dW_s,
+\]
+where $K(\cdot)$ is a kernel with singular behavior near zero, often of the form $K(t-s) \propto (t-s)^{H-1/2}$ with $H \in (0, 1/2)$. \citet{Bennedsen2021} emphasized that short- and long-run behavior can be separated econometrically.
+
+\subsection{Estimation Methods}
+
+Classical estimation of long memory in discrete time proceeds either parametrically or semiparametrically. One of the earliest semiparametric estimators is the Geweke--Porter-Hudak log-periodogram estimator \citep{GewekerPorterHudak1983}:
+\[
+\log I(\lambda_j) \approx c - 2d \log \lambda_j + u_j.
+\]
+The local Whittle estimator improves on this and has attractive asymptotic properties under broad conditions \citep{Robinson1995}.
+
+The paper treats econometric models as measurement instruments and proposes a layered strategy. One may think of the econometric task as producing a vector of persistence descriptors:
+\[
+\Pi_t = (d_t^{\mathrm{ARFIMA}},\; d_t^{\mathrm{FIGARCH}},\; H_t^{\mathrm{rough}},\; \beta_t^{\mathrm{HAR}},\; R_t).
+\]
+
+%==================================================
+\section{Structural Interpretation of Memory Parameters}
+\label{sec:structural}
+%==================================================
+
+The econometric literature usually introduces the memory parameter as a formal descriptor of temporal dependence. Yet once one moves from pure time-series theory to financial economics, such a reading becomes incomplete. Financial markets are institutional systems in which information is produced, interpreted, delayed, transmitted, amplified, and sometimes distorted by heterogeneous participants.
+
+A useful point of departure is the distinction between statistical persistence and economic persistence. Statistical persistence refers to the slow decay of dependence in a measured series. Economic persistence refers to the slow exhaustion of the market consequences of a disturbance. A memory parameter estimated from volatility data is interpretable as a summary of the duration over which informational consequences remain relevant.
+
+The first structural channel is information arrival and diffusion. To formalize this, let $\eta_t$ denote an uncertainty shock and let $I_t$ denote the stock of economically relevant unresolved information at time $t$:
+\[
+I_t = \sum_{j=0}^{\infty} w_j \eta_{t-j},
+\]
+where the weights $w_j$ describe how quickly the informational content of past shocks loses relevance. If the weights decay hyperbolically, $w_j \sim C j^{d-1}$, then $d$ measures how slowly past informational shocks lose relevance.
+
+A second channel is heterogeneity of agents and horizons. The memory parameter can be read as a summary of horizon dispersion in the market \citep{Muller1997, Corsi2009}.
+
+A third structural channel is liquidity. One can express this schematically:
+\[
+\sigma_t^2 = g(I_t, L_t),
+\]
+where $L_t$ captures liquidity conditions.
+
+The fourth structural channel is market stress and systemic risk. The fifth is regime dependence, representable as $d_t = \delta(Z_t)$, where $Z_t$ is a vector of regime variables. The sixth is sectoral differentiation, and the seventh is behavioral heterogeneity in belief updating.
+
+The composite interpretation also clarifies why memory can be useful for forecasting. One can define a structural persistence index $P_t$ and write:
+\[
+\mathbb{E}_t(\sigma_{t+h}^2) = F(Z_t, P_t),
+\]
+where $Z_t$ is a vector of conventional predictors. If $P_t$ is significant, the interpretation is that the market's current mode of information persistence contains incremental information about future uncertainty.
+
+%==================================================
+\section{Machine Learning with Persistence-Based Features}
+\label{sec:ml}
+%==================================================
+
+The preceding sections argued that persistence measures should be treated as candidate state variables summarizing the speed of information dissipation. The central forecasting problem may be written as
+\[
+Y_{t+h} = F(Z_t, P_t) + u_{t+h},
+\]
+where $Y_{t+h}$ is a volatility target at horizon $h$, $Z_t$ a vector of conventional predictors, and $P_t$ a vector of persistence-based features.
+
+\subsection{Persistence-Based Feature Construction}
+
+The first class of persistence-based features is \emph{time-varying memory estimates} $d_t$ estimated via rolling windows. A second class consists of \emph{local roughness measures} $H_t$. A third class is \emph{dispersion-based}, with cross-sectional mean $\bar{d}_t = \frac{1}{N}\sum_{i=1}^{N} d_{i,t}$ and dispersion $s_{d,t}^2 = \frac{1}{N}\sum_{i=1}^{N}(d_{i,t} - \bar{d}_t)^2$. A fourth class consists of group-level aggregates $\bar{d}_{g,t}$. Fifth, \emph{dynamic interaction terms} such as $d_t \times \mathrm{RV}_t$ and $d_t \times L_t$. Sixth, \emph{slopes and threshold indicators} such as $\Delta d_t = d_t - d_{t-1}$ and $\mathbf{1}\{d_t > c\}$.
+
+The full feature vector is:
+\[
+P_t = \bigl(d_t,\; H_t,\; \Delta d_t,\; \Delta H_t,\; \bar{d}_t,\; s_{d,t}^2,\; \{\bar{d}_{g,t}\}_{g=1}^{G},\; d_t \cdot \mathrm{RV}_t,\; d_t \cdot J_t,\; d_t \cdot L_t\bigr).
+\]
+
+\subsection{Learning Algorithms}
+
+\textbf{Regularized linear methods.} Shrinkage methods such as ridge regression, lasso, and elastic net are natural choices for controlling overfitting when persistence-based variables are correlated \citep{Hastie2009}. The regularized forecasting problem takes the form:
+\[
+\min_{\theta} \sum_t (Y_t - X_t' \theta)^2 + \lambda P(\theta).
+\]
+
+\textbf{Tree-based methods.} Random forests \citep{Breiman2001} and gradient-boosted trees \citep{Friedman2001} can learn threshold effects and interactions without manual specification. They naturally represent regime dependence by splitting the predictor space according to conditions such as high versus low aggregate persistence.
+
+\textbf{Neural networks.} A feedforward network can approximate complex nonlinear mappings $Y_{t+h} = F_\theta(Z_t, P_t)$. However, neural networks are most compelling when data are sufficiently rich and the complexity of interactions appears too large for simpler methods.
+
+\subsection{Interpretability and Stability}
+
+Because the features themselves are economically interpretable, one can still assess variable importance and partial dependence in a meaningful way. Feature importance rankings, SHAP-style decompositions, accumulated local effects, and partial dependence plots can be interpreted in terms of market states. To ensure stability, all persistence-based features must be estimated using rolling windows that respect the forecasting information set, with feature standardization and hyperparameter selection done by time-series cross-validation.
+
+Horizon dependence implies estimating separate models for each horizon $h$:
+\[
+Y_{t+h} = F_h(Z_t, P_t) + u_{t+h}.
+\]
+
+%==================================================
+\section{Data and Empirical Design}
+\label{sec:data}
+%==================================================
+
+This section describes the data architecture, measurement choices, empirical design, and implementation strategy used to study volatility persistence, roughness, and forecasting performance in a large panel of equities.
+
+\subsection{Sample Construction}
+
+The natural starting point is a broad panel of U.S. common stocks. A workable design combines a market index layer (S\&P 500, Dow Jones Industrial Average, Nasdaq 100, sector ETFs) with an individual-stock layer of 50--150 large-cap and liquid equities drawn from major sectors. The panel should span a sufficiently long sample, ideally beginning in the early 2000s, to include the global financial crisis, the European sovereign-stress period, the COVID-19 shock, and the recent higher-rate environment.
+
+The preferred source is the Bloomberg Terminal. Daily fields should include adjusted closing price, open, high, low, volume, market capitalization, and sector classification. At the market level, benchmark indices, the VIX, and key macro-financial controls should be downloaded.
+
+\subsection{Volatility Measurement}
+
+Multiple volatility proxies should be constructed. The first is squared return, $r_{i,t}^2$. The second is absolute return, $|r_{i,t}|$. The third is the Parkinson range-based estimator:
+\[
+\sigma_{P,i,t}^2 = \frac{1}{4\ln 2}\left(\ln \frac{H_{i,t}}{L_{i,t}}\right)^2.
+\]
+If intraday data are available, daily realized volatility may be defined as:
+\[
+\mathrm{RV}_{i,t} = \sum_{j=1}^{M_t} r_{i,t,j}^2.
+\]
+Returns are computed as $r_{i,t} = \log P_{i,t} - \log P_{i,t-1}$.
+
+\subsection{Rolling Persistence Estimation}
+
+Within each rolling window (e.g., 750 trading days), several persistence measures should be estimated: a semiparametric long-memory estimate such as the Geweke--Porter-Hudak or local Whittle estimator \citep{GewekerPorterHudak1983, Robinson1995}; an ARFIMA-based estimate; and HAR-type multi-horizon decomposition \citep{Corsi2009}.
+
+Cross-sectional aggregates should be constructed for each day $t$:
+\[
+\bar{d}_t = \frac{1}{N_t}\sum_{i=1}^{N_t} d_{i,t}, \qquad
+s_{d,t}^2 = \frac{1}{N_t}\sum_{i=1}^{N_t}(d_{i,t} - \bar{d}_t)^2, \qquad
+\bar{d}_{g,t} = \frac{1}{N_{g,t}}\sum_{i \in g} d_{i,t}.
+\]
+
+\subsection{Forecasting Design}
+
+The forecasting design is strictly out-of-sample. Three benchmark horizons are studied: one trading day, five trading days, and twenty-two trading days. Multi-day targets may be defined as:
+\[
+\mathrm{RV}_{i,t+1:t+h} = \sum_{k=1}^{h} \mathrm{RV}_{i,t+k}.
+\]
+
+The first benchmark is a simple autoregressive model for log volatility. The second is the HAR model \citep{Corsi2009}. The third benchmark may be an ARFIMA-based forecast, and for selected representative series a FIGARCH-type benchmark \citep{Baillie1996, GrangerJoyeux1980, Hosking1981}.
+
+Forecast performance is evaluated using:
+\[
+\mathrm{MSE} = \frac{1}{T}\sum_{t=1}^{T}(Y_t - \hat{Y}_t)^2,
+\]
+and the QLIKE criterion:
+\[
+\mathrm{QLIKE} = \frac{1}{T}\sum_{t=1}^{T}\left(\frac{Y_t}{\hat{Y}_t} - \log\frac{Y_t}{\hat{Y}_t} - 1\right).
+\]
+
+%==================================================
+\section{Numerical Analysis and Forecasting Results}
+\label{sec:results}
+%==================================================
+
+This section presents the numerical analysis and forecasting framework designed to evaluate whether persistence-based features improve volatility prediction across assets, horizons, and market regimes. The central hypothesis is that persistence-based features contain incremental predictive information beyond standard volatility lags and benchmark forecasting models.
+
+\subsection{Target Variable and Forecast Horizons}
+
+If high-frequency Bloomberg data are available, the preferred target is realized volatility \citep{Andersen2003, BarndorffNielsen2002}. The analysis studies three benchmark horizons: one trading day, five trading days, and twenty-two trading days. For the aggregated horizons:
+\[
+\mathrm{RV}_{i,t+1:t+h} = \sum_{k=1}^{h} \mathrm{RV}_{i,t+k}.
+\]
+
+\subsection{Benchmark Models}
+
+The first benchmark is a simple autoregressive model for log volatility. The second is the HAR model:
+\[
+\mathrm{RV}_{t+1} = \beta_0 + \beta_d \mathrm{RV}_t^d + \beta_w \mathrm{RV}_t^w + \beta_m \mathrm{RV}_t^m + u_{t+1},
+\]
+\citep{Corsi2009}. The third benchmark may include ARFIMA-based and FIGARCH-type forecasts for selected representative series \citep{Baillie1996, GrangerJoyeux1980, Hosking1981}.
+
+\subsection{Persistence-Augmented Models}
+
+A persistence-augmented linear forecasting equation:
+\[
+Y_{i,t+h} = \alpha_h + \beta_h' Z_{i,t} + \gamma_h' P_{i,t} + u_{i,t+h},
+\]
+where $P_{i,t}$ contains $d_{i,t}$, $\Delta d_{i,t}$, $\bar{d}_t$, $s_{d,t}^2$, sector persistence averages, and rolling roughness measures. Regularized methods \citep{Hastie2009} then address correlated predictors through the problem:
+\[
+\min_\theta \sum_t (Y_t - X_t' \theta)^2 + \lambda P(\theta).
+\]
+Tree-based methods include random forests \citep{Breiman2001} and gradient boosting \citep{Friedman2001}.
+
+\subsection{Forecast Evaluation}
+
+All estimation is strictly out-of-sample. MSE and QLIKE losses are reported for each model, horizon, and regime. For regime-specific evaluation, the sample is partitioned into high-volatility and low-volatility states. For forecast comparison tests, loss differentials $\Delta L_t = L_{1,t} - L_{2,t}$ are examined to assess whether $\mathbb{E}(\Delta L_t) = 0$.
+
+\subsection{Cross-Sectional Analysis}
+
+For each group $g$:
+\[
+\mathcal{L}_{g,h} = \frac{1}{N_g T_g}\sum_{i \in g}\sum_t L(Y_{i,t+h}, \hat{Y}_{i,t+h}).
+\]
+Comparing $\mathcal{L}_{g,h}$ across groups determines whether persistence-based features are especially valuable for financials, energy, technology, REITs, or more illiquid segments.
+
+\subsection{Forecast Combination}
+
+A combined forecast may be defined as:
+\[
+\hat{Y}_{t+h}^{\mathrm{comb}} = \sum_{m=1}^{M} w_m \hat{Y}_{t+h}^m, \quad \sum_{m=1}^{M} w_m = 1.
+\]
+
+The strongest expected outcome is: (i) persistence-based features improve forecasts relative to standard volatility benchmarks; (ii) gains are more pronounced at weekly and monthly horizons; (iii) gains become larger in high-volatility and crisis states; (iv) cross-sectional persistence averages and dispersion both matter; (v) results are stable across alternative persistence estimators and volatility targets.
+
+%==================================================
+\section{Economic Interpretation and Implications}
+\label{sec:econ}
+%==================================================
+
+The empirical results of the previous sections are not important merely because they improve forecast statistics. Their deeper significance lies in what they reveal about the economic meaning of persistence. This section moves from numerical performance to economic interpretation and asks what it means when rolling memory estimates rise, when cross-sectional persistence dispersion widens, and when persistence-based forecasts outperform standard benchmarks.
+
+\subsection{Volatility Level versus Volatility Persistence}
+
+Two periods may exhibit similar instantaneous volatility while differing sharply in how long the consequences of shocks are expected to last. The memory parameter provides a temporal stress indicator. It does not simply say that uncertainty is high; it says that uncertainty is expected to remain relevant for longer.
+
+\subsection{Risk Management and Stress Testing}
+
+Standard risk systems often rely on:
+\[
+\mathrm{Var}(R_{t+h} \mid \mathcal{F}_t) = G(Z_t).
+\]
+The present framework suggests augmenting this with persistence information:
+\[
+\mathrm{Var}(R_{t+h} \mid \mathcal{F}_t) = G(Z_t, P_t).
+\]
+A portfolio conditioned on high persistence faces a fundamentally different risk profile. This matters for risk budgeting, capital allocation, and rebalancing decisions. Stress scenarios conditioned on high persistence represent environments in which uncertainty remains unresolved, liquidity remains impaired, and correlations remain elevated for longer \citep{Baillie1996, BarndorffNielsen2002}.
+
+\subsection{Portfolio Allocation}
+
+Letting portfolio weights satisfy:
+\[
+w_t = \arg\max_{w \in \mathcal{W}} \mathbb{E}_t(R_{p,t+1}) - \frac{\lambda}{2}\mathrm{Var}_t(R_{p,t+1}),
+\]
+if the estimated persistence state rises, the optimizer may reduce exposure not merely because near-term volatility is expected to rise, but because the elevated-risk regime is expected to persist.
+
+\subsection{Systemic Stress and Macro-Financial Monitoring}
+
+A stylized representation:
+\[
+\sigma_{i,t}^2 = h_i(I_{i,t}, S_t, C_t),
+\]
+where $I_{i,t}$ is asset-specific unresolved information, $S_t$ is a systemic stress factor, and $C_t$ summarizes cross-sectional interdependence. A persistence-informed real-time decision rule:
+\[
+a_t = \begin{cases}
+a_t^1, & \text{if } P_t \le c_1, \\
+a_t^2, & \text{if } c_1 < P_t \le c_2, \\
+a_t^3, & \text{if } P_t > c_2.
+\end{cases}
+\]
+
+The role of roughness alongside long memory creates a layered interpretation: roughness reflects immediate irregularity and local market responsiveness, while long memory reflects the slower decay of the broader consequences of shocks. Together they suggest a market that is both reactive and enduringly affected by information \citep{Gatheral2018, Andersen2003, Corsi2009}.
+
+%==================================================
+\section{Conclusion}
+\label{sec:conclusion}
+%==================================================
+
+This paper has argued that persistence in financial volatility should not be treated merely as a technical property of a stochastic process. It should be understood as an economically meaningful feature of financial markets, one that reflects how slowly uncertainty is absorbed, how long the effects of shocks remain active, and how market conditions evolve across calm and stressed regimes. The standard econometric literature introduced persistence through fractional integration, long-memory dependence, and conditional-volatility models, thereby providing rigorous tools for measuring slow decay in volatility dynamics \citep{GrangerJoyeux1980, Hosking1981, Baillie1996}. Yet the broader contribution of the present study has been to reinterpret these measurements structurally.
+
+A central theme of the paper has been that volatility dynamics contain more than one layer of temporal structure. At short horizons, financial markets often exhibit highly irregular and reactive volatility behavior, emphasized by the rough-volatility literature \citep{Gatheral2018}. At longer horizons, they exhibit persistent dependence well captured by long-memory frameworks or multi-horizon approximations such as HAR \citep{Andersen2003, Corsi2009}. Volatility can be both locally rough and globally persistent.
+
+A major contribution of the paper has been to show how this interpretation can be operationalized in forecasting. The framework proposed a structured integration of econometric measurement and machine learning. Persistence-based features were treated as economically meaningful predictors rather than as hidden internal coefficients \citep{Hastie2009, Breiman2001, Friedman2001}.
+
+The paper points toward several directions for future research. One direction is to strengthen the connection between persistence measures and macro-financial variables. Another is to deepen the rough-volatility component using richer high-frequency data \citep{Bennedsen2021}. A third direction is to extend the framework beyond equities to fixed income, foreign exchange, commodities, and volatility derivatives. A fourth direction is to explore multivariate persistence structures in conditional covariance and correlation dynamics. A fifth direction is to develop persistence-informed decision systems that adapt model choice in real time.
+
+In this sense, the paper's concluding claim is both methodological and substantive. Methodologically, it shows that interpretable econometric features can be integrated with flexible predictive systems without abandoning economic meaning. Substantively, it shows that persistence is an informative and economically consequential feature of financial markets. Understanding volatility requires understanding not only how sharply shocks arrive, but how long their effects endure. Persistence provides a language for that duration, and that is why it matters.
+
+%==================================================
+% UNIFIED REFERENCE LIST
+%==================================================
+
+\bibliographystyle{apalike}
+\begin{thebibliography}{99}
+
+\bibitem[Andersen et al.(2003)]{Andersen2003}
+Andersen, T.~G., Bollerslev, T., Diebold, F.~X., \& Labys, P. (2003).
+\newblock Modeling and forecasting realized volatility.
+\newblock \emph{Econometrica}, 71(2), 579--625.
+
+\bibitem[Baillie et al.(1996)]{Baillie1996}
+Baillie, R.~T., Bollerslev, T., \& Mikkelsen, H.~O. (1996).
+\newblock Fractionally integrated generalized autoregressive conditional heteroskedasticity.
+\newblock \emph{Journal of Econometrics}, 74(1), 3--30.
+
+\bibitem[Barndorff-Nielsen \& Shephard(2002)]{BarndorffNielsen2002}
+Barndorff-Nielsen, O.~E., \& Shephard, N. (2002).
+\newblock Econometric analysis of realized volatility and its use in estimating stochastic volatility models.
+\newblock \emph{Journal of the Royal Statistical Society: Series B}, 64(2), 253--280.
+
+\bibitem[Bennedsen et al.(2021)]{Bennedsen2021}
+Bennedsen, M., Lunde, A., \& Pakkanen, M.~S. (2021).
+\newblock Decoupling the short- and long-term behavior of stochastic volatility.
+\newblock \emph{Journal of Financial Econometrics}, 20(5), 961--1006.
+
+\bibitem[Bollerslev(1986)]{Bollerslev1986}
+Bollerslev, T. (1986).
+\newblock Generalized autoregressive conditional heteroskedasticity.
+\newblock \emph{Journal of Econometrics}, 31(3), 307--327.
+
+\bibitem[Breiman(2001)]{Breiman2001}
+Breiman, L. (2001).
+\newblock Random forests.
+\newblock \emph{Machine Learning}, 45(1), 5--32.
+
+\bibitem[Corsi(2009)]{Corsi2009}
+Corsi, F. (2009).
+\newblock A simple approximate long-memory model of realized volatility.
+\newblock \emph{Journal of Financial Econometrics}, 7(2), 174--196.
+
+\bibitem[Ding et al.(1993)]{Ding1993}
+Ding, Z., Granger, C.~W.~J., \& Engle, R.~F. (1993).
+\newblock A long memory property of stock market returns and a new model.
+\newblock \emph{Journal of Empirical Finance}, 1(1), 83--106.
+
+\bibitem[Engle(1982)]{Engle1982}
+Engle, R.~F. (1982).
+\newblock Autoregressive conditional heteroskedasticity with estimates of the variance of United Kingdom inflation.
+\newblock \emph{Econometrica}, 50(4), 987--1007.
+
+\bibitem[Friedman(2001)]{Friedman2001}
+Friedman, J.~H. (2001).
+\newblock Greedy function approximation: A gradient boosting machine.
+\newblock \emph{Annals of Statistics}, 29(5), 1189--1232.
+
+\bibitem[Gatheral et al.(2018)]{Gatheral2018}
+Gatheral, J., Jaisson, T., \& Rosenbaum, M. (2018).
+\newblock Volatility is rough.
+\newblock \emph{Quantitative Finance}, 18(6), 933--949.
+
+\bibitem[Geweke \& Porter-Hudak(1983)]{GewekerPorterHudak1983}
+Geweke, J., \& Porter-Hudak, S. (1983).
+\newblock The estimation and application of long memory time series models.
+\newblock \emph{Journal of Time Series Analysis}, 4(4), 221--238.
+
+\bibitem[Granger \& Joyeux(1980)]{GrangerJoyeux1980}
+Granger, C.~W.~J., \& Joyeux, R. (1980).
+\newblock An introduction to long-memory time series models and fractional differencing.
+\newblock \emph{Journal of Time Series Analysis}, 1(1), 15--29.
+
+\bibitem[Gu et al.(2020)]{Gu2020}
+Gu, S., Kelly, B., \& Xiu, D. (2020).
+\newblock Empirical asset pricing via machine learning.
+\newblock \emph{Review of Financial Studies}, 33(5), 2223--2273.
+
+\bibitem[Hastie et al.(2009)]{Hastie2009}
+Hastie, T., Tibshirani, R., \& Friedman, J. (2009).
+\newblock \emph{The Elements of Statistical Learning: Data Mining, Inference, and Prediction} (2nd ed.).
+\newblock Springer.
+
+\bibitem[Hosking(1981)]{Hosking1981}
+Hosking, J.~R.~M. (1981).
+\newblock Fractional differencing.
+\newblock \emph{Biometrika}, 68(1), 165--176.
+
+\bibitem[Mikosch \& St\u{a}ric\u{a}(2004)]{MikoschStarica2004}
+Mikosch, T., \& St\u{a}ric\u{a}, C. (2004).
+\newblock Nonstationarities in financial time series, the long-range dependence, and the IGARCH effects.
+\newblock \emph{Review of Economics and Statistics}, 86(1), 378--390.
+
+\bibitem[M\"uller et al.(1997)]{Muller1997}
+M\"uller, U.~A., Dacorogna, M.~M., Dav\'{e}, R.~D., Olsen, R.~B., Pictet, O.~V., \& von Weizs\"acker, J.~E. (1997).
+\newblock Volatilities of different time resolutions---Analyzing the dynamics of market components.
+\newblock \emph{Journal of Empirical Finance}, 4(2--3), 213--239.
+
+\bibitem[Robinson(1995)]{Robinson1995}
+Robinson, P.~M. (1995).
+\newblock Gaussian semiparametric estimation of long range dependence.
+\newblock \emph{Annals of Statistics}, 23(5), 1630--1661.
+
+\end{thebibliography}
+
+\end{document}

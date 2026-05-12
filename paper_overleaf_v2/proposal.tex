@@ -1,0 +1,890 @@
+\documentclass[11pt,a4paper]{article}
+
+% ============================================
+% PACKAGES
+% ============================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\usepackage{caption}
+
+% ============================================
+% PAGE SETUP
+% ============================================
+\geometry{
+    left=1in,
+    right=1in,
+    top=1in,
+    bottom=1in
+}
+
+\setstretch{1.15}
+
+% ============================================
+% COLORS
+% ============================================
+\definecolor{darkblue}{RGB}{26,26,46}
+\definecolor{accentblue}{RGB}{45,52,54}
+\definecolor{lightgray}{RGB}{248,249,250}
+\definecolor{codegray}{RGB}{245,245,245}
+
+% ============================================
+% HYPERREF SETUP
+% ============================================
+\hypersetup{
+    colorlinks=true,
+    linkcolor=darkblue,
+    filecolor=darkblue,
+    urlcolor=darkblue,
+    citecolor=darkblue
+}
+
+% ============================================
+% SECTION FORMATTING
+% ============================================
+\titleformat{\section}
+    {\Large\bfseries\color{darkblue}}
+    {\thesection}{1em}{}
+\titleformat{\subsection}
+    {\large\bfseries\color{accentblue}}
+    {\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+    {\normalsize\bfseries\color{accentblue}}
+    {\thesubsubsection}{1em}{}
+
+% ============================================
+% HEADER/FOOTER
+% ============================================
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{LRD-ML Research Proposal}}
+\fancyhead[R]{\small\textit{Akash Deep , Nicholas Appiah}}
+\fancyfoot[C]{\small\thepage\ of \pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% ============================================
+% CODE LISTING STYLE
+% ============================================
+\lstset{
+    backgroundcolor=\color{codegray},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red!70!black},
+    tabsize=4
+}
+
+% ============================================
+% THEOREM ENVIRONMENTS
+% ============================================
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{hypothesis}{Hypothesis}[section]
+
+% ============================================
+% CUSTOM COMMANDS
+% ============================================
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\text{Var}}
+\newcommand{\Cov}{\text{Cov}}
+\newcommand{\Corr}{\text{Corr}}
+\newcommand{\dhat}{\hat{d}}
+\newcommand{\sigmahat}{\hat{\sigma}}
+\newcommand{\phihat}{\hat{\phi}}
+\newcommand{\thetahat}{\hat{\theta}}
+
+% ============================================
+% DOCUMENT BEGIN
+% ============================================
+\begin{document}
+
+% ============================================
+% TITLE PAGE
+% ============================================
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge\bfseries\color{darkblue} Long-Range Dependence as\\[0.3cm] Informative Features for\\[0.3cm] Machine Learning in\\[0.3cm] Financial Forecasting\par}
+    
+    \vspace{1.5cm}
+    
+    {\Large\textsc{Research Proposal}\par}
+    
+    \vspace{2cm}
+    
+    {\large
+    \textbf{Akash Deep}\\[0.3cm]
+    \textbf{Nicholas Appiah}\\[0.3cm]
+    Department of Mathematics \& Statistics\\[0.2cm]
+    Texas Tech University\\[0.2cm]
+    \texttt{akash.deep@ttu.edu}
+    \par}
+    
+    \vspace{1.5cm}
+    
+    {\large
+    \textbf{Advisor:} Dr. Svetlozar Rachev
+    \par}
+    
+    \vspace{2cm}
+    
+    {\large \today \par}
+    
+    \vfill
+    
+    \textit{Prepared for PhD Research Discussion}
+    
+\end{titlepage}
+
+% ============================================
+% TABLE OF CONTENTS
+% ============================================
+\tableofcontents
+\newpage
+
+% ============================================
+% EXECUTIVE SUMMARY
+% ============================================
+\section{Executive Summary}
+
+This proposal outlines a research program investigating a novel paradigm for combining long-range dependence (LRD) econometric models with machine learning: rather than treating LRD models and ML as competing approaches, we use the \textit{sufficient statistics} and \textit{estimated parameters} from LRD models as structured input features for ML algorithms.
+
+The core hypothesis is that ML can learn:
+\begin{enumerate}[label=(\roman*)]
+    \item When to trust the parametric LRD structure
+    \item Nonlinear interactions between memory dynamics and market conditions
+    \item Residual predictable structure that LRD models cannot capture by design
+\end{enumerate}
+
+\subsection*{Primary Research Questions}
+
+\begin{enumerate}
+    \item Does the estimated fractional differencing parameter $\dhat$ contain predictive information for volatility and returns beyond its role in stationarity transformation?
+    \item Can ML exploit time-variation in long-memory parameters to improve forecasting during regime changes?
+    \item What residual structure remains after ARFIMA-FIGARCH filtering, and can ML learn it?
+\end{enumerate}
+
+\subsection*{Key Novelties}
+
+\begin{itemize}
+    \item \textbf{$\dhat$ as a feature, not just a transformation:} First systematic study using memory parameters as ML inputs
+    \item \textbf{Memory dynamics:} $\Delta\dhat$, $\text{Vol}(\dhat)$, $\text{Trend}(\dhat)$ as regime indicators
+    \item \textbf{Cross-sectional memory:} Distribution of $\dhat$ across assets as market-level features
+    \item \textbf{Residual structure learning:} ML-based specification testing for FIGARCH models
+\end{itemize}
+
+% ============================================
+% MATHEMATICAL FRAMEWORK
+% ============================================
+\section{Mathematical Framework}
+
+\subsection{Long-Range Dependence in Returns and Volatility}
+
+\begin{definition}[Long Memory Process]
+A covariance stationary process $\{X_t\}$ exhibits long-range dependence if its autocovariance function $\gamma(k)$ satisfies:
+\begin{equation}
+    \gamma(k) \sim C_\gamma k^{2d-1} L(k) \quad \text{as } k \to \infty
+\end{equation}
+where $d \in (0, 0.5)$, $C_\gamma > 0$, and $L(\cdot)$ is a slowly varying function at infinity.
+\end{definition}
+
+Equivalently, the spectral density $f(\lambda)$ satisfies:
+\begin{equation}
+    f(\lambda) \sim C_f |\lambda|^{-2d} \quad \text{as } \lambda \to 0^+
+\end{equation}
+
+\subsubsection{ARFIMA(p,d,q) for Returns}
+
+The Autoregressive Fractionally Integrated Moving Average model:
+\begin{equation}
+    \Phi(B)(1-B)^d (r_t - \mu) = \Theta(B)\varepsilon_t
+\end{equation}
+where:
+\begin{itemize}
+    \item $\Phi(B) = 1 - \phi_1 B - \cdots - \phi_p B^p$ is the AR polynomial
+    \item $\Theta(B) = 1 + \theta_1 B + \cdots + \theta_q B^q$ is the MA polynomial
+    \item $(1-B)^d$ is the fractional differencing operator
+\end{itemize}
+
+The fractional differencing operator admits the binomial expansion:
+\begin{equation}
+    (1-B)^d = \sum_{k=0}^{\infty} \binom{d}{k}(-B)^k = \sum_{k=0}^{\infty} \pi_k B^k
+\end{equation}
+with weights:
+\begin{equation}
+    \pi_k = \frac{\Gamma(k-d)}{\Gamma(-d)\Gamma(k+1)} \sim \frac{k^{-d-1}}{\Gamma(-d)} \quad \text{as } k \to \infty
+\end{equation}
+
+The hyperbolic decay of $\pi_k$ (as opposed to exponential decay for integer $d$) is the signature of long memory.
+
+\subsubsection{FIGARCH(p,d,q) for Volatility}
+
+For conditional variance with long memory, we specify:
+\begin{align}
+    \varepsilon_t &= \sigma_t z_t, \quad z_t \sim D(0,1) \\
+    \sigma_t^2 &= \omega + \beta(B)\sigma_t^2 + \left[1 - \beta(B) - \Phi(B)(1-B)^d\right]\varepsilon_t^2
+\end{align}
+
+The FIGARCH model can be written in ARCH($\infty$) form:
+\begin{equation}
+    \sigma_t^2 = \frac{\omega}{1-\beta(1)} + \lambda(B)\varepsilon_t^2
+\end{equation}
+where $\lambda(B) = \sum_{k=0}^{\infty} \lambda_k B^k$ with coefficients decaying hyperbolically.
+
+\subsubsection{Joint ARFIMA-FIGARCH Specification}
+
+The complete model for returns with long memory in both mean and variance:
+\begin{align}
+    \Phi_r(B)(1-B)^{d_r} (r_t - \mu) &= \Theta_r(B)\varepsilon_t \label{eq:arfima_mean}\\
+    \varepsilon_t &= \sigma_t z_t \\
+    \Phi_\sigma(B)(1-B)^{d_\sigma} \varepsilon_t^2 &= \omega + [1-\beta(B)](\varepsilon_t^2 - \sigma_t^2) \label{eq:figarch_var}
+\end{align}
+
+This yields two memory parameters:
+\begin{itemize}
+    \item $d_r$ for returns (typically small or zero in efficient markets)
+    \item $d_\sigma$ for volatility (typically 0.3--0.5, well-documented empirically)
+\end{itemize}
+
+\subsection{Estimation of the Memory Parameter}
+
+\subsubsection{Geweke-Porter-Hudak (GPH) Log-Periodogram Regression}
+
+The spectral density near zero frequency implies:
+\begin{equation}
+    \ln f(\lambda_j) = \ln C_f - 2d \ln|\lambda_j| + \text{error}
+\end{equation}
+
+The GPH estimator regresses $\ln I(\lambda_j)$ on $\ln(4\sin^2(\lambda_j/2))$:
+\begin{equation}
+    \dhat_{\text{GPH}} = -\frac{1}{2} \cdot \frac{\sum_{j=1}^m (x_j - \bar{x})(\ln I(\lambda_j) - \overline{\ln I})}{\sum_{j=1}^m (x_j - \bar{x})^2}
+\end{equation}
+where:
+\begin{itemize}
+    \item $I(\lambda_j) = \frac{1}{2\pi T}\left|\sum_{t=1}^T X_t e^{i\lambda_j t}\right|^2$ is the periodogram
+    \item $\lambda_j = 2\pi j/T$ are Fourier frequencies
+    \item $m = T^\alpha$ for $\alpha \in (0.5, 0.8)$, typically $\alpha = 0.5$
+    \item $x_j = \ln(4\sin^2(\lambda_j/2))$
+\end{itemize}
+
+\textbf{Asymptotic distribution:}
+\begin{equation}
+    \sqrt{m}(\dhat_{\text{GPH}} - d) \xrightarrow{d} N\left(0, \frac{\pi^2}{24}\right)
+\end{equation}
+
+\subsubsection{Local Whittle Estimator}
+
+Minimize the local Whittle likelihood:
+\begin{equation}
+    Q(d) = \frac{1}{m}\sum_{j=1}^m \left[\ln(\lambda_j^{-2d} \hat{G}) + \frac{I(\lambda_j)}{\lambda_j^{-2d}\hat{G}}\right]
+\end{equation}
+where $\hat{G} = \frac{1}{m}\sum_{j=1}^m \lambda_j^{2d} I(\lambda_j)$.
+
+\textbf{Asymptotic distribution:}
+\begin{equation}
+    \sqrt{m}(\dhat_{\text{LW}} - d) \xrightarrow{d} N\left(0, \frac{1}{4}\right)
+\end{equation}
+
+The Local Whittle estimator is more efficient: variance $1/4$ vs $\pi^2/24 \approx 0.41$.
+
+\subsubsection{Exact Local Whittle (ELW) for Nonstationarity}
+
+For $d \in (-0.5, 1.5)$, the ELW estimator of \citet{shimotsu2005exact} handles both stationary and nonstationary cases, extending applicability to integrated processes.
+
+\subsection{The Novel Feature Construction Framework}
+
+\subsubsection{LRD-Derived Feature Vector}
+
+For each time $t$, construct the feature vector from rolling window estimation (window size $W$):
+
+\begin{equation}
+    \mathbf{F}_t^{\text{LRD}} = \begin{pmatrix} 
+        \dhat_{r,t} \\[0.2em]
+        \dhat_{\sigma,t} \\[0.2em]
+        \text{SE}(\dhat_{r,t}) \\[0.2em]
+        \text{SE}(\dhat_{\sigma,t}) \\[0.2em]
+        \phihat_{1,t}, \ldots, \phihat_{p,t} \\[0.2em]
+        \thetahat_{1,t}, \ldots, \thetahat_{q,t} \\[0.2em]
+        \sigmahat_t^2 \\[0.2em]
+        z_t = \hat{\varepsilon}_t / \sigmahat_t \\[0.2em]
+        z_t^2 \\[0.2em]
+        r_t^{(d)} = (1-B)^{\dhat} r_t
+    \end{pmatrix}
+\end{equation}
+
+\subsubsection{Memory Dynamics Features}
+
+Capture the evolution of long-memory parameters:
+\begin{align}
+    \Delta \dhat_t &= \dhat_t - \dhat_{t-1} \\
+    \text{Vol}(\dhat)_t &= \sqrt{\frac{1}{K}\sum_{k=0}^{K-1}(\dhat_{t-k} - \bar{d}_t)^2} \\
+    \text{Trend}(\dhat)_t &= \frac{\dhat_t - \dhat_{t-L}}{L}
+\end{align}
+
+\subsubsection{Cross-Sectional Memory Features}
+
+For a universe of $N$ assets at time $t$:
+\begin{align}
+    \bar{d}_t^{\text{CS}} &= \frac{1}{N}\sum_{i=1}^N \dhat_{i,t} \\
+    \sigma_d^{\text{CS}}(t) &= \sqrt{\frac{1}{N}\sum_{i=1}^N (\dhat_{i,t} - \bar{d}_t^{\text{CS}})^2} \\
+    \text{Skew}_d^{\text{CS}}(t) &= \frac{1}{N}\sum_{i=1}^N \left(\frac{\dhat_{i,t} - \bar{d}_t^{\text{CS}}}{\sigma_d^{\text{CS}}(t)}\right)^3
+\end{align}
+
+\subsection{ML Architecture with LRD Features}
+
+\subsubsection{Feature-Augmented Gradient Boosting}
+
+Target: $h$-step ahead realized volatility $RV_{t+h}$
+
+\begin{equation}
+    \widehat{RV}_{t+h} = F(\mathbf{X}_t)
+\end{equation}
+
+where the feature vector combines:
+\begin{equation}
+    \mathbf{X}_t = \left[\underbrace{\mathbf{F}_t^{\text{LRD}}}_{\text{LRD features}}, \underbrace{\mathbf{F}_t^{\text{HAR}}}_{\text{HAR components}}, \underbrace{\mathbf{F}_t^{\text{MKT}}}_{\text{Market variables}}\right]
+\end{equation}
+
+HAR components (benchmark from \citealt{corsi2009simple}):
+\begin{equation}
+    \mathbf{F}_t^{\text{HAR}} = \left[RV_t^{(d)}, RV_t^{(w)}, RV_t^{(m)}\right]
+\end{equation}
+where:
+\begin{align}
+    RV_t^{(d)} &= RV_t \\
+    RV_t^{(w)} &= \frac{1}{5}\sum_{i=0}^{4} RV_{t-i} \\
+    RV_t^{(m)} &= \frac{1}{22}\sum_{i=0}^{21} RV_{t-i}
+\end{align}
+
+\subsubsection{LSTM with Memory-Weighted Attention}
+
+For the LSTM architecture, we propose a memory-weighted attention mechanism:
+\begin{equation}
+    \alpha_{t,s} \propto \exp\left(\frac{\mathbf{h}_t^\top \mathbf{W}_\alpha \mathbf{h}_s}{\sqrt{d_k}} \cdot g(\dhat_t)\right)
+\end{equation}
+where $g(\dhat_t) = 1 + \dhat_t$ weights attention by memory strength---when $\dhat$ is higher, the model attends more to distant past observations.
+
+\subsubsection{Residual Learning Framework}
+
+\textbf{Stage 1:} Fit ARFIMA$(p,d,q)$-FIGARCH$(r,\delta,s)$ to obtain standardized residuals
+\begin{equation}
+    z_t = \frac{\varepsilon_t}{\sigma_t}
+\end{equation}
+
+\textbf{Stage 2:} Train ML to predict $z_t^2$
+
+If the volatility model is correctly specified:
+\begin{equation}
+    H_0: \E[z_t^2 | \mathcal{F}_{t-1}] = 1 \quad \forall t
+\end{equation}
+
+If ML achieves $R^2 > 0$ on $z_t^2$ out-of-sample, the null is rejected---implying exploitable misspecification.
+
+% ============================================
+% RESEARCH HYPOTHESES
+% ============================================
+\section{Research Hypotheses}
+
+\begin{hypothesis}[Memory Parameter Predictability]
+The estimated memory parameter $\dhat$ contains predictive information for future volatility beyond the HAR benchmark:
+\begin{equation}
+    \E[RV_{t+h} | \mathcal{F}_t, \dhat_t] \neq \E[RV_{t+h} | \mathcal{F}_t]
+\end{equation}
+\end{hypothesis}
+
+\begin{hypothesis}[Memory Dynamics Signal Regimes]
+Changes in $\dhat$ predict volatility regime transitions:
+\begin{equation}
+    P(\text{High Vol}_{t+h} | \Delta\dhat_t > \tau) > P(\text{High Vol}_{t+h})
+\end{equation}
+\end{hypothesis}
+
+\begin{hypothesis}[Cross-Sectional Memory Dispersion]
+Cross-sectional dispersion in memory parameters predicts market-level volatility:
+\begin{equation}
+    \Corr\left(\sigma_d^{\text{CS}}(t), VIX_{t+h}\right) > 0
+\end{equation}
+\end{hypothesis}
+
+\begin{hypothesis}[Residual Structure Exists]
+ARFIMA-FIGARCH residuals contain learnable structure:
+\begin{equation}
+    R^2_{\text{ML}}(z_t^2) > 0 \quad \text{(out-of-sample)}
+\end{equation}
+\end{hypothesis}
+
+\begin{hypothesis}[Hybrid Dominance]
+The LRD-augmented ML model outperforms both pure econometric and pure ML approaches:
+\begin{equation}
+    \text{QLIKE}_{\text{hybrid}} < \min\left(\text{QLIKE}_{\text{FIGARCH}}, \text{QLIKE}_{\text{ML}}\right)
+\end{equation}
+\end{hypothesis}
+
+% ============================================
+% DATA REQUIREMENTS
+% ============================================
+\section{Data Requirements}
+
+\subsection{Primary Dataset: S\&P 500 Constituents}
+
+\begin{table}[htbp]
+\centering
+\caption{Bloomberg Terminal Data Requirements}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Data Type} & \textbf{Bloomberg Field} & \textbf{Frequency} & \textbf{Period} \\
+\midrule
+Adjusted Close & PX\_LAST & Daily & 2000--2024 \\
+Intraday Prices & INTRADAY\_PRICE & 5-min & 2010--2024 \\
+Volume & VOLUME & Daily & 2000--2024 \\
+Bid-Ask Spread & BID\_ASK\_SPREAD & Daily & 2000--2024 \\
+Market Cap & CUR\_MKT\_CAP & Monthly & 2000--2024 \\
+Sector & GICS\_SECTOR & Static & Current \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Market-Level Variables}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Variable} & \textbf{Bloomberg Ticker} & \textbf{Frequency} \\
+\midrule
+VIX & VIX Index & Daily \\
+Risk-Free Rate & USGG3M Index & Daily \\
+Term Spread & USYC1030 Index & Daily \\
+Credit Spread & CDX IG CDSI GEN 5Y & Daily \\
+Market Return & SPX Index & Daily \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Realized Volatility Construction}
+
+From 5-minute returns $r_{t,i}$ for day $t$ (where $i = 1, \ldots, M$ with $M = 78$ intervals):
+\begin{equation}
+    RV_t = \sum_{i=1}^{M} r_{t,i}^2
+\end{equation}
+
+Bias-corrected estimator \citep{hansen2006realized}:
+\begin{equation}
+    RV_t^{\text{AC1}} = RV_t + 2\sum_{i=1}^{M-1} r_{t,i} r_{t,i+1}
+\end{equation}
+
+\subsection{Sample Construction}
+
+\begin{itemize}
+    \item \textbf{Training:} 2000--2017 (18 years)
+    \item \textbf{Validation:} 2018--2019 (2 years)
+    \item \textbf{Test:} 2020--2024 (5 years, includes COVID crisis)
+\end{itemize}
+
+Cross-sectional sample: $\sim$500 stocks with sufficient history, survivorship-bias-free using point-in-time index membership.
+
+% ============================================
+% MODEL SPECIFICATIONS
+% ============================================
+\section{Model Specifications}
+
+\subsection{Benchmark Models}
+
+\begin{enumerate}[label=\textbf{B\arabic*:}]
+    \item \textbf{HAR-RV} \citep{corsi2009simple}
+    \begin{equation}
+        RV_{t+h} = \beta_0 + \beta_d RV_t^{(d)} + \beta_w RV_t^{(w)} + \beta_m RV_t^{(m)} + \varepsilon_{t+h}
+    \end{equation}
+    
+    \item \textbf{FIGARCH(1,d,1)}
+    \begin{equation}
+        \sigma_t^2 = \omega + \beta \sigma_{t-1}^2 + \left[1 - \beta - (1-\phi B)(1-B)^d\right]\varepsilon_t^2
+    \end{equation}
+    
+    \item \textbf{Pure ML} (XGBoost/LSTM on raw features, no LRD structure)
+    \begin{equation}
+        \widehat{RV}_{t+h} = F_{\text{ML}}\left(RV_{t-k:t}, r_{t-k:t}, \mathbf{X}_t^{\text{MKT}}\right)
+    \end{equation}
+\end{enumerate}
+
+\subsection{Proposed Models}
+
+\begin{enumerate}[label=\textbf{P\arabic*:}]
+    \item \textbf{HAR + LRD Features (XGBoost)}
+    \begin{equation}
+        \mathbf{X} = \left[\mathbf{F}^{\text{HAR}}, \dhat, \Delta\dhat, \sigmahat^2, z^2\right]
+    \end{equation}
+    
+    \item \textbf{Full LRD-ML Hybrid (XGBoost)}
+    \begin{equation}
+        \mathbf{X} = \left[\mathbf{F}^{\text{LRD}}, \mathbf{F}^{\text{HAR}}, \mathbf{F}^{\text{MKT}}\right]
+    \end{equation}
+    
+    \item \textbf{LRD-LSTM} --- Sequential model with LRD feature inputs and memory-weighted attention
+    
+    \item \textbf{Residual Learning}
+    \begin{align}
+        \text{Stage 1:} \quad & \text{FIGARCH} \to z_t = \varepsilon_t/\sigma_t \\
+        \text{Stage 2:} \quad & \text{ML on } z_t^2
+    \end{align}
+    
+    \item \textbf{Cross-Sectional Factor Model}
+    \begin{equation}
+        r_{i,t+1} = \alpha + \gamma \dhat_{i,t} + \boldsymbol{\beta}'\mathbf{f}_t + \varepsilon_{i,t+1}
+    \end{equation}
+\end{enumerate}
+
+\subsection{Evaluation Framework}
+
+\subsubsection{Loss Functions}
+
+\begin{align}
+    \text{MSE} &= \frac{1}{T}\sum_{t=1}^T (RV_t - \widehat{RV}_t)^2 \\
+    \text{QLIKE} &= \frac{1}{T}\sum_{t=1}^T \left(\ln\widehat{RV}_t + \frac{RV_t}{\widehat{RV}_t}\right) \\
+    \text{MAE} &= \frac{1}{T}\sum_{t=1}^T |RV_t - \widehat{RV}_t|
+\end{align}
+
+\subsubsection{Statistical Tests}
+
+\textbf{Diebold-Mariano Test:}
+\begin{equation}
+    DM = \frac{\bar{d}}{\sqrt{\widehat{LRV}_d / T}} \xrightarrow{d} N(0,1)
+\end{equation}
+where $d_t = L(e_{1,t}) - L(e_{2,t})$ is the loss differential and $\widehat{LRV}_d$ is a HAC estimator of the long-run variance.
+
+\textbf{Model Confidence Set} \citep{hansen2011model}: For multiple model comparison with proper family-wise error rate control.
+
+\subsubsection{Robustness Checks}
+
+\begin{itemize}
+    \item Subsample analysis: pre-crisis, crisis, post-crisis periods
+    \item Rolling vs expanding window estimation
+    \item Multiple forecast horizons: $h = 1, 5, 22$ days
+    \item Alternative $\dhat$ estimators: GPH, Local Whittle, ELW
+\end{itemize}
+
+% ============================================
+% COMPUTATIONAL PIPELINE
+% ============================================
+\section{Computational Pipeline}
+
+\subsection{Phase 1: Data Preparation}
+
+\begin{tcolorbox}[title=Data Extraction \& Preprocessing]
+\begin{enumerate}
+    \item Bloomberg Terminal $\to$ Daily prices, 5-min bars, market variables
+    \item Point-in-time index membership for survivorship-bias-free sample
+    \item Compute log returns: $r_t = \ln(P_t/P_{t-1})$
+    \item Compute realized volatility from 5-minute data
+    \item Handle missing data, corporate actions, winsorize extremes (0.1\%, 99.9\%)
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{Phase 2: Rolling LRD Estimation}
+
+\begin{algorithm}[H]
+\caption{Rolling Window LRD Estimation}
+\begin{algorithmic}[1]
+\Require Returns $\{r_t\}_{t=1}^T$, window size $W$, bandwidth $m$
+\Ensure Time series of $\{\dhat_t, \text{SE}_t\}_{t=W}^T$
+\For{$t = W$ to $T$}
+    \State $\mathbf{r} \gets \{r_{t-W+1}, \ldots, r_t\}$
+    \State $\dhat_t^{\text{GPH}}, \text{SE}_t^{\text{GPH}} \gets \textsc{GPH}(\mathbf{r}, m)$
+    \State $\dhat_t^{\text{LW}}, \text{SE}_t^{\text{LW}} \gets \textsc{LocalWhittle}(\mathbf{r}, m)$
+    \State Fit ARFIMA-FIGARCH $\to$ extract $\sigmahat_t^2$, $\hat{\varepsilon}_t$, $z_t$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Computational Considerations:}
+\begin{itemize}
+    \item $\sim$500 stocks $\times$ $\sim$5000 days $\times$ 3 estimation methods
+    \item Embarrassingly parallel across stocks
+    \item Estimated runtime: 24--48 hours on 32-core machine
+\end{itemize}
+
+\subsection{Phase 3: Feature Engineering}
+
+\begin{table}[htbp]
+\centering
+\caption{Feature Categories}
+\begin{tabular}{@{}p{3cm}p{9cm}@{}}
+\toprule
+\textbf{Category} & \textbf{Features} \\
+\midrule
+LRD Parameters & $\dhat_r$, $\dhat_\sigma$, SE($\dhat_r$), SE($\dhat_\sigma$) \\
+Memory Dynamics & $\Delta\dhat$, Vol($\dhat$), Trend($\dhat$) \\
+Model Outputs & $\sigmahat^2$, $z_t$, $z_t^2$, $r_t^{(d)}$ \\
+HAR Components & $RV^{(d)}$, $RV^{(w)}$, $RV^{(m)}$ \\
+Market Variables & VIX, Volume, Spread, Returns \\
+Cross-Sectional & $\bar{d}^{\text{CS}}$, $\sigma_d^{\text{CS}}$, Skew$_d^{\text{CS}}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Phase 4: Model Training}
+
+\begin{itemize}
+    \item Time-series cross-validation with embargo period
+    \item Hyperparameter tuning via Bayesian optimization
+    \item Feature importance via SHAP values
+\end{itemize}
+
+% ============================================
+% EXPECTED CONTRIBUTIONS
+% ============================================
+\section{Expected Contributions}
+
+\subsection{Methodological Contributions}
+
+\begin{enumerate}
+    \item \textbf{Novel Feature Framework:} First systematic study using LRD model parameters ($\dhat$, $\sigmahat^2$, standardized residuals) as ML input features rather than preprocessing tools.
+    
+    \item \textbf{Memory Dynamics Features:} Introduction of $\Delta\dhat$, Vol($\dhat$), and Trend($\dhat$) as regime indicators for volatility forecasting.
+    
+    \item \textbf{Cross-Sectional Memory Analysis:} First application of cross-sectional $\dhat$ distribution moments as market-level predictors.
+    
+    \item \textbf{Residual Structure Test:} Formal framework for testing FIGARCH misspecification via ML predictability of squared standardized residuals.
+\end{enumerate}
+
+\subsection{Empirical Contributions}
+
+\begin{enumerate}
+    \item Rigorous out-of-sample evaluation across S\&P 500 universe with proper statistical inference (DM tests, Model Confidence Set)
+    
+    \item Crisis period analysis: does LRD-ML hybrid improve during market stress (2008--09, 2020)?
+    
+    \item SHAP-based interpretation of which LRD features drive predictive gains
+\end{enumerate}
+
+\subsection{Potential Extensions}
+
+\begin{itemize}
+    \item \textbf{Risk Management:} VaR/ES estimation with proper backtesting
+    \item \textbf{Options Pricing:} LRD-ML volatility forecasts as inputs to option valuation
+    \item \textbf{Cross-Asset:} Extend to FX, commodities, cryptocurrencies
+    \item \textbf{Real-Time:} Develop pipeline for live trading applications
+\end{itemize}
+
+% ============================================
+% TIMELINE
+% ============================================
+\section{Timeline}
+
+\begin{table}[htbp]
+\centering
+\caption{Research Timeline}
+\begin{tabular}{@{}clll@{}}
+\toprule
+\textbf{Phase} & \textbf{Task} & \textbf{Duration} & \textbf{Deliverable} \\
+\midrule
+1 & Data extraction \& cleaning & 4 weeks & Clean dataset \\
+2 & LRD estimation pipeline & 6 weeks & Rolling $\dhat$ estimates \\
+3 & Feature engineering & 4 weeks & Feature matrices \\
+4 & Benchmark implementation & 4 weeks & HAR, FIGARCH, Pure ML \\
+5 & Hybrid model development & 6 weeks & LRD-ML models \\
+6 & Evaluation \& robustness & 6 weeks & Statistical results \\
+7 & Writing \& revision & 8 weeks & Draft paper \\
+\midrule
+\multicolumn{2}{l}{\textbf{Total}} & \textbf{$\sim$10 months} & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================
+% PUBLICATION STRATEGY
+% ============================================
+\section{Publication Strategy}
+
+\subsection{Target Venues}
+
+\begin{enumerate}
+    \item \textbf{Primary:} \textit{Journal of Financial Econometrics} Special Issue on ``Machine Learning in Financial Econometrics'' (Deadline: March 1, 2026)
+    
+    \item \textbf{Alternatives:}
+    \begin{itemize}
+        \item \textit{Quantitative Finance}
+        \item \textit{Journal of Banking \& Finance}
+        \item \textit{Journal of Empirical Finance}
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Key Differentiator}
+
+Novel theoretical framework for LRD-ML integration with proper statistical inference---not just another ``ML vs traditional models'' comparison. The cross-sectional memory factor analysis could potentially reach \textit{Review of Financial Studies} if asset pricing implications are strong.
+
+% ============================================
+% RISK ASSESSMENT
+% ============================================
+\section{Risk Assessment}
+
+\begin{table}[htbp]
+\centering
+\caption{Risk Assessment and Mitigation}
+\begin{tabular}{@{}p{4cm}ccp{5cm}@{}}
+\toprule
+\textbf{Risk} & \textbf{Prob.} & \textbf{Impact} & \textbf{Mitigation} \\
+\midrule
+$\dhat$ estimation noise dominates signal & Medium & High & Ensemble of estimators; focus on volatility $d$ \\
+ML overfits to LRD features & Medium & Medium & Strict train/val/test split; regularization \\
+Computational bottleneck & Low & Medium & Parallel estimation; cloud computing \\
+Results not significant & Medium & High & Multiple hypotheses; economic significance \\
+Scooped by another group & Low & High & Target JFEC special issue deadline \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================
+% REFERENCES
+% ============================================
+\newpage
+\section{References}
+
+\subsection*{Foundational LRD}
+
+\begin{itemize}
+    \item Geweke, J., \& Porter-Hudak, S. (1983). The estimation and application of long memory time series models. \textit{Journal of Time Series Analysis}, 4(4), 221--238.
+    
+    \item Baillie, R. T., Bollerslev, T., \& Mikkelsen, H. O. (1996). Fractionally integrated generalized autoregressive conditional heteroskedasticity. \textit{Journal of Econometrics}, 74(1), 3--30.
+    
+    \item Robinson, P. M. (1995). Gaussian semiparametric estimation of long range dependence. \textit{Annals of Statistics}, 23(5), 1630--1661.
+    
+    \item Shimotsu, K., \& Phillips, P. C. (2005). Exact local Whittle estimation of fractional integration. \textit{Annals of Statistics}, 33(4), 1890--1933.
+\end{itemize}
+
+\subsection*{LRD in Finance}
+
+\begin{itemize}
+    \item Ding, Z., Granger, C. W., \& Engle, R. F. (1993). A long memory property of stock market returns and a new model. \textit{Journal of Empirical Finance}, 1(1), 83--106.
+    
+    \item Andersen, T. G., Bollerslev, T., Diebold, F. X., \& Labys, P. (2003). Modeling and forecasting realized volatility. \textit{Econometrica}, 71(2), 579--625.
+    
+    \item Corsi, F. (2009). A simple approximate long-memory model of realized volatility. \textit{Journal of Financial Econometrics}, 7(2), 174--196.
+    
+    \item Caporale, G. M., Gil-Alana, L., \& Plastun, A. (2018). Is market fear persistent? A long-memory analysis. \textit{Finance Research Letters}, 27, 140--147.
+\end{itemize}
+
+\subsection*{Machine Learning in Finance}
+
+\begin{itemize}
+    \item Gu, S., Kelly, B., \& Xiu, D. (2020). Empirical asset pricing via machine learning. \textit{Review of Financial Studies}, 33(5), 2223--2273.
+    
+    \item López de Prado, M. (2018). \textit{Advances in Financial Machine Learning}. Wiley.
+    
+    \item Hansen, P. R., Lunde, A., \& Nason, J. M. (2011). The model confidence set. \textit{Econometrica}, 79(2), 453--497.
+\end{itemize}
+
+\subsection*{Hybrid Approaches}
+
+\begin{itemize}
+    \item Zhao, Y., et al. (2024). From GARCH to neural network for volatility forecast. \textit{Proceedings of AAAI Conference on AI}.
+    
+    \item Stempień, K., \& Ślepaczuk, R. (2025). Hybrid models for financial forecasting: Combining econometric, machine learning, and deep learning models. \textit{arXiv:2505.19617}.
+\end{itemize}
+
+% ============================================
+% APPENDIX
+% ============================================
+\newpage
+\appendix
+
+\section{Mathematical Proofs (Sketch)}
+
+\subsection{Consistency of Rolling $\dhat$ Estimator}
+
+Under standard regularity conditions, the rolling window Local Whittle estimator satisfies:
+\begin{equation}
+    \dhat_t \xrightarrow{p} d \quad \text{as } W \to \infty
+\end{equation}
+where $W$ is the window size, provided $W/T \to 0$ as both $W, T \to \infty$.
+
+\subsection{Asymptotic Distribution for Two-Stage Inference}
+
+When using $\dhat$ from stage 1 as a feature in stage 2 ML:
+\begin{equation}
+    \sqrt{T}(\hat{\beta}_{\text{ML}} - \beta) \xrightarrow{d} N(0, V + \Delta)
+\end{equation}
+where $V$ is the standard ML variance and $\Delta$ is the correction for first-stage estimation error. This correction should be acknowledged even if typically ignored in practice.
+
+\section{Implementation Code Snippets}
+
+\subsection{GPH Estimator}
+
+\begin{lstlisting}[language=Python]
+import numpy as np
+
+def gph_estimator(x, m=None):
+    """
+    Geweke-Porter-Hudak log-periodogram regression
+    """
+    T = len(x)
+    if m is None:
+        m = int(np.floor(T**0.5))
+    
+    # Periodogram at Fourier frequencies
+    freq = 2 * np.pi * np.arange(1, m+1) / T
+    fft_x = np.fft.fft(x - np.mean(x))
+    I = np.abs(fft_x[1:m+1])**2 / (2 * np.pi * T)
+    
+    # Regressors
+    y = np.log(I)
+    X = np.log(4 * np.sin(freq/2)**2)
+    
+    # OLS
+    X_dm = X - np.mean(X)
+    beta = np.sum(X_dm * (y - np.mean(y))) / np.sum(X_dm**2)
+    d_hat = -beta / 2
+    se = np.pi / np.sqrt(24 * m)
+    
+    return d_hat, se
+\end{lstlisting}
+
+\section{Data Dictionary}
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Variable} & \textbf{Definition} & \textbf{Source} \\
+\midrule
+$r_t$ & Log return: $\ln(P_t/P_{t-1})$ & Computed \\
+$RV_t$ & Realized variance: $\sum r^2_{t,i}$ & 5-min data \\
+$\dhat_r$ & Memory parameter for returns & GPH/LW \\
+$\dhat_\sigma$ & Memory parameter for volatility & FIGARCH MLE \\
+$\sigmahat^2_t$ & Conditional variance & FIGARCH \\
+$z_t$ & Standardized residual: $\varepsilon_t/\sigma_t$ & FIGARCH \\
+$VIX_t$ & CBOE Volatility Index & Bloomberg \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\vfill
+\begin{center}
+\textit{Prepared for discussion with Dr. Svetlozar Rachev}
+\end{center}
+
+\end{document}

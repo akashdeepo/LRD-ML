@@ -1,0 +1,30 @@
+% Table 8: Sector-Level Forecast Improvement (h=5) vs Model A
+
+\begin{table}[htbp]
+\centering
+\caption{Sector-Level MSE Improvement (\%) vs Model A at $h=5$}
+\label{tab:sector_split}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccccc}
+\toprule
+Sector & A & A1 & A2 & A3 & A4 & A5 & C & D\_lasso & D\_rf & D\_gbm \\
+\midrule
+Communication Services & +0.00\% & +7.29\% & -0.76\% & +0.42\% & +0.38\% & +7.37\% & +6.39\% & +5.76\% & +0.53\% & -14.61\% \\
+Consumer Discretionary & +0.00\% & +8.36\% & -0.03\% & +0.11\% & +0.26\% & +7.44\% & +8.51\% & +6.97\% & +1.66\% & -9.57\% \\
+Consumer Staples & +0.00\% & +7.22\% & +0.02\% & +0.51\% & +0.33\% & +6.83\% & +8.55\% & +6.46\% & +0.86\% & -10.85\% \\
+Energy & +0.00\% & +4.28\% & +0.71\% & +0.13\% & +0.14\% & +5.20\% & +4.91\% & +1.73\% & -2.84\% & -13.14\% \\
+Financials & +0.00\% & +9.45\% & +0.27\% & +0.19\% & +0.19\% & +9.46\% & +9.48\% & +7.79\% & +4.24\% & -6.76\% \\
+Health Care & +0.00\% & +6.62\% & -0.60\% & +0.61\% & +0.11\% & +7.12\% & +8.75\% & +7.87\% & +3.20\% & -9.00\% \\
+Industrials & +0.00\% & +9.10\% & -0.29\% & +0.79\% & +0.25\% & +9.41\% & +10.51\% & +8.30\% & +3.39\% & -8.15\% \\
+Information Technology & +0.00\% & +5.07\% & -0.26\% & +0.15\% & +0.26\% & +4.55\% & +4.19\% & +3.51\% & -0.61\% & -14.55\% \\
+Materials & +0.00\% & +10.99\% & -0.25\% & +0.61\% & +0.01\% & +10.89\% & +12.72\% & +11.28\% & +4.10\% & -12.16\% \\
+Real Estate & +0.00\% & +10.22\% & +0.79\% & -0.04\% & -0.09\% & +10.16\% & +10.29\% & +10.50\% & +5.66\% & -7.99\% \\
+Utilities & +0.00\% & +8.08\% & +1.45\% & +0.23\% & +0.22\% & +6.98\% & +7.62\% & +9.15\% & +2.58\% & -4.60\% \\
+\bottomrule
+\end{tabular}%
+}
+\begin{tablenotes}\small
+\item Notes: Out-of-sample MSE improvement on $\log RV^{PK}$ at horizon $h=5$, by GICS sector, relative to Model A. Pooled across stocks within each sector and over the entire out-of-sample window.
+\end{tablenotes}
+\end{table}

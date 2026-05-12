@@ -1,0 +1,64 @@
+% Table 5: Out-of-sample forecast comparison (HLN-corrected DM)
+
+\begin{table}[htbp]
+\centering
+\caption{Out-of-Sample Forecast Comparison: Layered Ladder $A \to A_1\dots A_5 \to C \to D$, Horizons $h \in \{1,5,22\}$}
+\label{tab:model_comparison}
+\small
+\begin{tabular}{llcccc}
+\toprule
+Model & $h$ & MSE($\log RV^{PK}$) & QLIKE & \%$\Delta$ vs A & HLN DM-$t$ vs A \\
+\midrule
+\textbf{A} &  1 & 0.6686 & -7.5872 & +0.00\% & -- \\
+ &  5 & 0.3634 & -7.6731 & +0.00\% & -- \\
+ & 22 & 0.2689 & -7.6121 & +0.00\% & -- \\
+\midrule
+\textbf{A1} &  1 & 0.6345 & -7.6340 & +5.10\% & $+5.34^{***}$ \\
+ &  5 & 0.3353 & -7.6949 & +7.72\% & $+5.31^{***}$ \\
+ & 22 & 0.2589 & -7.6156 & +3.72\% & $+1.98^{**}$ \\
+\midrule
+\textbf{A2} &  1 & 0.6722 & -7.5780 & -0.54\% & $-3.06^{***}$ \\
+ &  5 & 0.3635 & -7.6712 & -0.03\% & $-0.07$ \\
+ & 22 & 0.2697 & -7.6083 & -0.30\% & $-0.41$ \\
+\midrule
+\textbf{A3} &  1 & 0.6692 & -7.5918 & -0.10\% & $-0.58$ \\
+ &  5 & 0.3621 & -7.6755 & +0.37\% & $+1.05$ \\
+ & 22 & 0.2655 & -7.6179 & +1.26\% & $+1.41$ \\
+\midrule
+\textbf{A4} &  1 & 0.6689 & -7.5843 & -0.05\% & $-0.45$ \\
+ &  5 & 0.3627 & -7.6717 & +0.21\% & $+0.80$ \\
+ & 22 & 0.2681 & -7.6108 & +0.29\% & $+0.47$ \\
+\midrule
+\textbf{A5} &  1 & 0.6358 & -7.6442 & +4.91\% & $+4.02^{***}$ \\
+ &  5 & 0.3357 & -7.6970 & +7.63\% & $+4.18^{***}$ \\
+ & 22 & 0.2612 & -7.6170 & +2.87\% & $+1.38$ \\
+\midrule
+\textbf{C} &  1 & 0.6382 & -7.6422 & +4.55\% & $+3.15^{***}$ \\
+ &  5 & 0.3334 & -7.6992 & +8.24\% & $+3.87^{***}$ \\
+ & 22 & 0.2540 & -7.6258 & +5.54\% & $+2.33^{**}$ \\
+\midrule
+\textbf{D\_lasso} &  1 & 0.6403 & -7.6316 & +4.23\% & $+3.92^{***}$ \\
+ &  5 & 0.3381 & -7.6940 & +6.97\% & $+4.16^{***}$ \\
+ & 22 & 0.2680 & -7.6113 & +0.33\% & $+0.20$ \\
+\midrule
+\textbf{D\_ridge} &  1 & 0.6452 & -7.6301 & +3.50\% & $+3.28^{***}$ \\
+ &  5 & 0.3418 & -7.6931 & +5.95\% & $+3.60^{***}$ \\
+ & 22 & 0.2698 & -7.6121 & -0.32\% & $-0.08$ \\
+\midrule
+\textbf{D\_en} &  1 & 0.6405 & -7.6305 & +4.20\% & $+3.97^{***}$ \\
+ &  5 & 0.3382 & -7.6939 & +6.93\% & $+4.23^{***}$ \\
+ & 22 & 0.2677 & -7.6117 & +0.44\% & $+0.25$ \\
+\midrule
+\textbf{D\_rf} &  1 & 0.6658 & -7.6177 & +0.42\% & $+0.41$ \\
+ &  5 & 0.3553 & -7.6824 & +2.22\% & $+1.62$ \\
+ & 22 & 0.2831 & -7.6002 & -5.29\% & $-2.24^{**}$ \\
+\midrule
+\textbf{D\_gbm} &  1 & 0.7584 & -7.5710 & -13.43\% & $-8.58^{***}$ \\
+ &  5 & 0.3993 & -7.6656 & -9.87\% & $-4.27^{***}$ \\
+ & 22 & 0.3206 & -7.5854 & -19.22\% & $-5.53^{***}$ \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item Notes: pooled across all stocks and out-of-sample dates (post 40\% warm-up). MSE on $\log RV^{PK}$ scale (range-based variance proxy); QLIKE on the variance scale. HLN DM-$t$ is the Harvey-Leybourne-Newbold finite-sample-corrected Diebold-Mariano statistic, computed on the cross-sectional mean loss differential per date with Newey-West HAC variance (bandwidth tied to $\lceil h / 5 \rceil - 1$ to handle overlapping multi-step forecasts on a weekly sample stride) and Student-$t(T-1)$ reference. Positive values indicate the model beats Model A. Significance: $^{*}$ $p<0.10$, $^{**}$ $p<0.05$, $^{***}$ $p<0.01$. Layered ladder: $A$ (HAR core), $A_1$ ($+$ VIX, MOVE; HAR-X), $A_2$ ($+$ own-stock persistence block), $A_3$ ($+$ cross-sectional mean and dispersion of $\hat d$), $A_4$ ($+$ sector-mean $\hat d$), $A_5$ ($+$ $\hat d$, VIX, MOVE, $\hat d \times$ VIX, $\hat d \times$ MOVE), $C$ (full union), $D$ (predictors of $C$ estimated by shrinkage / tree-based ML).
+\end{tablenotes}
+\end{table}

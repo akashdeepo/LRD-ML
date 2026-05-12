@@ -1,0 +1,29 @@
+% Table: FIGARCH(1,d,1) Estimates
+
+\begin{table}[htbp]
+\centering
+\caption{FIGARCH(1,d,1) Model Estimates}
+\label{tab:figarch_estimates}
+\small
+\begin{tabular}{lcccccc}
+\toprule
+Stock & $\omega$ & $d$ & $\phi$ & $\beta$ & AIC & BIC \\
+\midrule
+AAPL & 0.2153 & 0.311 & 0.313 & 0.524 & 25240.0 & 25280.3 \\
+MSFT & 0.2259 & 0.309 & 0.218 & 0.426 & 22734.1 & 22774.4 \\
+JPM & 0.1213 & 0.461 & 0.182 & 0.510 & 23429.5 & 23469.8 \\
+XOM & 0.0671 & 0.421 & 0.231 & 0.557 & 21309.8 & 21350.2 \\
+JNJ & 0.0725 & 0.308 & 0.346 & 0.498 & 17233.5 & 17273.8 \\
+GE & 0.0904 & 0.378 & 0.311 & 0.556 & 23508.0 & 23548.3 \\
+WMT & 0.1606 & 0.244 & 0.378 & 0.483 & 19624.8 & 19665.1 \\
+KO & 0.1433 & 0.273 & 0.000 & 0.175 & 17667.8 & 17708.1 \\
+PG & 0.1897 & 0.237 & 0.000 & 0.116 & 17635.3 & 17675.6 \\
+BA & 0.1723 & 0.346 & 0.322 & 0.568 & 24599.0 & 24639.4 \\
+\midrule
+\textbf{Mean} & -- & \textbf{0.329} & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item Notes: FIGARCH(1,d,1) with AR(1) mean and normal innovations. $d \in (0, 0.5)$ indicates stationary long memory in conditional variance.
+\end{tablenotes}
+\end{table}
