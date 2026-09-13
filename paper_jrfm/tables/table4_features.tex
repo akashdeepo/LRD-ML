@@ -1,0 +1,58 @@
+% Table 4: Persistence Feature Vector -- definitions and pooled statistics
+
+\begin{table}[htbp]
+\centering
+\caption{Persistence Features and Descriptive Diagnostics: Pooled Statistics}
+\label{tab:features}
+\small
+\begin{tabular}{llcccc}
+\toprule
+Category & Feature & Mean & Std & 1\% & 99\% \\
+\midrule
+\multicolumn{6}{l}{\textbf{LRD}} \\
+  & $\hat d_{GPH,t}$ (rolling) & 0.3461 & 0.1922 & 0.0016 & 0.8308 \\
+  & $\hat d_{LW,t}$ (rolling) & 0.3358 & 0.1738 & 0.0265 & 0.8278 \\
+\midrule
+\multicolumn{6}{l}{\textbf{Roughness}} \\
+  & $H_t$ (rolling) & 0.0620 & 0.0275 & 0.0196 & 0.1303 \\
+\midrule
+\multicolumn{6}{l}{\textbf{Memory dyn.}} \\
+  & $\Delta\hat d_t$ & -0.0002 & 0.0300 & -0.0956 & 0.0956 \\
+  & $\mathrm{Vol}(\hat d)_t$ & 0.0134 & 0.0224 & 0.0001 & 0.1174 \\
+  & $\mathrm{Trend}(\hat d)_t$ & -0.0002 & 0.0161 & -0.0532 & 0.0504 \\
+\midrule
+\multicolumn{6}{l}{\textbf{HAR}} \\
+  & $RV^d$ & 0.0003 & 0.0012 & 0.0000 & 0.0027 \\
+  & $RV^w$ & 0.0003 & 0.0010 & 0.0000 & 0.0027 \\
+  & $RV^m$ & 0.0003 & 0.0008 & 0.0000 & 0.0025 \\
+\midrule
+\multicolumn{6}{l}{\textbf{Sector aggregate}} \\
+  & $\bar d_{s(i),t}$ & 0.3461 & 0.1605 & 0.0891 & 0.6724 \\
+\midrule
+\multicolumn{6}{l}{\textbf{Cross-sectional}} \\
+  & $\bar d_t$ (cross-sectional mean) & 0.3461 & 0.1493 & 0.1400 & 0.6058 \\
+  & $\sigma_d^t$ (cross-sectional std) & 0.1192 & 0.0236 & 0.0670 & 0.1676 \\
+  & Skew of $d_t$ across stocks & 0.0165 & 0.4559 & -1.1219 & 0.8546 \\
+  & Kurt of $d_t$ across stocks & 0.3385 & 0.8753 & -0.7179 & 2.8986 \\
+  & $P(\hat d > 0.30)$ & 0.5311 & 0.3313 & 0.0522 & 1.0000 \\
+  & Range of $\hat d$ across stocks & 0.6155 & 0.1391 & 0.3810 & 0.9985 \\
+\midrule
+\multicolumn{6}{l}{\textbf{Market}} \\
+  & VIX & 19.0494 & 8.3693 & 9.8977 & 53.7306 \\
+  & MOVE & 84.6779 & 30.7937 & 44.3771 & 188.2890 \\
+\midrule
+\multicolumn{6}{l}{\textbf{Interaction}} \\
+  & $\hat d_t \cdot \mathrm{VIX}_t$ & 7.2215 & 6.2893 & 0.0250 & 29.4611 \\
+  & $\hat d_t \cdot \mathrm{MOVE}_t$ & 30.6675 & 23.2602 & 0.1071 & 108.2395 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item Notes: Statistics are pooled across stocks and dates in the
+rolling-estimation panel. Persistence estimates are updated every five
+trading days, and HAR components are constructed from Parkinson range-based
+variance. Sector aggregates use GICS level-1 classifications. Threshold
+indicators and interactions with VIX and MOVE use GPH estimates. This table includes descriptive
+diagnostics in addition to the forecasting predictors specified in
+Section~\ref{sec:ml}.
+\end{tablenotes}
+\end{table}

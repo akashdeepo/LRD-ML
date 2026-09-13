@@ -1,0 +1,55 @@
+% Table 9: Robustness summary -- Model C vs Model A at h=5
+\begin{table}[p]
+\centering
+\caption{Robustness Summary: Model~C Relative to Model~A at $h=5$}
+\label{tab:robustness}
+\small
+\setlength{\tabcolsep}{3pt}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lccc}
+\toprule
+Variant & MSE & \% $\Delta$ vs A & HLN DM-$t$ \\ 
+\midrule
+Headline (Model C, full panel) & 0.3334 & +8.24\% & $+3.87$ \\ 
+Inference: plain DM (illustrative) & 0.3334 & +8.24\% & $+3.87$ (plain $+23.97$) \\ 
+\midrule
+Benchmark: GARCH(1,1) on returns & 0.7033 & -93.54\% & $-20.30$ \\ 
+\midrule
+Liquidity: low-liquidity half & 0.3342 & +8.95\% & $+4.26$ \\ 
+Liquidity: high-liquidity half & 0.3327 & +7.51\% & $+3.33$ \\ 
+\midrule
+Estimator: $\hat{d}_{LW}$ replaces $\hat{d}_{GPH}$ & 0.3336 & +8.21\% & $+3.85$ \\ 
+\midrule
+Rolling window: 500 days & 0.3302 & +9.13\% & $+4.00$ \\ 
+Rolling window: 1000 days & 0.3319 & +8.67\% & $+3.63$ \\ 
+\midrule
+Target: log mean future squared returns & 0.9102 & +4.16\% & $+3.10$ \\ 
+\midrule
+Regime: high VIX ($Q_4$) & -- & +17.94\% & -- \\ 
+Regime: low VIX ($Q_1$) & -- & +6.57\% & -- \\ 
+Regime: COVID 2020 & -- & +18.88\% & -- \\ 
+\bottomrule
+\end{tabular}%
+}
+\begin{tablenotes}\small
+\item Notes: Unless indicated otherwise, the checks compare Model~C with
+Model~A at $h=5$ using the $\log RV^{PK}$ target. Liquidity groups are formed
+by splitting at the cross-sectional median of full-sample mean inverse
+dollar volume. The estimator variant replaces GPH with local-Whittle
+estimates throughout the persistence block, including dynamics and
+interactions. Window variants reestimate rolling persistence before
+reconstructing the features. The target variant uses the log of future
+mean squared returns and refits both A and C. The GARCH(1,1) row reports a
+constant-mean model fitted to log returns and refitted every 20 sample
+steps, with the log of mean forecast conditional variance evaluated against
+the Parkinson target. Its return-variance scale differs from the
+range-based target, complicating interpretation of its relative loss. Under
+the proxy-robust QLIKE loss of \citet{patton2011volatility}, the GARCH(1,1)
+HLN-corrected DM statistic against Model~A narrows to $-2.80$ ($p=0.005$),
+versus $-20.30$ under MSE in the column above.
+Regime rows reproduce the $h=5$ comparisons in
+Table~\ref{tab:regime_split}. The plain DM statistic treats pooled cells
+as independent; the HLN statistic uses panel-aware aggregation and the
+Harvey--Leybourne--Newbold correction.
+\end{tablenotes}
+\end{table}

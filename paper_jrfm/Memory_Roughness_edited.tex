@@ -1,0 +1,1931 @@
+\documentclass[jrfm,article,submit,moreauthors,pdftex]{Definitions/mdpi}
+
+\usepackage[section]{placeins}
+\usepackage{threeparttable}
+\setlength{\headheight}{20pt}
+
+\firstpage{1}
+\pubyear{2026}
+\copyrightyear{2026}
+\doinum{}
+\datereceived{}
+\daterevised{}
+\dateaccepted{}
+\datepublished{}
+
+\Title{Volatility Persistence as a Financial State Variable:
+Memory, Roughness, and Forecasting Across Market Regimes}
+
+\Author{Akash Deep $^{1}$, Nicholas Appiah $^{1,*}$ and Svetlozar T. Rachev $^{1}$}
+\AuthorNames{Akash Deep, Nicholas Appiah and Svetlozar T. Rachev}
+
+\address[1]{Department of Mathematics and Statistics, Texas Tech University,
+Lubbock, TX 79409, USA}
+\corres{Correspondence:  \href{mailto:niappiah@ttu.edu}{niappiah@ttu.edu}}
+
+\abstract{
+This paper examines whether volatility persistence provides more forecasting
+information as a shared financial state than as a stock-specific parameter. Using 115 equities drawn from the S\&P~500 over November
+2001--April 2026, we combine memory estimates, roughness diagnostics, and heterogeneous
+autoregressive (HAR), market-state-augmented HAR (HAR-X), and
+persistence-augmented forecasts.
+Volatility proxies display persistent dependence and low estimated Hurst
+exponents. Own-stock persistence and roughness add little beyond HAR, while
+a joint specification incorporating cross-sectional and sectoral persistence
+states and persistence--stress interactions improves on HAR-X at weekly and
+monthly, but not daily, horizons under mean squared error. Market-state
+variables account for much of the short-horizon improvement over HAR; the
+additional contribution of persistence features is largest at the monthly
+horizon and varies across stress regimes. The full model reduces mean squared error by 4.55--8.24\% relative to HAR. A
+volatility-managed portfolio application shows a COVID Sharpe ratio of 1.36
+versus 1.06 for HAR-X management, although full-sample Sharpe ratios are
+similar. Tree-based estimators do not improve on the structured linear
+specification. These findings support persistence states
+as complementary forecasting inputs and are consistent with a reduced-form
+interpretation in terms of uncertainty propagation, without identifying
+causal mechanisms or estimating stress duration.}
+
+\keyword{long memory; rough volatility; volatility forecasting; financial econometrics;
+realized volatility; persistence dynamics}
+\JEL{C22; C53; G12; G17}
+
+\begin{document}
+
+
+\section{Introduction}
+\label{sec:intro}
+% =============================================================================
+
+Volatility forecasting occupies a central role in financial econometrics
+because volatility enters risk management, derivative pricing, portfolio
+allocation, margin determination, stress testing, and macro-financial
+monitoring. A large empirical literature has documented that volatility
+measures exhibit substantially greater persistence than raw asset returns.
+Classical long-memory models formalized this observation by extending
+conventional weak-dependence frameworks to allow autocorrelations that
+decay at hyperbolic rather than exponential rates
+\citep{granger1980introduction,hosking1981fractional}. Subsequent work
+incorporated fractional dependence into conditional-volatility specifications
+through FIGARCH-type models \citep{baillie1996fractionally}, while the
+realized-volatility literature improved the empirical measurement of latent
+volatility dynamics using high-frequency data
+\citep{andersen2003modeling,barndorff2002econometric}.
+
+Despite extensive empirical evidence for persistence in volatility proxies,
+the interpretation of persistence remains controversial. One branch of the
+literature views long-memory behavior as reflecting structural
+characteristics of financial markets, including heterogeneous trading
+horizons, slow information diffusion, and institutional frictions
+\citep{muller1997volatilities}. Another branch argues that apparent
+long-range dependence may arise from structural breaks, stochastic regime
+changes, or nonstationary volatility dynamics rather than genuine fractional
+dependence \citep{mikosch2004nonstationarities}. As a result, the economic
+interpretation of persistence measures remains unsettled. The central issue
+is therefore not simply whether a fractional parameter can be estimated, but
+whether persistence measures behave coherently across market states and
+contain useful information for forecasting and risk management.
+
+This paper examines volatility persistence from a reduced-form perspective.
+Rather than interpreting the memory parameter as a purely technical object
+associated with fractional differencing, we investigate whether rolling
+persistence measures behave empirically like indicators of the temporal
+propagation of uncertainty in financial markets. More specifically, we study
+whether persistence measures rise during sustained stress episodes, whether
+they co-move with broad market uncertainty indicators, and whether they
+improve volatility forecasts beyond standard benchmark models. The analysis
+does not attempt to identify a unique structural mechanism generating
+persistence. Instead, persistence is treated as an empirical summary
+statistic whose dynamics may reflect several overlapping mechanisms,
+including heterogeneous investor horizons, liquidity conditions, delayed
+information processing, regime shifts, and market-wide stress propagation.
+
+The paper also considers the relationship between long-memory behavior and
+rough volatility. Recent research has shown that volatility paths often
+display substantial local irregularity, with estimated Hurst exponents
+significantly below the Brownian benchmark of $\frac{1}{2}$
+\citep{gatheral2018volatility,bennedsen2021decoupling}. Although roughness
+and long memory are sometimes presented as competing explanations of
+volatility dynamics, they describe different temporal characteristics. Long
+memory concerns the persistence of dependence over long horizons, whereas
+roughness concerns local path irregularity at very short horizons. The
+empirical analysis in this paper suggests that both characteristics may
+coexist within the same volatility process.
+
+A further issue concerns the role of machine learning in volatility
+forecasting. Flexible forecasting algorithms can capture nonlinear
+interactions and high-dimensional predictor structures that may be difficult
+to represent using conventional parametric models. However, purely
+data-driven forecasting systems often lack economic interpretability and may
+produce unstable results outside the estimation sample
+\citep{gu2020empirical}. The present paper adopts an intermediate approach:
+econometric methods are used to construct interpretable persistence-related
+features, while forecasting systems incorporate these features alongside
+conventional volatility predictors and market-state variables.
+
+The empirical analysis uses a panel of 115 S\&P~500 stocks over the period
+November 2001 through April 2026. We estimate rolling long-memory measures
+using both the Geweke--Porter-Hudak and local-Whittle estimators and
+estimate local roughness using rolling Hurst exponents. These variables are
+incorporated into a forecasting framework that compares heterogeneous
+autoregressive (HAR) models, HAR models with market-state controls (HAR-X),
+persistence-augmented regressions, shrinkage estimators, and tree-based
+machine-learning methods.
+
+The central contribution is a distinction between stock-specific
+persistence and shared persistence states. The own-stock persistence and
+roughness block adds little beyond HAR, whereas the full specification,
+which combines cross-sectional and sectoral states with persistence--stress
+interactions and market controls, improves on HAR-X at weekly and monthly
+horizons. The results favor modeling persistence jointly with market
+conditions rather than treating an individual memory estimate as a
+stand-alone predictor. They do not establish that every aggregate block
+independently improves forecasts or that persistence is causally systemic.
+
+The paper makes three contributions. First, it documents persistent
+low-frequency dependence alongside roughness diagnostics across a broad
+equity panel, distinguishing these temporal characteristics without treating
+either as proof of a particular stochastic law. Second, it evaluates the
+forecasting content of persistence at the stock, cross-sectional, sectoral,
+and interaction levels using common benchmarks. HAR-X is central to this
+comparison: market-state controls explain much of the gain over HAR, and
+the full persistence feature set contributes additional accuracy primarily
+at longer horizons. Third, it relates this evidence to a volatility-managed
+portfolio application and compares linear, shrinkage, and tree-based
+estimators using the same feature space. The reported results favor
+structured linear forecasts in this setting, not a general rejection of
+nonlinear methods.
+
+The scope of the evidence is deliberately reduced-form. Persistence rises
+during major stress episodes and co-moves with the VIX, but the lead--lag
+diagnostic does not establish a leading stress signal. The reported
+significance tests compare forecasts with HAR; numerical gains relative to
+HAR-X are not accompanied by direct significance tests against that
+stronger benchmark. The contribution is therefore that shared persistence
+states can complement conventional volatility and market-stress information,
+with value that varies across horizons and regimes.
+
+The remainder of the paper proceeds as follows. Section~\ref{sec:literature}
+reviews the literature. Section~\ref{sec:theory} discusses the theoretical
+foundations of persistence. Section~\ref{sec:econometrics} presents the
+econometric framework. Section~\ref{sec:structural} develops the
+reduced-form interpretation. Section~\ref{sec:ml} introduces the forecasting
+framework. Section~\ref{sec:data} describes the data and empirical design.
+Section~\ref{sec:results} presents the results. Section~\ref{sec:economic}
+discusses the economic implications. Section~\ref{sec:conclusion} concludes.
+
+
+% =============================================================================
+\section{Literature Review: Persistence, Roughness, and Volatility}
+\label{sec:literature}
+% =============================================================================
+
+The literature on volatility persistence originates with foundational work
+on fractional integration and ARFIMA processes, which extended classical
+time-series analysis by allowing autocorrelation structures with
+hyperbolically decaying dependence rather than conventional exponential
+decay \citep{granger1980introduction,hosking1981fractional}. These
+developments became especially important in financial econometrics because
+volatility proxies such as squared returns, absolute returns, and realized
+variance measures exhibit substantially stronger persistence than raw asset
+returns themselves \citep{ding1993long}. The resulting evidence motivated
+the development of models capable of capturing long-range dependence in
+financial volatility while remaining consistent with broader conditional
+heteroskedasticity frameworks.
+
+One important contribution in this direction was the FIGARCH model
+introduced by \citet{baillie1996fractionally}, which incorporated
+fractional integration directly into conditional variance dynamics.
+FIGARCH generalized conventional GARCH specifications by allowing shocks to
+decay at hyperbolic rates, thereby accommodating the empirically observed
+persistence of volatility. The model rapidly became a standard benchmark in
+long-memory volatility research because it provided a tractable parametric
+representation of persistent conditional heteroskedasticity. Subsequent
+extensions introduced asymmetric responses, multivariate formulations, and
+alternative fractional structures, further expanding the long-memory
+volatility literature.
+
+At approximately the same time, the realized-volatility literature
+substantially improved the empirical measurement of latent volatility
+processes. \citet{andersen2003modeling} and \citet{barndorff2002econometric}
+demonstrated that high-frequency financial data could be used to construct
+more accurate ex post measures of integrated volatility. These developments
+strengthened empirical evidence for volatility persistence because
+realized-volatility measures contain less measurement noise than traditional
+squared-return proxies. The resulting data environment allowed researchers
+to study persistence properties with considerably greater precision.
+
+Another important development was the HAR model proposed by
+\citet{corsi2009simple}. Rather than imposing exact fractional integration,
+the HAR framework approximates long-memory behavior using a parsimonious
+multi-horizon structure involving daily, weekly, and monthly
+realized-volatility components. The HAR model proved empirically successful
+because it combines forecasting accuracy with economic interpretability. In
+particular, it is consistent with the idea that financial markets contain
+heterogeneous agents operating at different investment horizons
+\citep{muller1997volatilities}. The HAR framework remains one of the most
+widely used benchmarks in volatility forecasting.
+
+Despite substantial empirical support for persistence, the interpretation of
+persistence remains controversial. One branch of the literature views long
+memory as reflecting genuine structural characteristics of financial markets,
+including heterogeneous trading frequencies, delayed information diffusion,
+and institutional frictions. Another branch argues that apparent long-range
+dependence may arise from structural breaks, regime changes, stochastic
+volatility shifts, or nonlinear dynamics rather than from genuine fractional
+integration \citep{mikosch2004nonstationarities}. This critique implies that
+estimated persistence parameters should be interpreted cautiously because
+they may reflect evolving market conditions rather than stable stochastic
+mechanisms.
+
+The debate surrounding long memory became even more important following the
+emergence of the rough-volatility literature. \citet{gatheral2018volatility}
+showed that volatility paths frequently exhibit substantial local
+irregularity, with estimated Hurst exponents significantly below the
+Brownian-motion benchmark of $H=\frac{1}{2}$. Subsequent work clarified that
+roughness and long memory are not necessarily competing concepts.
+\citet{bennedsen2021decoupling} argued that short-run roughness and
+long-horizon persistence may represent distinct temporal features of
+volatility processes. The empirical analysis adopts
+this perspective by estimating both rolling persistence measures and rolling
+Hurst exponents within the same forecasting framework.
+
+In parallel with these econometric developments, machine learning has become
+increasingly important in volatility forecasting and empirical asset pricing.
+Flexible learning algorithms are capable of capturing nonlinear interactions,
+threshold effects, and high-dimensional predictor structures
+\citep{breiman2001random,friedman2001greedy,gu2020empirical,hastie2009elements}.
+However, purely data-driven approaches may produce unstable results outside
+the estimation sample and frequently lack economic interpretability.
+
+This tension between statistical flexibility and economic interpretation has
+become a central issue in modern empirical finance. Recent research
+increasingly emphasizes hybrid approaches in which economically motivated
+features are combined with flexible forecasting architectures. In this
+setting, the quality and interpretability of the feature space may be more
+important than the complexity of the forecasting algorithm itself.
+
+Taken together, this literature motivates a focused empirical question:
+does estimating persistence add forecasting information beyond the
+multi-horizon dynamics captured by HAR and the market conditions captured
+by HAR-X? The present paper addresses this question by separating own-stock
+features from cross-sectional aggregates, sectoral states, and
+persistence--stress interactions. Its contribution is this comparative
+assessment of persistence as a forecasting state variable, rather than a
+new fractional model or identification of an information-diffusion mechanism.
+
+% =============================================================================
+\section{Theoretical Foundations of Long Memory and Information
+Persistence}
+\label{sec:theory}
+% =============================================================================
+
+The concept of long memory emerged from attempts to describe stochastic
+processes whose dependence structures cannot be adequately represented by
+conventional short-memory models. Long-memory processes retain measurable
+dependence over substantially longer horizons, typically characterized
+through a slowly decaying autocovariance structure in which dependence
+declines at a hyperbolic rather than exponential rate
+\citep{granger1980introduction,hosking1981fractional}.
+
+Formally, a covariance-stationary long-memory process may be characterized
+by an autocovariance function satisfying
+\begin{equation}
+  \gamma(k) \sim c_\gamma\, k^{2d-1}\quad \text{as } k\to\infty,
+  \label{eq:lm-autocov}
+\end{equation}
+where $d\in(0,\frac{1}{2})$ denotes the memory parameter.
+
+Because $2d-1>-1$,
+the autocovariances are not absolutely summable, implying persistent
+dependence across long horizons. Equivalent characterizations arise in the
+frequency domain,
+\begin{equation}
+  f(\lambda) \sim c_f\, \lambda^{-2d}, \quad \lambda \to 0,
+\end{equation}
+providing the foundation for semiparametric estimators of long memory,
+including the Geweke--Porter-Hudak and local-Whittle procedures employed
+later in the paper \citep{robinson1995gaussian}.
+
+The fractional-difference operator $(1-L)^d$ provides the bridge between
+these probabilistic properties and empirically estimable time-series models.
+Fractionally integrated ARFIMA systems express current observations as
+weighted combinations of past innovations, where the weights decay gradually
+rather than disappearing rapidly. Relative to standard ARMA structures,
+fractional integration allows shocks to persist over much longer horizons
+while preserving covariance stationarity when $d<\frac{1}{2}$. In financial
+econometrics, this framework proved especially useful because volatility
+measures routinely display persistence patterns that are inconsistent with
+short-memory dynamics.
+
+Although long-memory models originated as statistical descriptions of
+temporal dependence, their interpretation in financial applications
+naturally raises broader economic questions. When persistence is observed in
+volatility proxies rather than in returns themselves, the memory parameter
+may be viewed as summarizing the duration over which uncertainty shocks
+continue to influence market behavior. Importantly, this interpretation
+should not be understood as structural identification of a unique mechanism.
+Rather, persistence measures are best viewed as reduced-form summaries
+reflecting several overlapping economic forces that jointly influence the
+temporal propagation of volatility.
+
+Several economic mechanisms could generate persistent volatility.
+Heterogeneous trading horizons can aggregate into slow adjustment
+\citep{muller1997volatilities,corsi2009simple}; delayed information
+processing, liquidity constraints, and gradual portfolio rebalancing may
+also prolong responses to shocks. These channels motivate studying
+persistence, but the empirical design does not distinguish among them.
+Regime changes and structural breaks remain alternative explanations for
+similar low-frequency behavior \citep{mikosch2004nonstationarities}.
+
+These considerations suggest that persistence measures may serve as
+reduced-form indicators of the temporal organization of uncertainty in
+financial markets. A stylized representation may be written as
+\begin{equation}
+  I_t \;=\; \sum_{k=0}^{\infty} w_k\, \varepsilon_{t-k}, \qquad
+  w_k \sim c\, k^{d-1},
+  \label{eq:info-persistence}
+\end{equation}
+where $I_t$ denotes an uncertainty-related process influenced by past
+informational shocks $\varepsilon_{t-k}$, and $d$ governs the speed at
+which the influence of past shocks declines over time.
+
+It is important, however, to distinguish carefully between statistical
+persistence and economic interpretation. The presence of estimated long
+memory does not necessarily imply that markets literally follow stationary
+fractional stochastic laws. Structural breaks, regime changes, stochastic
+volatility shifts, and evolving institutional environments may generate
+empirical behavior resembling long-range dependence. Consequently,
+persistence measures should not be interpreted mechanically as identifying
+a single structural mechanism. Instead, they should be viewed as empirical
+indicators whose behavior may reflect several interacting economic channels
+simultaneously.
+
+The interpretation developed in this paper therefore remains intentionally
+reduced-form. The central empirical question is not whether a unique
+structural mechanism can be identified, but rather whether persistence
+measures behave coherently across market states and whether they contain
+useful forecasting information beyond conventional volatility predictors.
+If persistence measures rise systematically during sustained stress
+episodes, co-move with broad uncertainty indicators, and improve volatility
+forecasts during crisis periods, then they may provide economically
+informative summaries of market conditions even without full structural
+identification.
+
+This perspective also accommodates the rough-volatility literature.
+Roughness and long memory describe different aspects of temporal dependence
+rather than mutually exclusive mechanisms. Long memory concerns
+low-frequency dependence and the persistence of shocks across longer
+horizons. Roughness concerns local path irregularity at very short horizons.
+A rough-volatility process satisfies
+\begin{equation}
+  \mathrm{E}\bigl|\log\sigma^2_{t+\Delta} - \log\sigma^2_t\bigr|^q
+  \;\propto\; \Delta^{qH},
+  \label{eq:rough-scaling-sec3}
+\end{equation}
+where $H<\frac{1}{2}$ implies rougher behavior than standard Brownian motion
+\citep{gatheral2018volatility}. A volatility process may therefore be
+simultaneously rough at short horizons and persistent at longer horizons.
+Financial markets may react sharply and irregularly immediately after news
+arrivals while still exhibiting prolonged uncertainty propagation over
+subsequent periods.
+
+The coexistence of roughness and persistence suggests that volatility
+dynamics should be analyzed across multiple temporal scales rather than
+through a single dependence measure. High-frequency volatility fluctuations
+may primarily reflect microstructure effects and rapid information arrivals,
+whereas medium- and long-horizon persistence may reflect broader
+institutional adjustment processes, funding conditions, and macro-financial
+uncertainty propagation. The empirical framework developed later in the
+paper incorporates both dimensions simultaneously through rolling estimates
+of long-memory parameters and rolling Hurst exponents.
+
+For forecasting, the relevant question is whether estimated persistence
+summarizes dependence not already captured by volatility lags and
+market-state controls. The empirical sections investigate this through
+forecast comparisons across horizons and regimes. These comparisons assess
+predictive usefulness, not the expected duration of an identified shock.
+
+% =============================================================================
+\section{Econometric Modeling of Fractional and Rough Volatility}
+\label{sec:econometrics}
+% =============================================================================
+
+The econometric analysis of volatility persistence has evolved along two
+closely related but conceptually distinct directions. The first focuses on
+long-memory dynamics and emphasizes slow hyperbolic decay over medium and
+long horizons. The second focuses on rough volatility and emphasizes highly
+irregular local behavior at very short horizons. The long-memory literature
+developed primarily within discrete-time econometrics through fractional
+integration and ARFIMA-type models. Rough-volatility models, by contrast,
+emerged from continuous-time stochastic-volatility theory and high-frequency
+financial econometrics. Recent empirical evidence suggests that these two
+perspectives are not mutually exclusive. The empirical framework developed
+in this paper therefore incorporates both dimensions in a common forecasting
+framework.
+
+\subsection{ARFIMA, GARCH, and FIGARCH}
+
+The ARFIMA framework provides a discrete-time representation of fractional
+dependence. For a covariance-stationary process $\{X_t\}$,
+\begin{equation}
+  \phi(L)\, (1-L)^d\, X_t \;=\; \theta(L)\,\eta_t,
+\end{equation}
+where $\phi(L)$ and $\theta(L)$ are finite-order lag polynomials, $d$
+denotes the fractional integration parameter, and $\eta_t$ is a white-noise
+innovation process \citep{granger1980introduction,hosking1981fractional}.
+The operator $(1-L)^d$ generalizes conventional integer differencing to
+fractional orders and allows shocks to decay gradually over long horizons.
+When applied to volatility proxies such as squared returns, absolute
+returns, range-based volatility measures, or realized variance, ARFIMA
+models provide parsimonious representations of long-range dependence in
+financial volatility. Unlike standard short-memory models, fractional
+integration allows dependence to persist over extended periods while
+preserving covariance stationarity when $d<\frac{1}{2}$.
+
+The conditional heteroskedasticity literature approached volatility
+persistence from a different perspective. Beginning with the ARCH model of
+\citet{engle1982autoregressive} and the GARCH extension of
+\citet{bollerslev1986generalized}, volatility dynamics were modeled directly
+through evolving conditional variance equations. Standard GARCH systems
+successfully capture volatility clustering but imply geometric decay in
+the effects of shocks. Empirical volatility series, however, often display
+substantially slower decay than conventional GARCH structures permit. The
+FIGARCH model of \citet{baillie1996fractionally} addressed this limitation
+by embedding fractional integration directly within the conditional-variance
+recursion,
+\begin{equation}
+  \bigl[1 - \beta(L)\bigr]\, h_t \;=\; \omega
+  + \bigl[1 - \beta(L) - \phi(L)(1-L)^d\bigr]\, \varepsilon_t^2 \,,
+\end{equation}
+where $h_t$ denotes conditional variance and $\varepsilon_t$ denotes return
+innovations. FIGARCH allows volatility shocks to decay hyperbolically rather
+than exponentially while preserving the conditional-heteroskedasticity
+structure.
+
+The FIGARCH framework became particularly influential because it provided an
+explicit connection between long-memory econometrics and volatility
+modeling. Numerous subsequent extensions introduced asymmetric effects,
+multivariate specifications, nonlinear dynamics, and regime dependence.
+Nevertheless, the central empirical motivation remained unchanged:
+volatility shocks appear to dissipate much more slowly than conventional
+short-memory volatility models predict.
+
+An important practical issue concerns interpretation. Although ARFIMA and
+FIGARCH systems estimate similar persistence behavior, they represent
+different modeling philosophies. ARFIMA-type systems emphasize the
+dependence structure of the observed process itself, whereas GARCH-type
+systems emphasize the evolution of latent conditional variance. In practice,
+both approaches frequently generate evidence consistent with persistent
+volatility dynamics.
+
+\subsection{Realized Volatility and HAR Models}
+
+The development of realized-volatility methodology substantially improved
+empirical analysis of volatility persistence. Traditional volatility proxies
+based on squared daily returns contain substantial measurement noise and
+therefore obscure underlying dependence structures. High-frequency financial
+data made it possible to construct more accurate ex post measures of
+integrated volatility through realized-variance estimators
+\citep{andersen2003modeling,barndorff2002econometric}.
+Realized-volatility measures significantly strengthened empirical evidence
+for persistent volatility dynamics because they provide less noisy
+approximations to latent volatility processes. These measures also
+facilitated more precise estimation of long-memory behavior and improved
+volatility forecasting performance across a wide range of applications.
+
+An especially important contribution was the heterogeneous autoregressive
+(HAR) model proposed by \citet{corsi2009simple}. The HAR framework
+approximates long-memory behavior using a parsimonious multi-horizon
+structure rather than imposing exact fractional integration,
+\begin{equation}
+  \log \mathrm{RV}_{t+1} \;=\; \beta_0 + \beta_d \log \mathrm{RV}^{(d)}_t
+  + \beta_w \log \mathrm{RV}^{(w)}_t
+  + \beta_m \log \mathrm{RV}^{(m)}_t
+  + u_{t+1},
+\end{equation}
+where $\mathrm{RV}^{(d)}_t$, $\mathrm{RV}^{(w)}_t$, and
+$\mathrm{RV}^{(m)}_t$ denote daily, weekly, and monthly realized-volatility
+components. The HAR model proved remarkably successful empirically because
+it captures many observed features of long-memory volatility dynamics while
+remaining computationally simple and economically interpretable. The
+framework is closely connected to heterogeneous-agent theories in which
+market participants operate at different investment horizons
+\citep{muller1997volatilities}. Daily components capture short-horizon
+trading activity, whereas weekly and monthly components reflect
+slower-moving institutional and macroeconomic adjustments.
+
+The HAR framework also became a dominant benchmark in volatility forecasting
+because of its strong empirical performance relative to more complex
+nonlinear specifications. In the present paper, HAR models serve as the
+baseline forecasting architecture against which persistence-augmented models
+are evaluated.
+
+\subsection{Rough Volatility}
+
+The rough-volatility literature introduced a complementary perspective on
+volatility dynamics by emphasizing local path irregularity rather than
+long-horizon persistence. \citet{gatheral2018volatility} showed that
+volatility paths estimated from high-frequency financial data often display
+substantially rougher behavior than implied by standard Brownian-motion
+models. In particular, estimated Hurst exponents frequently lie well below
+the classical benchmark $H=\frac{1}{2}$.
+
+A simplified rough-volatility representation may be written as
+\begin{equation}
+  \log \sigma_t \;=\; \mu + \nu\, B^H_t,
+\end{equation}
+where $B^H_t$ denotes fractional Brownian motion with Hurst exponent
+$H<\frac{1}{2}$. From an econometric standpoint, roughness is commonly
+characterized through scaling relations involving moments of volatility
+increments,
+\begin{equation}
+  \mathrm{E}|\log\sigma^2_{t+\Delta} - \log\sigma^2_t|^q \;\propto\; \Delta^{qH},
+\end{equation}
+where $H$ governs the scaling of local volatility fluctuations across
+short horizons. Let $m(q,\Delta)$ denote the empirical $q$th absolute
+moment of log-volatility increments at lag $\Delta$. We estimate $H_t$
+as the slope from regressing $\log m(q,\Delta)$ on $\log\Delta$ over
+a small grid of lags, divided by $q$.
+
+The rough-volatility framework proved highly successful in explaining
+several empirical features of financial markets, including short-horizon
+volatility behavior and implied-volatility surface dynamics
+\citep{bennedsen2021decoupling}. Rough models also provided improved
+consistency with observed option-market data and generated substantial
+interest in both academic and practitioner communities.
+
+Importantly, roughness and long memory characterize different temporal
+properties of volatility. Roughness concerns highly local short-term
+irregularity, whereas long memory concerns persistence across broader
+temporal horizons. A volatility process may therefore be simultaneously
+rough and persistent. The empirical framework adopted in this paper
+explicitly incorporates both dimensions through rolling estimates of
+long-memory parameters and rolling Hurst exponents.
+
+\subsection{Semiparametric Estimation of Long Memory}
+
+Empirical estimation of long memory presents substantial econometric
+challenges because dependence structures must be distinguished from
+nonstationarity, regime shifts, and structural breaks. The literature
+therefore developed several semiparametric estimation procedures that focus
+specifically on low-frequency behavior.
+
+One widely used approach is the Geweke--Porter-Hudak (GPH)
+log-periodogram estimator \citep{geweke1983estimation}. The estimator
+exploits the low-frequency behavior of the spectral density by regressing
+the logarithm of the periodogram on transformed Fourier frequencies. Using
+the first $m$ low-frequency ordinates, the estimator takes the form
+\begin{equation}
+  \log I(\lambda_j) \;=\; \alpha
+  - d\,\log\bigl[4\sin^2(\lambda_j/2)\bigr] + u_j,
+\end{equation}
+where $I(\lambda_j)$ is the periodogram at Fourier frequency
+$\lambda_j=2\pi j/T$, $j=1,\ldots,m$, and $T$ is the number of observations.
+The bandwidth is $m=\lfloor T^{0.65}\rfloor$. If $\hat\beta$ is the estimated
+slope on $\log[4\sin^2(\lambda_j/2)]$, the displayed regression implies
+$\hat d=-\hat\beta$.
+
+Another important procedure is the local-Whittle estimator proposed by
+\citet{robinson1995gaussian}. Rather than relying on regression, the
+local-Whittle approach minimizes an approximation to the Gaussian likelihood
+over the low-frequency band of the spectrum. The estimator generally
+exhibits lower asymptotic variance under broad conditions and has become one
+of the standard semiparametric procedures in long-memory econometrics. Both
+estimators focus specifically on low-frequency dependence without imposing
+complete parametric ARMA or GARCH structures, making them attractive for
+empirical applications in which the short-memory component may be
+misspecified or unstable.
+
+In addition to semiparametric methods, the present paper also uses FIGARCH
+estimates on representative subsets of stocks as parametric cross-checks.
+Combining semiparametric and parametric approaches helps reduce dependence
+on any single modeling framework and improves robustness of the empirical
+conclusions.
+
+\subsection{Identification Challenges}
+
+Several identification problems complicate empirical interpretation of
+persistence estimates. The first concerns structural nonstationarity.
+Repeated regime shifts, evolving volatility states, and structural breaks
+can generate empirical behavior resembling fractional dependence even when
+the underlying process is not truly fractionally integrated
+\citep{mikosch2004nonstationarities}. As a result, estimated persistence
+parameters should not automatically be interpreted as evidence for
+stationary long-memory laws.
+
+The second challenge concerns the distinction between highly persistent
+GARCH systems and genuine fractional integration. Near-integrated GARCH
+models may produce empirical dynamics that are difficult to distinguish from
+FIGARCH processes in finite samples, especially when persistence parameters
+approach unity. A third challenge concerns rough-volatility estimation.
+High-frequency financial data contain substantial market microstructure
+noise arising from bid--ask bounce, asynchronous trading, discreteness
+effects, and liquidity frictions. Unless realized-volatility measures are
+carefully constructed, estimated roughness parameters may partly reflect
+measurement distortions rather than genuine volatility dynamics.
+
+The present paper addresses these issues through several robustness
+procedures. Persistence is estimated on the Parkinson range-based variance
+proxy with both the GPH and local-Whittle estimators, FIGARCH estimates
+provide a parametric cross-check, rolling estimation windows of varying
+lengths are compared, and the forecasting target is alternatively defined
+from squared returns. The objective is not to establish exact
+structural identification of fractional stochastic laws, but rather to
+determine whether persistence-related measures behave coherently across
+market states and contain useful forecasting information.
+
+These identification issues are central to the broader interpretation
+developed in the next section, where persistence measures are viewed as
+reduced-form indicators of uncertainty propagation rather than as
+mechanically interpreted fractional coefficients.
+
+% =============================================================================
+\section{Persistence as a Reduced-Form Financial State Variable}
+\label{sec:structural}
+% =============================================================================
+
+The memory parameter $d$ describes the decay of temporal dependence under a
+fractional model. In the empirical application, its rolling estimate
+$\hat d_{i,t}$ is used as a summary of recent dependence in a volatility
+proxy. A financial state variable here means an observable or estimated
+predictor summarizing market conditions; it does not imply a structurally
+identified or sufficient state representation. Estimated persistence can
+reflect fractional dependence, regime shifts, measurement effects, or
+several mechanisms operating together.
+
+The central hypothesis concerns the level of aggregation at which
+persistence is informative. An own-stock estimate may largely duplicate
+the information in that stock's daily, weekly, and monthly volatility
+components. Cross-sectional and sectoral averages may summarize shared
+dependence less visible in those individual histories. Interactions with
+VIX and MOVE allow the association between persistence and future
+volatility to vary with market conditions. The forecasting design assesses
+these possibilities without assuming that each feature block must improve
+accuracy.
+
+Three empirical patterns would be consistent with this interpretation.
+First, rolling persistence states may vary across calm and stressed
+periods. Second, they may co-move with market-wide uncertainty indicators
+while still contributing information conditional on those indicators.
+Third, additional forecasting value may depend on the horizon and regime.
+None of these patterns alone establishes a causal channel, and co-movement
+with stress is not equivalent to forecasting its onset or length.
+
+The duration and propagation of uncertainty provide an economic
+interpretation rather than a directly estimated outcome. Heterogeneous
+adjustment, liquidity constraints, and delayed information processing can
+motivate slow dependence decay, as discussed in Section~\ref{sec:theory}.
+However, this paper does not estimate shock half-lives, crisis exit
+probabilities, or the expected time until volatility normalizes.
+Consequently, $\hat d_{i,t}$ is not a calibrated measure of stress duration.
+The evidence can be consistent with uncertainty propagation without
+identifying or measuring that mechanism directly.
+
+The distinction from market-state controls is empirical, not absolute.
+VIX and MOVE already contain forward-looking volatility information, and
+HAR incorporates persistent multi-horizon dynamics. Persistence features
+must therefore be assessed against HAR-X rather than credited with the
+entire gain of a combined model over HAR. A full-model comparison with
+HAR-X measures the joint incremental contribution of the added feature
+set; it does not uniquely attribute that gain to cross-sectional averages,
+sectoral states, roughness, or individual interactions.
+
+Roughness remains a complementary diagnostic of short-scale irregularity.
+Its inclusion alongside memory estimates allows both temporal dimensions
+to enter the forecasting exercise, but low estimated Hurst exponents do not
+by themselves establish incremental forecast value. The practical
+contribution is to evaluate persistence states conditional on established
+predictors, not to replace those predictors with a single parameter.
+
+% =============================================================================
+\section{Structured Forecasting with Persistence-Based Features}
+\label{sec:ml}
+% =============================================================================
+
+If persistence measures contain economically meaningful information, the
+next question concerns how such information should be incorporated into
+volatility forecasting systems. The approach adopted in this paper treats
+persistence measures not as isolated econometric coefficients but as dynamic
+state variables describing the temporal structure of financial uncertainty.
+Forecasting systems are therefore constructed around economically
+interpretable persistence-based features rather than around purely
+mechanical lag structures.
+
+The framework developed here occupies an intermediate position between
+classical econometric modeling and purely data-driven machine learning.
+Traditional parametric forecasting systems provide interpretability and
+structural discipline but may fail to capture nonlinear interactions and
+regime dependence. Purely flexible machine-learning systems may capture
+complex patterns while sacrificing economic transparency and out-of-sample
+stability \citep{gu2020empirical}. The objective of the present framework
+is therefore not to replace econometric structure with machine learning,
+but rather to combine economically interpretable feature construction with
+flexible forecasting architectures.
+
+The central hypothesis is that persistence features may contain information
+not fully captured by HAR dynamics and VIX/MOVE controls. Whether that
+information is useful, and at which horizon, is an empirical question. The
+feature design allows shared persistence and its interaction with market
+stress to complement conventional predictors without assuming that
+persistence directly measures the remaining duration of uncertainty.
+
+The forecasting framework organizes predictors into three groups: HAR
+time-aggregation components, market-state indicators (VIX and MOVE), and
+persistence-related features and interactions. These groups can contain
+overlapping information; their inclusion is not a structural decomposition
+of volatility into separately identified economic channels.
+
+Formally, let $y_{t,h}$ denote the future volatility target at forecast
+horizon $h$, let $\mathbf X_t$ denote a vector of conventional predictors,
+and let $\mathbf Z_t$ denote a vector of persistence-based features. The
+forecasting problem may be written as
+\begin{equation}
+  y_{t,h} \;=\; F\!\bigl(\mathbf X_t,\, \mathbf Z_t\bigr) + u_{t+h},
+\end{equation}
+where $F(\cdot)$ may represent either a linear or nonlinear forecasting
+system. The substantive contribution of the framework lies less in the
+specific estimator than in the construction of the persistence feature
+space. The feature vector includes several dimensions of persistence
+behavior:
+\begin{equation}
+\begin{split}
+\mathbf{Z}_t \; = \; \Bigl( & \hat{d}_t, \, \Delta\hat{d}_t, \, \mathrm{Vol}(\hat{d})_t, \, \mathrm{Trend}(\hat{d})_t, \, H_t, \, \Delta H_t, \, \overline{d}_t, \, \sigma_d^t, \, \overline{d}_{s(i),t}, \\
+& \hat{d}_t \!\cdot\! \mathrm{VIX}_t, \, \hat{d}_t \!\cdot\! \mathrm{MOVE}_t \Bigr).
+\end{split}
+\end{equation}
+These variables summarize persistence dynamics at several levels. The
+own-stock persistence estimate $ \hat{d}_t$ captures local persistence
+behavior. Cross-sectional aggregates $\overline d_t$ and $\sigma_d^t$
+summarize system-wide persistence conditions, while sectoral averages
+$\overline d_{s(i),t}$ capture industry-specific uncertainty propagation.
+Interaction terms such as $ \hat{d}_t\!\cdot\!\mathrm{VIX}_t$ allow the impact of
+stress to depend on the persistence state of the market.
+
+The forecasting architecture is organized as a layered ladder of models
+designed to isolate the marginal contribution of different persistence
+components. The baseline uses HAR components together with lagged-return
+controls:
+\begin{align}
+  \textbf{Model A:}\quad
+  &\log\mathrm{RV}^{(d)}_t,\;\log\mathrm{RV}^{(w)}_t,\;\log\mathrm{RV}^{(m)}_t,\;r_{t-1},\;|r_{t-1}|.
+  \notag
+\end{align}
+
+The first augmentation introduces market-state variables:
+\begin{align}
+  \textbf{Model }A_1:\quad &A + \bigl(\mathrm{VIX}_t,\;\mathrm{MOVE}_t\bigr).
+  \notag
+\end{align}
+This HAR-X specification provides the market-state benchmark against which
+the added persistence feature set must be evaluated.
+
+The second augmentation introduces own-stock persistence and roughness
+features:
+\begin{align}
+  \textbf{Model }A_2:\quad
+  &A + \bigl( \hat{d}_t,\;\Delta \hat{d}_t,\;\mathrm{Vol}( \hat{d})_t,\;
+  \mathrm{Trend}( \hat{d})_t,\;H_t,\;\Delta H_t\bigr).
+  \notag
+\end{align}
+
+The third and fourth augmentations introduce cross-sectional and sectoral
+persistence features, respectively:
+\begin{align}
+  \textbf{Model }A_3:\quad &A + \bigl(\overline{d}_t,\;\sigma_d^t\bigr),
+  \notag\\
+  \textbf{Model }A_4:\quad &A + \overline{d}_{s(i),t}.
+  \notag
+\end{align}
+
+The fifth augmentation introduces persistence-by-stress interactions:
+\begin{align}
+  \textbf{Model }A_5:\quad
+  &A + \bigl( \hat{d}_t,\;\mathrm{VIX}_t,\;\mathrm{MOVE}_t,\;
+   \hat{d}_t\!\cdot\!\mathrm{VIX}_t,\; \hat{d}_t\!\cdot\!\mathrm{MOVE}_t\bigr).
+  \notag
+\end{align}
+
+The full persistence-augmented forecasting system combines all feature blocks
+simultaneously, adding the persistence vector $\mathbf Z_t$ to HAR-X:
+\begin{align}
+  \textbf{Model C:}\quad &A_1 + \mathbf Z_t.
+  \notag
+\end{align}
+
+Finally, the same feature space is estimated using several shrinkage and
+tree-based procedures, namely the Lasso \citep{tibshirani1996regression},
+Ridge regression \citep{hoerl1970ridge}, the Elastic Net
+\citep{zou2005regularization}, Random Forests \citep{breiman2001random},
+and Gradient Boosting \citep{friedman2001greedy}:
+\begin{align}
+  \textbf{Model D:}\quad
+  &\text{Lasso, Ridge, Elastic Net, Random Forest, Gradient Boosting.}
+  \notag
+\end{align}
+
+These specifications are parallel augmentations of HAR, not a sequence in
+which each model adds to its immediate predecessor. Comparisons of $A_2$,
+$A_3$, and $A_4$ with HAR assess the corresponding blocks in isolation.
+Because $A_5$ includes VIX and MOVE as well as interactions, its gain over
+HAR cannot be attributed to interactions alone. Model~C combines the
+feature blocks without duplicating shared predictors; its comparison with
+HAR-X assesses their joint incremental contribution conditional on
+market-state controls.
+
+The common feature space for Models~C and D also permits comparison of
+linear, shrinkage, and tree-based estimators. This comparison evaluates the
+implemented algorithms and tuning procedures in this dataset rather than
+isolating a universal effect of estimator complexity.
+
+Several implementation safeguards are required because persistence-based
+variables are estimated quantities rather than directly observed variables.
+Rolling estimation windows are constructed to avoid look-ahead bias and to
+preserve the forecasting information set. Feature standardization is
+performed using training-sample information only. Hyperparameters are
+selected through time-series cross-validation rather than random
+cross-sectional shuffling. These precautions are particularly important
+because volatility forecasting systems are highly sensitive to temporal
+dependence structures.
+
+Forecast evaluation also requires careful treatment because volatility
+proxies themselves contain measurement noise. In addition to mean squared
+error on the logarithmic realized-volatility scale, the framework therefore
+employs the QLIKE loss function discussed by \citet{patton2011volatility},
+which is more robust when realized-volatility proxies contain observational
+error. For pairwise forecast comparisons, the paper uses the
+Diebold--Mariano statistic of \citet{diebold1995comparing} with the
+\citet{harvey1997testing} finite-sample correction (HLN), computed on the
+cross-sectional mean loss differential per date and using a Newey--West HAC
+variance \citep{newey1987simple} with bandwidth $\lceil h/5\rceil-1$. Importantly, inference is
+conducted using panel-aware cross-sectional aggregation rather than naive
+pooled-cell independence assumptions. This distinction is critical because
+ignoring within-date cross-sectional dependence substantially inflates
+apparent statistical significance.
+
+The forecasting structure assesses whether estimated persistence states
+provide useful conditional information. Horizon and regime comparisons
+describe where that information is most useful; they do not directly test
+uncertainty duration or identify the mechanisms behind persistence.
+
+% =============================================================================
+\section{Data and Empirical Design}
+\label{sec:data}
+% =============================================================================
+
+This section describes the data architecture, volatility construction
+procedures, rolling estimation framework, and forecasting protocol used in
+the empirical analysis. The central methodological principle is that
+persistence and roughness measures must be estimated in a manner consistent
+with the temporal structure of financial data while avoiding forward-looking
+contamination and preserving comparability across forecasting models.
+
+The empirical framework is designed around three objectives. First, the
+data environment must be sufficiently long to capture multiple volatility
+regimes, including calm periods, financial crises, and post-crisis
+transitions. Second, the volatility proxies must be constructed carefully
+enough to distinguish genuine persistence from measurement noise. Third,
+the forecasting design must permit rigorous out-of-sample evaluation under
+realistic financial forecasting conditions.
+
+\subsection{Sample}
+
+The primary dataset consists of common equities drawn from the S\&P~500
+index with sufficiently long daily histories to support rolling estimation
+of persistence and roughness measures. Daily open, high, low, close,
+volume, and market-capitalization data are obtained from Bloomberg for an
+initial universe of 125 securities. After imposing a 70\% data-coverage
+requirement over the sample period, the final analysis panel contains
+115 stocks observed over 6,136 trading days from November~29, 2001 through
+April~21, 2026.\footnote{Data accessed through Bloomberg Terminal on April 21, 2026.}
+
+This coverage-based sample is not presented as a point-in-time reconstruction
+of S\&P~500 membership. Requiring long histories may favor surviving,
+established firms and exclude shorter-lived or less-completely observed
+securities. The results are therefore conditional on the selected panel
+rather than representative of all firms that belonged to the index during
+2001--2026. The coverage threshold alone does not establish that every
+retained stock is observed on every date.
+
+The sample spans several major financial regimes, including the post-2001
+recovery period, the credit expansion preceding the global financial
+crisis, the global financial crisis itself, the European sovereign-debt
+episode, the long low-volatility post-crisis expansion, the COVID shock,
+and the post-COVID inflationary environment. The presence of these distinct
+regimes is essential because the paper interprets persistence measures as
+state-dependent indicators of uncertainty propagation.
+
+In addition to stock-level data, the analysis incorporates several
+market-wide variables intended to capture broad financial conditions. These
+include the S\&P~500 index, Dow Jones Industrial Average, Nasdaq~100,
+Russell~2000, the VIX implied-volatility index, the MOVE Treasury-volatility
+index, Treasury-yield series, the 2s/10s yield-curve slope, and
+investment-grade and high-yield CDX credit indices. Sector-level
+aggregation is implemented using GICS level-1 classifications together
+with SPDR sector ETFs.
+
+The resulting dataset provides several important advantages. The long
+sample horizon allows persistence measures to be evaluated across multiple
+crisis periods and volatility states. The cross-sectional structure permits
+construction of aggregate persistence measures and sectoral persistence
+indices.
+
+\subsection{Volatility Proxies}
+
+Daily logarithmic returns are computed from adjusted closing prices and
+winsorized at the 0.1\% and 99.9\% percentiles within each stock in order
+to reduce the influence of recording errors, corporate actions, and
+isolated outlier observations. Because volatility measurement plays a
+central role in persistence estimation, the choice of volatility proxy is
+particularly important.
+
+The primary volatility measure used throughout the paper is the range-based
+variance estimator of \citet{parkinson1980extreme},
+\begin{equation}
+  \mathrm{RVPK}_t \;=\; \frac{(\ln H_t - \ln L_t)^2}{4\ln 2},
+  \label{eq:parkinson}
+\end{equation}
+In Equation~\eqref{eq:parkinson}, $H_t$ and $L_t$ denote the daily high
+and low prices; elsewhere, $H$ denotes the Hurst exponent. Unlike squared
+close-to-close returns, the Parkinson estimator exploits intraday price
+range information and therefore provides a more efficient volatility proxy
+under continuous-diffusion assumptions. The Parkinson measure offers several
+advantages for the present application. First, it can be constructed
+over the long daily sample without requiring transaction-level data. Second,
+it substantially reduces measurement noise relative to squared returns.
+Third, the estimator captures volatility clustering particularly clearly,
+which is important for persistence estimation.
+
+For robustness, the forecasting comparison in Section~\ref{sec:results}
+is also repeated with the logarithm of future mean squared returns as the
+target, a noisier close-to-close volatility proxy.
+
+For forecasting purposes, the volatility target for stock $i$ at horizon
+$h$ is defined as the logarithm of the future average Parkinson variance,
+\begin{equation}
+  y_{i,t,h} \;=\; \log\!\Bigl(\frac{1}{h}\!\sum_{j=1}^{h}
+  \mathrm{RVPK}_{i,t+j}\Bigr).
+\end{equation}
+Three forecast horizons are considered, $h\in\{1,5,22\}$, corresponding
+approximately to daily, weekly, and monthly horizons. This design assesses
+whether the incremental contribution of persistence varies with the
+forecast horizon rather than assuming a uniform benefit.
+
+\subsection{Descriptive Statistics}
+
+Table~\ref{tab:summary_stats} reports summary statistics for daily log
+returns pooled across the 115-stock panel and reported separately by GICS sector.
+The pooled annualized mean return equals approximately 9.4\%, while the
+pooled annualized standard deviation equals approximately 31.5\%.
+
+More importantly, the distribution of returns displays substantial
+non-normality. The pooled excess kurtosis exceeds 11, and the Jarque--Bera
+statistic \citep{jarque1980efficient} overwhelmingly rejects Gaussianity. The fitted Student-$t$
+distribution has approximately 2.7 degrees of freedom, indicating heavy
+tails. Substantial cross-sectional heterogeneity is also present
+across sectors. Information Technology and Financials display the largest
+annualized volatility levels, whereas Utilities and Consumer Staples
+display substantially lower volatility. Real Estate and Financials exhibit
+especially heavy-tailed behavior, consistent with their sensitivity to
+systemic financial conditions and leverage dynamics.
+
+\input{tables/table1_summary_stats.tex}
+
+
+\input{tables/table2_data_description.tex}
+
+Table~\ref{tab:data_description} summarizes the composition of the panel
+together with the distribution of market-wide state variables. The VIX
+ranges from approximately 9 to above 82, while the MOVE index ranges from
+approximately 37 to above 264. These substantial variations in market
+stress permit evaluation of whether persistence states and their
+forecasting usefulness vary across market conditions.
+
+The descriptive evidence therefore already suggests several key themes that
+are explored later in the forecasting analysis. Financial returns are
+highly non-Gaussian, volatility dynamics exhibit substantial persistence,
+and market-wide stress conditions vary dramatically across the sample
+period.
+
+
+
+\subsection{Preliminary Diagnostics}
+
+Before proceeding to rolling persistence estimation and forecasting
+analysis, it is important to examine several basic empirical properties of
+the data. The preliminary diagnostics illustrate the stylized facts motivating the
+paper: volatility clustering, heavy tails, cross-sectional comovement, and
+persistent conditional heteroskedasticity.
+
+Figure~\ref{fig:data_overview} presents four preliminary diagnostics for a
+representative stock, together with the VIX index. Panel~(a) displays
+daily logarithmic returns for AAPL, while panel~(b) reports the
+corresponding Parkinson range-based variance proxy. The contrast between
+the two series immediately reveals one of the classical stylized facts of
+financial econometrics. Returns themselves fluctuate around zero with
+little visually detectable serial dependence, whereas volatility measures
+display pronounced clustering. Large volatility episodes tend to be
+followed by additional large volatility episodes, while calm periods tend
+to persist as well.
+
+The recession-shaded regions corresponding to the global financial crisis
+and COVID are especially informative. During these periods, the Parkinson
+variance proxy rises sharply and remains elevated for extended intervals
+rather than reverting immediately to calm-state levels. This behavior
+motivates studying dependence alongside volatility magnitude, without
+equating a persistence estimate with a direct measure of stress duration.
+
+Panel~(c) of Figure~\ref{fig:data_overview} compares autocorrelation
+functions for raw returns, squared returns, and Parkinson realized
+variance. Raw returns exhibit little serial dependence at the displayed
+lags, consistent with
+the approximate unpredictability of returns documented throughout the
+financial-econometrics literature. By contrast, both squared returns and
+the Parkinson variance proxy display autocorrelations that decay slowly and
+remain positive beyond the first few lags. The Parkinson
+autocorrelations generally lie above those for squared returns,
+suggesting that the range-based estimator provides a less noisy volatility
+proxy.
+
+This distinction is important because persistence estimation is highly
+sensitive to measurement error. Squared returns contain substantial noise
+arising from isolated jumps and market microstructure effects. By exploiting
+intraday high--low information, the Parkinson estimator substantially
+improves the signal-to-noise ratio of volatility measurement.
+
+Panel~(d) presents the VIX time series over the full sample period. The
+VIX displays several dramatic spikes corresponding to major stress
+episodes, particularly the global financial crisis and COVID. These broad
+market stress indicators later play a central role in the
+persistence-by-stress interaction framework developed in
+Section~\ref{sec:ml}.
+
+\begin{figure}[htbp]
+\begin{adjustwidth}{-\extralength}{0cm}
+\centering
+\includegraphics[width=\linewidth]{figures/fig1_data_overview.pdf}
+\caption{Daily log returns and Parkinson range-based variance proxy for a
+representative stock; ACF comparison; and the VIX time series.
+Recession-shaded windows mark the global financial crisis and COVID.
+\emph{Takeaway: volatility clusters visibly; squared returns and $\mathrm{RVPK}$
+exhibit slow autocorrelation decay out to 50 lags while raw returns do
+not.}}
+\label{fig:data_overview}
+\end{adjustwidth}
+\end{figure}
+
+Figure~\ref{fig:diagnostics} extends the diagnostic analysis in several
+directions. Panel~(a) compares the empirical pooled distribution of daily
+returns with fitted Gaussian and Student-$t$ distributions. The empirical
+distribution displays substantially heavier tails than the Gaussian
+benchmark, particularly in the extremes. The associated Jarque--Bera
+statistic rejects normality, while the quantile--quantile (QQ) plot in
+panel~(d) shows departures from the normal reference line in the tails. Extreme observations
+occur far more frequently than predicted by normal-diffusion models. This
+heavy-tailed structure has important implications for volatility modeling
+because persistence estimation can be distorted when tail behavior is
+ignored.
+
+Panel~(b) of Figure~\ref{fig:diagnostics} reports cross-stock Parkinson
+variance correlations for ten representative equities. The displayed
+off-diagonal correlations range from $0.14$ (PG--JPM) to $0.72$ (KO--XOM). The heatmap reveals substantial
+cross-sectional heterogeneity in volatility comovement, with particularly
+large correlations among firms exposed to similar macroeconomic or sectoral
+conditions. These cross-sectional relationships motivate the construction
+of aggregate persistence variables later in the forecasting framework. If
+uncertainty propagates systemically across sectors and balance sheets, then
+cross-sectional persistence aggregates should contain information beyond
+individual-stock volatility dynamics.
+
+Panel~(c) compares FIGARCH conditional volatility estimates with rolling
+Parkinson realized volatility for AAPL. Both series respond to major stress episodes, although their short-run
+fluctuations differ. This is a descriptive comparison of the
+fractional-volatility model and the observed proxy, not a formal validation
+of the model. Table~\ref{tab:figarch_estimates} gives FIGARCH point estimates
+for ten stocks with normal innovations: the mean estimate is
+$\hat d = 0.329$ with values in $[0.237,\,0.461]$, all below
+$\frac{1}{2}$. These FIGARCH parameters are model-specific and should not
+be equated with the semiparametric memory estimates or treated as a
+stationarity test.
+
+Taken together, the preliminary diagnostics establish several important
+empirical conclusions. First, volatility measures exhibit strong persistence
+while returns themselves remain approximately serially uncorrelated. Second,
+financial returns are substantially heavy-tailed and strongly non-Gaussian.
+Third, volatility dynamics display substantial cross-sectional comovement.
+Fourth, long-memory volatility models provide empirically plausible
+descriptions of observed volatility behavior. Most importantly, the
+diagnostics strongly support the interpretation that volatility persistence
+is not an isolated feature of a few securities or crisis episodes. Rather,
+persistent volatility dynamics appear broadly throughout the cross-section
+and evolve systematically across market states.
+
+
+\begin{figure}[htbp]
+\begin{adjustwidth}{-\extralength}{0cm}
+\centering
+\includegraphics[width=\linewidth]{figures/fig_preliminary_diagnostics.pdf}
+\caption{Preliminary diagnostics. (a) Pooled log-return distribution with
+normal and Student-$t$ fits. (b) Cross-stock Parkinson-RV correlation
+heatmap. (c) FIGARCH(1,$d$,1) conditional volatility versus realized volatility for AAPL. (d) QQ-plot against a normal reference.
+\emph{Takeaway: returns have heavy tails; FIGARCH and the range-based
+volatility proxy both respond to major stress episodes.}}
+\label{fig:diagnostics}
+\end{adjustwidth}
+\end{figure}
+
+\input{tables/table_figarch_estimates.tex}
+
+
+\subsection{Rolling Estimation Design}
+
+Persistence and roughness measures are estimated within rolling windows so
+that they behave as dynamic state variables rather than fixed full-sample
+constants. This distinction is essential for the interpretation developed
+throughout the paper. If persistence reflects evolving uncertainty
+conditions, information diffusion, and regime-dependent stress propagation,
+then persistence measures themselves must be allowed to vary over time.
+
+For each stock $i$ and each end date $t$, the fractional integration
+parameter $ \hat{d}_{i,t}$ is estimated using a rolling 750-trading-day
+window. Both the Geweke--Porter-Hudak log-periodogram estimator and the
+local-Whittle semiparametric estimator are employed using bandwidth
+$m = \lfloor T^{0.65}\rfloor$. The rolling estimates are updated every
+five trading days, producing approximately weekly time series of
+$ \hat{d}_{i,t}^{GPH}$, $ \hat{d}_{i,t}^{LW}$, and $H_{i,t}$, where $H_{i,t}$
+denotes the rolling Hurst exponent estimated from logarithmic Parkinson
+range-based variance.
+
+Weekly updating balances responsiveness to market conditions against
+short-term estimation variation. It provides an intermediate frequency
+between daily updates and the greater smoothing associated with monthly
+updates.
+
+The 750-day estimation window is similarly motivated by the tradeoff
+between statistical precision and state sensitivity. Persistence estimation
+requires relatively long windows because long-memory parameters are
+fundamentally low-frequency objects. Very short windows generate unstable
+estimates with large sampling variance. Extremely long windows, however,
+blur structural regime changes and reduce responsiveness to evolving market
+conditions. The selected window length therefore balances these competing
+considerations.
+
+The rolling framework transforms persistence from a static full-sample
+coefficient into a genuinely time-varying market-state variable. This
+transformation is central to the economic interpretation of the paper.
+Under the rolling design, persistence measures may rise during prolonged
+stress episodes and decline during calm periods, allowing analysis
+of state-dependent persistence, not direct measurement of stress duration.
+
+These rolling estimates provide the forecasting features introduced in
+Section~\ref{sec:ml}, as well as additional descriptive diagnostics. The
+resulting variables fall into several categories. The first category consists of own-stock
+persistence dynamics,
+\begin{equation}
+  \hat{d}_{i,t},\, \Delta \hat{d}_{i,t},\;
+  \mathrm{Vol}( \hat{d})_{i,t},\, \mathrm{Trend}( \hat{d})_{i,t},\,  H_{i,t},\, \Delta H_{i,t},
+\end{equation}
+
+summarizing the level, evolution, variability, and trend structure of
+persistence and roughness at the individual-stock level. The second
+category consists of cross-sectional persistence aggregates,
+\begin{equation}
+  \overline{d}_t,\;\sigma_d^t,\;\mathrm{Skew}_t(d),\;\mathrm{Kurt}_t(d),
+\end{equation}
+which summarize system-wide persistence conditions. The cross-sectional
+mean $\overline d_t$ is especially important because the paper interprets
+it as a summary of shared volatility dependence in
+financial markets. The third category consists of sectoral persistence
+measures, $\overline d_{s(i),t}$, where the average is computed across
+stocks belonging to the same GICS sector as stock $i$, intended to capture
+industry-specific stress propagation and heterogeneous information environments.
+
+
+Additional descriptive variables include threshold indicators $\mathbf 1_{\{ \hat{d}_{i,t}
+> \tau\}}$ together with interaction terms involving VIX, MOVE, and
+liquidity conditions. The forecasting models use the predictors explicitly
+listed in Section~\ref{sec:ml}; the broader descriptive inventory should
+not be interpreted as additional regressors in every model.
+
+Table~\ref{tab:features} reports pooled descriptive statistics for the
+resulting feature set. Several patterns are immediately noteworthy. First,
+the GPH and local-Whittle rolling estimates are close on average (pooled
+means of 0.346 and 0.336), although the GPH estimates are somewhat more
+dispersed. Second, the reported Hurst
+estimates are well below $\frac{1}{2}$, consistent with roughness in the
+observed volatility proxy. Third, the cross-sectional mean persistence measure varies
+substantially over time, supporting its interpretation as a dynamic state
+variable rather than a stable structural constant.
+
+\input{tables/table4_features.tex}
+The rolling estimates are not uniformly within the covariance-stationary
+fractional range: the reported 99th percentiles are 0.8308 (GPH) and 0.8278
+(local-Whittle), above $d=\frac{1}{2}$, and roughly one fifth of the rolling
+GPH estimates exceed that threshold. A mean estimate below the threshold does
+not establish stationarity in every window. We therefore use rolling estimates
+as reduced-form dependence features and do not interpret large values as
+verified parameters of a stationary fractional process.
+
+The persistence-by-VIX interaction is larger during crisis periods. Because
+it is a product of its inputs, this descriptive pattern alone does not
+establish an amplification mechanism.
+
+Rolling persistence features are constructed from observations available
+through date $t$, preserving the forecasting information set. The
+walk-forward protocol is described below.
+
+The rolling framework permits comparison of estimated dependence across
+market states. Because long windows smooth and overlap, movements in these
+estimates should not be read as dates of shock arrival or measurements of
+how quickly a particular disturbance is resolved.
+
+Moreover, because the rolling framework generates persistence measures for
+each stock, sector, and date simultaneously, it becomes possible to study
+not only average persistence but also the cross-sectional dispersion and
+heterogeneity of persistence conditions throughout the financial system.
+The resulting persistence-state panel therefore forms the core empirical
+object underlying the forecasting analysis developed in the next section.
+ 
+
+ 
+
+\subsection{Out-of-Sample Forecasting Protocol}
+
+The forecast evaluation is strictly walk-forward. We use the first 40\%
+of the sample dates (sample dates 1 through 431, ending in mid-2013) as the
+initial training window; thereafter, we produce forecasts at every
+subsequent sample date. For the linear specifications
+(Models~$A,A_1,A_2,A_3,A_4,A_5,C$) we refit by ordinary least squares
+at every step (expanding window). For Model~$D$ we refit every twenty
+sample steps to keep the computational burden tractable for the tree-based
+estimators; results are not sensitive to this stride. All feature
+standardization, hyperparameter selection, and model selection are
+performed on training-window information only. Both the realized target
+and the forecast are recorded as $(T_{\mathrm{eval}}\!\times\!N)$ panels,
+which are then used to calculate forecast losses, the Diebold--Mariano
+statistics, and the regime and sector comparisons in Section~\ref{sec:results}.
+
+% =============================================================================
+\section{Numerical Analysis and Forecasting Results}
+\label{sec:results}
+% =============================================================================
+
+This section presents the empirical results of the paper. The analysis
+proceeds in several stages. First, we examine full-sample estimates of
+long-memory and roughness parameters across the cross-section of equities.
+Second, we study the dynamics of rolling persistence measures across market
+regimes. Third, we evaluate the forecasting performance of the layered
+forecasting framework developed in Section~\ref{sec:ml}. Finally, we
+investigate robustness across sectors, volatility states, liquidity
+conditions, and alternative estimation procedures.
+
+The central empirical question is whether persistence measures behave like
+economically meaningful state variables rather than purely statistical
+nuisance parameters. Under the interpretation developed earlier, persistence
+measures should rise during sustained stress episodes, co-move with broad
+uncertainty indicators, and contribute forecasting information particularly
+during periods in which uncertainty resolves slowly.
+
+\subsection{Long-Memory and Roughness Estimates}
+
+We begin with full-sample cross-sectional estimates of persistence and
+roughness. The results indicate persistent dependence and low Hurst estimates in
+the observed volatility proxies across the equity panel.
+
+The first important finding is that raw returns themselves display
+essentially no evidence of long memory. The cross-sectional mean GPH
+estimate for returns is approximately $ \hat{d}^{GPH}_{\mathrm{returns}}
+= -0.022$, and only 15\% of stocks exhibit statistical significance at
+the 5\% level. This result is consistent with the approximate
+unpredictability of financial returns documented throughout the empirical
+asset-pricing literature.
+
+The volatility proxies show a different pattern.
+For the Parkinson range-based variance proxy, the cross-sectional mean GPH
+estimate equals approximately $ \hat{d}^{GPH}_{\mathrm{RV}} = 0.451$, while
+the corresponding local-Whittle estimate equals approximately
+$ \hat{d}^{LW}_{\mathrm{RV}} = 0.440$. The two semiparametric estimators
+therefore agree closely, both on average and sector by sector
+(Table~\ref{tab:lrd_estimates}). Moreover, 99\% (GPH) and 100\%
+(local-Whittle) of stocks exhibit statistically significant persistence
+estimates. These results provide strong evidence that
+long-memory behavior is a broad characteristic of volatility dynamics
+rather than an isolated feature of a few securities.
+
+The roughness diagnostics provide complementary evidence. The cross-sectional
+mean Hurst exponent estimated from logarithmic Parkinson range-based variance
+equals approximately $H = 0.063$, with every stock in the panel satisfying
+$H < \frac{1}{2}$. This result is consistent with local irregularity in the observed proxy;
+it does not by itself identify the path regularity of latent volatility. The cross-sectional
+dispersion of Hurst estimates is small, indicating similar proxy-based
+roughness estimates across sectors and firms.
+
+Table~\ref{tab:lrd_estimates} reports these estimates separately by GICS
+sector. Financials and Real Estate have relatively large persistence
+estimates, consistent with their exposure to systemic stress propagation,
+leverage conditions, and liquidity cycles. Utilities and Consumer Staples
+display somewhat smaller persistence estimates, although long-memory
+behavior remains substantial throughout all sectors. An additional feature
+of the results is the limited dispersion of persistence estimates across
+the cross-section: the standard deviation of persistence estimates across
+stocks remains relatively modest, indicating that long-memory volatility
+behavior is fundamentally a panel-wide phenomenon rather than the
+consequence of a few extreme outliers.
+
+
+ \input{tables/table3_lrd_estimates}
+
+\begin{figure}[H]
+\begin{adjustwidth}{-\extralength}{0cm}
+\centering
+\includegraphics[width=\linewidth]{figures/fig2_lrd_estimates.pdf}
+\caption{Rolling persistence estimates. (a)~Cross-sectional distribution
+of full-sample GPH $ \hat{d}$ on Parkinson range-based variance proxy.
+(b)~Rolling $ \hat{d}^{GPH}$ for AAPL, JPM, XOM, JNJ, PG.
+(c)~Cross-sectional mean $\overline d_t$ with $\pm 1$ standard deviation
+band. (d)~$\overline d_t$ versus VIX, with linear fit and correlation.
+\emph{Takeaway: the cross-sectional mean memory parameter rises sharply
+in the GFC and COVID and tracks the VIX with correlation $\rho=+0.50$,
+consistent with its interpretation as a stress-associated persistence state.}}
+\label{fig:lrd_estimates}
+\end{adjustwidth}
+\end{figure}
+
+Figure~\ref{fig:lrd_estimates} reports four time-series and cross-sectional
+views of the rolling estimation. Panel~(a) reports the distribution of
+full-sample GPH estimates across all 115 stocks. The distribution is
+concentrated between 0.30 and 0.60 (84\% of stocks) around the mean of 0.451;
+about 30\% of the full-sample estimates lie above $\frac{1}{2}$, the boundary
+of the covariance-stationary range, which is one reason the paper treats
+$\hat d$ as a reduced-form dependence measure rather than a verified
+parameter of a stationary fractional process.
+
+Panel~(b) reports rolling $ \hat{d}^{GPH}$ for five representative stocks
+(AAPL, JPM, XOM, JNJ, PG). The most striking feature is the broad upward
+shift in persistence during major crisis episodes, particularly during the
+global financial crisis and COVID.
+
+Panel~(c) presents the aggregate state central to the forecasting
+framework: the cross-sectional mean persistence state $\overline d_t =
+N^{-1}\sum_i  \hat{d}_{i,t}$, together with a one-standard-deviation band.
+The dynamics of this aggregate persistence state are highly informative.
+During the calm 2013--2014 period, the cross-sectional mean persistence
+measure is approximately $\overline d_t \approx 0.31$. During
+the global financial crisis (2008-Q3 through 2009-Q4), the cross-sectional
+mean rises to approximately $\overline d_t \approx 0.50$, an increase of
+approximately 62\%. During COVID (March--December 2020), the persistence
+state rises even further to approximately $\overline d_t \approx 0.57$, an
+increase of approximately 86\% relative to the calm-state baseline.
+
+These increases document an association between estimated persistence and
+major stress episodes. They are consistent with prolonged uncertainty
+propagation, but do not measure the time needed to resolve uncertainty or
+distinguish that interpretation from regime-dependent changes in volatility.
+
+Panel~(d) of Figure~\ref{fig:lrd_estimates} examines the relationship
+between the cross-sectional persistence state and the VIX. The estimated
+contemporaneous correlation equals approximately
+$\rho(\overline d_t, \text{VIX}_t) = 0.50$. This correlation shows that persistence and VIX are related but not
+identical. It does not establish conditional forecast value, a leading
+relationship, or the expected duration of uncertainty. The benchmark and
+lead--lag comparisons below assess predictive usefulness and temporal
+association, not duration.
+
+
+
+Taken together, these findings motivate the reduced-form interpretation of
+Section~\ref{sec:structural}: persistence varies with market conditions and
+may summarize shared dependence relevant to forecasting. The next
+subsection tests its predictive usefulness beyond HAR and HAR-X rather than
+assuming that its association with stress establishes that usefulness.
+
+\subsection{Out-of-Sample Forecast Comparison}
+
+Table~\ref{tab:model_comparison} compares the HAR core (Model~A), its
+parallel augmentations ($A_1$--$A_5$), the full feature specification (C),
+and alternative estimators (D) at horizons $h\in\{1,5,22\}$. Performance is
+measured by mean squared error on the log Parkinson-variance target and
+QLIKE on the variance scale. Positive percentage improvements denote lower
+MSE than HAR. The reported panel-aware HLN-corrected Diebold--Mariano
+statistics also use HAR as the reference; they do not test Model~C against
+HAR-X.
+
+\input{tables/table5_model_comparison.tex}
+
+The HAR-X benchmark is essential for interpreting the results. Adding VIX
+and MOVE alone ($A_1$) reduces MSE relative to HAR by 5.10\%, 7.72\%, and
+3.72\% at the daily, weekly, and monthly horizons. The reported tests reject
+equal predictive accuracy against HAR at conventional levels. Market-state
+variables therefore account for a substantial part of the improvement
+available over volatility lags alone.
+
+Adding only own-stock persistence and roughness ($A_2$) does not improve
+MSE: the corresponding changes relative to HAR are $-0.54\%$, $-0.03\%$,
+and $-0.30\%$. The daily deterioration is statistically significant under
+the reported test. This result shows that estimating individual persistence does not
+automatically provide information beyond the multi-horizon HAR components.
+
+Cross-sectional aggregates alone ($A_3$) yield changes of $-0.10\%$,
+$+0.37\%$, and $+1.26\%$, while sectoral persistence alone ($A_4$) yields
+$-0.05\%$, $+0.21\%$, and $+0.29\%$. The positive weekly and monthly
+changes are modest and not statistically significant at the reported
+levels. These blocks are therefore potential components of a joint state
+representation, not independently established sources of forecast gains.
+
+Model~$A_5$, which includes market controls as well as persistence--stress
+interactions, improves on HAR by 4.91\%, 7.63\%, and 2.87\%. Each of these
+MSE gains is smaller than the corresponding HAR-X gain. Its performance
+cannot be read as evidence that interactions alone outperform market-state
+controls, although its QLIKE values are lower than those of HAR-X.
+
+The full persistence-augmented specification (C) reduces MSE relative to
+HAR by 4.55\%, 8.24\%, and 5.54\%. Its reported HLN statistics are 3.15,
+3.87, and 2.33, respectively, indicating significance against HAR at the
+1\%, 1\%, and 5\% levels. Relative to HAR-X, however, the pattern is more
+selective. Model~C has higher daily MSE (0.6382 versus 0.6345), slightly
+lower weekly MSE (0.3334 versus 0.3353), and lower monthly MSE (0.2540
+versus 0.2589). Expressed on the common HAR-relative improvement scale,
+these differences are $-0.55$, $+0.52$, and $+1.82$ percentage points.
+They are descriptive differences between the reported gains, not percentage
+MSE reductions using HAR-X as the denominator. Direct significance tests
+of C against HAR-X are not reported.
+
+Thus, market-state variables account for much of the short-horizon gain,
+while the additional contribution of the joint persistence feature set is
+largest at the monthly horizon. The full model also has lower QLIKE than
+HAR-X at all three horizons, showing that the daily ranking depends on the
+loss function. This evidence supports persistence as a complement to
+established predictors, not as a uniformly superior substitute.
+
+\begin{figure}[htbp]
+\begin{adjustwidth}{-\extralength}{0cm}
+\centering
+\includegraphics[width=\linewidth]{figures/fig5_mse_improvement.pdf}
+\caption{Forecast gains relative to HAR. Bars report percentage MSE
+improvement over Model~A at $h\in\{1,5,22\}$. Models~$A_1$--$A_5$ are
+parallel augmentations, not sequential marginal additions.}
+\label{fig:layered_ablation}
+\end{adjustwidth}
+\end{figure}
+
+The estimator comparisons favor the structured linear specification among
+models using the full feature set. Lasso, Ridge, and Elastic Net improve on
+HAR at daily and weekly horizons but offer little monthly improvement.
+Random Forest yields modest short-horizon gains and deteriorates at the
+monthly horizon; Gradient Boosting increases MSE at every pooled horizon.
+Overfitting is a possible explanation, but these comparisons do not
+identify its cause or establish that nonlinear methods are generally
+inferior. They show that the evaluated nonlinear estimators do not deliver
+additional accuracy from this feature set under the implemented protocol.
+
+Figure~\ref{fig:stock_distribution} shows that the weekly gains over HAR
+are broadly distributed: approximately 99\% of stocks improve under HAR-X
+and 94\% under Model~C. These shares concern comparisons with HAR, not the
+fraction of stocks benefiting incrementally from persistence beyond HAR-X.
+Together with Table~\ref{tab:model_comparison}, they support a focused
+conclusion: own-stock persistence alone is unhelpful, while its joint use
+with shared states and stress information is more promising, particularly
+at longer horizons.
+
+
+\begin{figure}[htbp]
+\begin{adjustwidth}{-\extralength}{0cm}
+\centering
+\includegraphics[width=\linewidth]{figures/fig6_stock_distribution.pdf}
+\caption{Per-stock MSE improvement versus Model~A at $h=5$. Left:
+histograms for $A_1$, C, and D-Lasso. Right: distributions across the
+forecasting specifications.}
+\label{fig:stock_distribution}
+\end{adjustwidth}
+\end{figure}
+
+
+\subsection{Descriptive Coefficient Diagnostics}
+
+Table~\ref{tab:importance} reports standardized Lasso coefficients from one
+pooled fit per horizon using all out-of-sample evaluation dates. These are
+retrospective descriptive fits, not the walk-forward forecasts evaluated
+in Table~\ref{tab:model_comparison}. They describe conditional associations
+within the feature set rather than providing independent out-of-sample
+validation or a causal decomposition of forecast gains.
+
+\input{tables/table6_feature_importance.tex}
+
+The HAR components remain prominent. The monthly component has the largest
+coefficient at each horizon, rising from 0.3540 at $h=1$ to 0.4499 at
+$h=22$. VIX also enters positively, with a coefficient declining from
+0.2784 to 0.1132. These patterns reinforce the importance of established
+volatility dynamics and market-state information.
+
+The own-stock memory coefficient is positive, whereas cross-sectional mean
+persistence and the own-stock persistence--VIX interaction enter negatively. The
+persistence--VIX coefficient is substantial in magnitude, ranging from
+$-0.1453$ to $-0.1151$. Sectoral persistence coefficients are positive but
+small. These signs describe conditional associations in a model containing
+correlated predictors and interactions; they do not imply that higher
+persistence necessarily raises forecast volatility or prolongs stress.
+
+Standardization aids comparison of coefficient magnitudes, but Lasso
+selection does not supply significance tests. Correlated inputs can also
+redistribute coefficients across related predictors. Consequently, retained
+aggregate features are not evidence that each block independently improves
+forecasting, and retention of own-stock memory does not contradict the weak
+performance of $A_2$. The forecast comparisons, rather than coefficient
+magnitudes alone, establish the practical distinction between individual
+persistence and the joint state representation.
+
+\subsection{Regime Split}
+
+Table~\ref{tab:regime_split} reports MSE improvements relative to HAR by
+market regime and horizon. It distinguishes two questions: whether the
+combined forecasting system is useful during stress, and whether its
+persistence features add accuracy beyond HAR-X within those same states.
+The reported regime comparisons are descriptive and do not include
+regime-specific tests of C against HAR-X.
+
+\input{tables/table7_subsamples.tex}
+
+During high-VIX states, Model~C improves on HAR by 11.84\%, 17.94\%, and
+8.75\% at the daily, weekly, and monthly horizons, compared with HAR-X gains
+of 11.45\%, 16.05\%, and 6.87\%. The full model therefore adds 0.39,
+1.89, and 1.88 percentage points on the HAR-relative improvement scale.
+These results are consistent with shared persistence features providing
+additional information when market stress is elevated, especially beyond
+the daily horizon.
+
+COVID provides an important qualification. Model~C improves on HAR by
+6.83\%, 18.88\%, and 17.49\%, whereas HAR-X improves by 11.81\%, 20.67\%,
+and 15.81\%. Thus, the full model underperforms HAR-X at daily and weekly
+horizons during COVID and improves on it only at the monthly horizon.
+The weekly 18.88\% gain is therefore relative to HAR, not HAR-X, and
+cannot be attributed entirely to persistence. The monthly
+comparison instead provides the clearest COVID evidence for incremental
+forecasting value from the full feature set.
+
+Gains over HAR also occur in calm states. At the weekly horizon, Model~C
+improves by 6.57\% in the low-VIX regime, versus 5.58\% for HAR-X.
+Persistence-related information is therefore not exclusively useful during
+stress. The more defensible finding is that its additional value varies
+with both horizon and regime, while the combined model's gains over HAR
+are particularly large in stressed periods.
+
+Figure~\ref{fig:leadlag} compares the cross-sectional persistence state
+with VIX across leads and lags. Correlations are positive across the
+displayed range and are higher at negative than at positive lags. Under
+the plotted convention, positive lags indicate persistence leading VIX;
+the stronger negative-lag association is consistent with persistence
+responding to earlier market stress. The 750-day backward-looking
+estimation window smooths the persistence series and limits directional
+interpretation. This diagnostic does not establish persistence as a
+leading indicator or predict how long a stress episode will last.
+
+\begin{figure}[htbp]
+\begin{adjustwidth}{-\extralength}{0cm}
+\centering
+\includegraphics[width=\linewidth]{figures/fig7_leadlag_d_vix.pdf}
+\caption{Lead--lag cross-correlation between cross-sectional mean memory
+$\bar{\hat d}_t$ and $\mathrm{VIX}_{t+k}$ over $\pm60$ trading days.
+Positive $k$ denotes persistence leading VIX. The persistence estimates use
+750-day backward-looking windows.}
+\label{fig:leadlag}
+\end{adjustwidth}
+\end{figure}
+
+Taken together, the regime comparisons support a state-dependent
+forecasting interpretation. They are consistent with uncertainty
+propagation but neither identify that mechanism nor validate persistence
+as a direct measure or leading predictor of stress duration.
+
+\subsection{Sector Split}
+
+Table~\ref{tab:sector_split} reports weekly MSE improvements by GICS
+sector. Model~C improves on HAR in all eleven sectors, with gains ranging
+from 4.19\% in Information Technology to 12.72\% in Materials. These
+comparisons establish breadth relative to HAR, but they do not attribute
+all sectoral gains to persistence.
+
+\input{tables/table8_horizons.tex}
+
+HAR-X accounts for much of the improvement in every sector. Relative to
+HAR-X, Model~C has lower MSE in eight sectors and higher MSE in
+Communication Services, Information Technology, and Utilities. The largest
+additional gains on the HAR-relative improvement scale occur in Health
+Care (2.13 percentage points), Materials (1.73), Industrials (1.41), and
+Consumer Staples (1.33). By contrast, the incremental changes in Financials
+and Real Estate are only 0.03 and 0.07 percentage points, despite their
+large total gains over HAR. Their performance should therefore not be
+presented as strong evidence that persistence adds information beyond
+market-state controls in funding-sensitive sectors.
+
+\begin{figure}[h!]
+\begin{adjustwidth}{-\extralength}{0cm}
+\centering
+\includegraphics[width=\linewidth]{figures/fig8_sector_heatmap.pdf}
+\caption{Percentage MSE improvement of Model~C over Model~A by GICS
+sector and forecast horizon. Sectors are sorted by the $h=5$ gain.}
+\label{fig:sector_heatmap}
+\end{adjustwidth}
+\end{figure}
+
+Figure~\ref{fig:sector_heatmap} extends the comparison with HAR across
+horizons. Materials records a monthly improvement of approximately 12.6\%,
+and Health Care and Industrials also show relatively large monthly gains.
+However, improvements do not increase monotonically with horizon: several
+sectors have their largest gains at $h=5$, and Energy underperforms HAR
+at $h=22$. The evidence favors horizon-specific evaluation rather than a
+uniform long-horizon benefit across industries.
+
+Sectoral heterogeneity is compatible with differences in common exposures
+and adjustment dynamics, but the table does not identify liquidity,
+leverage, or information-diffusion channels. Nor does heterogeneity itself
+rule out overfitting. The practical finding is narrower: the full feature
+set complements market-state controls in several sectors, while its
+incremental value is small or negative in others. Gradient Boosting
+underperforms HAR in every sector at the weekly horizon, whereas the
+relative performance of shrinkage methods varies by sector.
+
+\subsection{Robustness}
+
+The final step in the empirical analysis is to determine whether the
+forecasting improvements remain stable across alternative estimation
+procedures, rolling-window choices, volatility proxies, liquidity
+conditions, and benchmark specifications.
+
+Table~\ref{tab:robustness} summarizes a broad robustness battery for the
+headline comparison between the full persistence-augmented model and the HAR benchmark
+at the weekly forecasting horizon. The reported variants retain positive gains against HAR, subject to the
+benchmark and measurement qualifications discussed below.
+\input{tables/table9_robustness.tex}
+Replacing the GPH persistence estimator throughout the feature set with
+the local-Whittle estimator produces forecasting improvements almost
+identical to the headline specification: $+8.21\%$ versus the baseline
+$+8.24\%$. This result is important because it demonstrates that the
+forecasting gains are not driven by the particular semiparametric estimator
+used to construct the persistence variables.
+
+The rolling-window robustness checks produce similarly stable results.
+Using a shorter 500-day rolling estimation window yields approximately
+$+9.13\%$ forecast improvement, while using a longer 1000-day window
+yields approximately $+8.67\%$. Both forecasting gains remain statistically
+significant. These findings indicate that the forecasting gains are not
+artifacts of a particular rolling-window length. Persistence-based
+forecasting variables remain informative across substantially different
+temporal smoothing structures.
+
+The volatility-proxy robustness checks are also revealing. Replacing the
+Parkinson realized-variance target with the logarithm of future mean
+squared returns, a substantially noisier volatility proxy, reduces
+the magnitude of the forecasting gains but still produces statistically
+significant improvement: $+4.16\%$. This result suggests that the
+persistence-based forecasting gains are not specific to the Parkinson
+volatility estimator itself. The smaller gain is consistent with
+sensitivity to the volatility proxy, but the comparison does not isolate
+measurement noise as its cause.
+
+Liquidity splits show gains over HAR in both groups: 8.95\% in the
+low-liquidity half and 7.51\% in the high-liquidity half. The larger gain in
+the former is consistent with a liquidity-related interpretation, but the
+split does not identify a liquidity mechanism. These groups use a static
+full-sample liquidity classification and are retrospective diagnostics,
+not real-time trading rules.
+
+The GARCH(1,1) benchmark row warrants comment. A conventional GARCH(1,1)
+model estimated directly on returns performs substantially worse than the
+HAR benchmark when evaluated against the Parkinson range-based variance
+target: $-93.5\%$ relative performance under mean squared error loss.
+Under QLIKE, the reported HLN DM statistic is $-2.80$. This statistic
+is not directly comparable to a percentage MSE change, since the loss
+functions use different scales. Comparisons between returns-based
+conditional variance models and range-based proxies involve substantial scale mismatch
+and measurement differences. The paper therefore emphasizes that the
+forecasting comparison should primarily be interpreted within the
+realized-volatility forecasting environment rather than as a definitive
+rejection of all conditional-variance models.
+
+Finally, the robustness analysis again illustrates the importance of
+correct statistical inference. The naive pooled-cell Diebold--Mariano
+statistic ignoring cross-sectional dependence equals approximately
+$+23.97$, whereas the properly panel-aware HLN-corrected statistic equals
+approximately $+3.87$. This difference illustrates how
+apparent statistical significance may be inflated when within-date
+cross-sectional dependence is ignored.
+
+Taken together, the robustness checks show that the combined model's gains
+against HAR persist under the reported estimator, window, proxy, and
+liquidity variations. Because these checks compare C with HAR rather than
+HAR-X, they do not separately establish robustness of the incremental
+persistence contribution conditional on market-state controls. They also
+do not resolve sample selection, structural-break identification, or
+direct measurement of uncertainty duration.
+
+% =============================================================================
+\section{Economic Interpretation and Implications}
+\label{sec:economic}
+% =============================================================================
+
+The forecasting evidence supports using persistence states alongside
+conventional volatility and market-stress predictors. Their economic
+interpretation concerns shared dependence and uncertainty propagation,
+rather than an identified structural mechanism. The portfolio exercise
+provides an application of the existing forecasts; the broader implications
+for stress monitoring remain potential uses rather than separately
+validated results.
+
+\subsection{Volatility-Managed Portfolios}
+\label{subsec:volmanaged}
+
+Following \citet{moreira2017volatility}, the paper constructs equity
+portfolios that scale exposure inversely with forecast variance. For stock
+$i$ at date $t$, the managed five-day return is
+\begin{equation}
+  f_{m,i,t} \;=\; \frac{c_{m,i}}{\hat{\sigma}^2_{m,i,t}}\,r_{i,t\to t+5},
+\end{equation}
+where $\hat\sigma^2_{m,i,t}=\exp(\hat y_{m,i,t})$ is the exponentiated
+log-variance forecast and $c_{m,i}$ is a stock- and model-specific variance
+normalization constant. The Parkinson proxy is the forecast target; this
+construction should not be interpreted as directly forecasting the
+conditional variance of portfolio returns.
+
+Table~\ref{tab:volmanaged} shows similar Sharpe ratios over the full evaluation
+sample: 0.73 for the unmanaged portfolio, 0.72 for HAR-X management, and
+0.73 for Model~C management. Model~C has a smaller maximum drawdown than
+both comparators, but its full-sample certainty-equivalent return is below
+that of the unmanaged portfolio (5.23\% versus 5.40\%). The evidence does
+not support a claim of uniformly superior risk-adjusted performance.
+
+During COVID, Model~C management produces a Sharpe ratio of 1.36, compared
+with 1.06 for HAR-X management and 0.65 for the unmanaged portfolio. Its
+certainty-equivalent return is 12.30\%, versus 8.55\% and $-2.98\%$,
+respectively. However, its COVID maximum drawdown is larger than that of
+HAR-X management in absolute magnitude (5.04\% versus 4.33\%). In high-VIX
+states, the Sharpe ratios for Model~C and HAR-X management are 0.93 and
+0.88; in low-VIX states, they are 0.92 and 0.88. The particularly large COVID Sharpe
+difference is therefore a regime-specific result, not a uniform advantage
+across all metrics or market states.
+
+These portfolio comparisons need not reproduce the MSE ranking. During
+COVID at $h=5$, HAR-X has lower forecast MSE than Model~C, yet the
+Model~C-managed portfolio has the higher Sharpe ratio. Forecast loss and
+portfolio performance evaluate different objects: inverse-variance weights
+and realized returns determine the latter. The portfolio result is an
+application-level comparison, not proof that persistence improves COVID
+weekly forecast accuracy or uniquely causes the Sharpe difference.
+
+
+\begin{figure}[htbp]
+\begin{adjustwidth}{-\extralength}{0cm}
+\centering
+\includegraphics[width=\linewidth]{figures/fig9_volmanaged_cumulative.pdf}
+\caption{Cumulative wealth (log scale) of the unmanaged equal-weight
+portfolio and three volatility-managed variants over the out-of-sample
+window. The shaded band marks March--December 2020.}
+\label{fig:volmanaged}
+\end{adjustwidth}
+\end{figure}
+
+\input{tables/table10_volmanaged.tex}
+\FloatBarrier
+
+Figure~\ref{fig:volmanaged} displays the corresponding wealth paths over
+the evaluation period following the initial training window. It does not
+provide out-of-sample evidence for the global financial crisis, which
+predates the stated forecast evaluation start. The exercise illustrates
+the consequences of forecast-based exposure scaling rather than identifying
+how uncertainty is transmitted or resolved.
+
+The portfolio statistics are descriptive. The reported table does not
+provide inference for Sharpe differences, transaction-cost-adjusted results,
+or sufficient detail about the calibration period for $c_{m,i}$ to establish
+that the variance normalization is implementable in real time. Accordingly,
+the exercise is evidence about the reported strategy construction, not a
+verified net-of-cost investment recommendation.
+
+\subsection{Implications for Risk Monitoring}
+
+The cross-sectional persistence state rises during the global financial
+crisis and COVID and has a contemporaneous correlation of approximately
+0.50 with VIX. These full-sample diagnostics motivate monitoring dependence
+alongside volatility levels. They do not establish that persistence predicts
+the onset of stress or the time until conditions normalize. The lead--lag
+correlations and the smoothing induced by rolling estimation do not
+establish a directional forecasting relationship.
+
+For risk management, the immediate implication is to evaluate persistence
+features as complementary inputs to multi-horizon volatility forecasts.
+They may also motivate scenarios involving more persistent volatility or
+sectorally concentrated dependence. Applications to crisis-duration
+forecasting, systemic early warning, multivariate risk, and volatility
+trading remain extensions requiring their own evaluation. The current
+results do not validate those uses.
+
+\subsection{Implications for Forecasting Design}
+
+The comparison across estimators favors a structured linear use of the
+feature set over the evaluated tree-based alternatives. The relevant
+methodological lesson is conditional: interpretable feature construction
+can be useful without a highly flexible estimator in this panel and
+forecasting protocol. It is not a general claim that nonlinear methods
+cannot forecast volatility, nor does the comparison alone establish
+whether sample size, tuning, or estimation instability explains their
+performance. HAR-X remains a strong benchmark throughout.
+
+% =============================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+% =============================================================================
+
+This paper evaluates volatility persistence as a financial state variable
+rather than solely as a stock-specific fractional parameter. Across 115
+equities drawn from the S\&P~500 over November 2001--April 2026, the
+volatility proxies display persistent dependence and low estimated Hurst
+exponents. The cross-sectional mean GPH and local-Whittle estimates are
+0.451 and 0.440, respectively, and the mean Hurst estimate is approximately
+0.063. These diagnostics are consistent with persistence at longer scales
+and local irregularity, without identifying a unique latent volatility
+process or establishing stationarity in every rolling window.
+
+The main contribution is the distinction between individual persistence and
+its joint use with shared market states. The own-stock persistence and
+roughness block adds little beyond HAR. Cross-sectional and sectoral blocks
+in isolation deliver small, statistically insignificant gains at weekly and
+monthly horizons. Their joint inclusion with persistence--stress
+interactions and market controls is more useful, supporting the use of
+persistence as part of a conditional state representation rather than as a
+stand-alone stock-level predictor.
+
+Benchmark choice is central to this conclusion. Model~C reduces MSE by
+4.55\%, 8.24\%, and 5.54\% relative to HAR at daily, weekly, and monthly
+horizons, with significance under the reported panel-aware HLN tests.
+However, HAR-X already achieves reductions of 5.10\%, 7.72\%, and 3.72\%.
+The full model therefore improves on HAR-X at weekly and monthly horizons,
+not daily, under MSE; its largest additional gain is monthly. These
+HAR-X comparisons are descriptive because direct significance tests against
+that benchmark are not reported. Market-state information explains much of
+the short-horizon gain, while persistence features provide a complementary,
+horizon-dependent contribution.
+
+The same qualification applies across regimes. In high-VIX states the full
+model improves on HAR-X at all three horizons, but during COVID it does so
+only at the monthly horizon. Its weekly COVID gain of 18.88\% over HAR is
+smaller than HAR-X's 20.67\% gain. Sectoral comparisons likewise show
+heterogeneous incremental value rather than universal improvement. These
+patterns sharpen the contribution: the usefulness of shared persistence
+states depends on the forecasting horizon, market conditions, and benchmark.
+
+The volatility-managed portfolio exercise offers an economic application.
+Model~C management has a COVID Sharpe ratio of 1.36 versus 1.06 for HAR-X
+management, although their full-sample Sharpe ratios are similar and
+Model~C does not dominate every risk metric. These descriptive results do
+not establish net-of-cost implementability or statistical significance of
+the portfolio differences. The estimator comparisons similarly favor the
+structured linear specification over the evaluated tree-based procedures
+within this setting, not linear methods in general.
+
+Several limitations define the scope of the findings. The coverage-selected
+panel may be subject to survivorship and selection effects, and range-based
+volatility measurement is not equivalent to observing latent volatility.
+Rolling estimates can reflect regime changes as well as fractional
+dependence, with some local-Whittle values outside the stationary range.
+The evidence is consistent with interpreting persistence as a reduced-form
+indicator of uncertainty propagation, but no duration outcome or causal
+transmission mechanism is identified. The VIX lead--lag diagnostic
+documents an association with market stress, not a validated leading
+stress indicator.
+
+Future work could assess point-in-time constituent panels, richer
+high-frequency measurements, other asset classes, and multivariate
+covariance forecasts. Direct modeling of stress duration would provide a
+separate test of the economic interpretation, while implementation-aware
+portfolio evaluation would clarify its practical value. The present
+contribution does not depend on those extensions: it shows how a joint
+persistence-state specification can complement established volatility
+predictors, and identifies where the existing evidence supports that use
+and where it does not.
+
+\authorcontributions{Conceptualization, A.D., N.A. and S.T.R.; methodology,
+A.D. and N.A.; software, A.D.; formal analysis, A.D.; data curation, N.A.;
+writing---original draft preparation, A.D. and N.A.; writing---review and
+editing, A.D., N.A. and S.T.R.; supervision, S.T.R.}
+
+\funding{This research received no external funding.}
+
+\institutionalreview{Not applicable.}
+
+\informedconsent{Not applicable.}
+
+\dataavailability{Restrictions apply to the availability of these data.
+Daily price, volume, and market-index data were obtained from Bloomberg
+Terminal and are available from the authors with the permission of Bloomberg.
+The estimation and forecasting code is available from the authors on request.}
+
+\acknowledgments{We thank Texas Tech University for its support. During the
+preparation of this manuscript, the authors used OpenAI Prism for the purposes
+of language editing and restructuring of the text. The authors have reviewed
+and edited the output and take full responsibility for the content of this
+publication.}
+
+\conflictsofinterest{The authors declare no conflicts of interest.}
+
+\reftitle{References}
+\bibliography{reference}
+
+\end{document}

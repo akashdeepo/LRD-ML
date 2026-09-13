@@ -72,3 +72,8 @@ results/intermediate/*.csv
 # - PNG figures (results/figures/*.png)
 # - LaTeX tables (results/tables/*.tex)
 # - Documentation (.md files)
+
+# Ad-hoc archives and inbound drafts (keep the tree clean)
+*.zip
+*(1).pdf
+notes.txt

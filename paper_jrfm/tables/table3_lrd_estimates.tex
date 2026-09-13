@@ -1,0 +1,47 @@
+% Table 3: LRD and Roughness Estimates by GICS Sector
+
+\begin{table*}[t]
+\centering
+\caption{Long-Range Dependence and Roughness Estimates by Sector}
+\label{tab:lrd_estimates}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{threeparttable}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccccc}
+\toprule
+ & \multicolumn{2}{c}{Returns} & \multicolumn{3}{c}{Parkinson RV} & \multicolumn{1}{c}{Roughness} & \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-6} \cmidrule(lr){7-7}
+Sector & $\bar d_{\mathrm{GPH}}$ & $\bar d_{\mathrm{LW}}$ 
+& $\bar d_{\mathrm{GPH}}$ & $\bar d_{\mathrm{LW}}$ & \% Sig 
+& $\bar H$ & N \\
+\midrule
+Communication Services & 0.019 & 0.002 & 0.477 & 0.477 & 100\% & 0.076 & 5 \\
+Consumer Discretionary & -0.019 & -0.028 & 0.454 & 0.444 & 100\% & 0.056 & 9 \\
+Consumer Staples & -0.037 & -0.041 & 0.384 & 0.381 & 91\% & 0.059 & 11 \\
+Energy & -0.008 & -0.030 & 0.416 & 0.439 & 100\% & 0.067 & 5 \\
+Financials & -0.027 & -0.033 & 0.490 & 0.461 & 100\% & 0.071 & 19 \\
+Health Care & -0.034 & -0.030 & 0.431 & 0.419 & 100\% & 0.058 & 15 \\
+Industrials & -0.011 & -0.015 & 0.444 & 0.437 & 100\% & 0.060 & 17 \\
+Information Technology & -0.015 & -0.017 & 0.467 & 0.455 & 100\% & 0.061 & 18 \\
+Materials & -0.019 & -0.017 & 0.464 & 0.448 & 100\% & 0.061 & 3 \\
+Real Estate & -0.011 & -0.037 & 0.511 & 0.486 & 100\% & 0.069 & 7 \\
+Utilities & -0.063 & -0.066 & 0.400 & 0.404 & 100\% & 0.062 & 6 \\
+\midrule
+\textbf{Overall} & -0.022 & -0.028 & 0.451 & 0.440 & 99\% & 0.063 & 115 \\
+\bottomrule
+\end{tabular*}
+
+\begin{tablenotes}[flushleft]
+\footnotesize
+\item Notes: $d$ denotes the fractional differencing parameter. GPH is the
+Geweke--Porter-Hudak log-periodogram estimator with bandwidth $m=\lfloor
+T^{0.65}\rfloor$; LW is the local-Whittle estimator. Returns are daily log
+returns; Parkinson RV is the range-based variance proxy constructed from
+daily high and low prices. $H$ is the Hurst exponent estimated from the
+scaling of the $q=2$ absolute moment of increments in $\log\mathrm{RV}^{PK}$
+over lags $\{1,2,3,5,8,13,21\}$. Estimates below $H=0.5$ are consistent
+with roughness in the observed proxy. \% Sig reports the share of stocks
+whose volatility GPH estimates are significant at the 5\% level.
+\end{tablenotes}
+\end{threeparttable}
+\end{table*}
