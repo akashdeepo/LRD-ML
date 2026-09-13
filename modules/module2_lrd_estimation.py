@@ -77,7 +77,10 @@ def gph(x: np.ndarray, m: int | None = None) -> tuple[float, float, float]:
     Xd = X - X.mean()
     yd = y - y.mean()
     beta = (Xd * yd).sum() / (Xd ** 2).sum()
-    d_hat = -beta / 2.0
+    # With regressor log[4 sin^2(lam/2)] the GPH slope equals -d, so
+    # d_hat = -beta.  (The pre-2026-09-13 code divided by 2, which is only
+    # correct for the regressor log|2 sin(lam/2)|; it halved every GPH estimate.)
+    d_hat = -beta
     se = np.pi / np.sqrt(24 * m)
     p = 2 * (1 - stats.norm.cdf(abs(d_hat / se)))
     return d_hat, se, p
@@ -267,7 +270,7 @@ def figure2(rv_gph: pd.DataFrame, rolling_d: pd.DataFrame,
     ax.set_ylabel("Density")
     ax.set_title(r"(a) Distribution of $\hat d$ for Parkinson RV (GPH)",
                  fontweight="bold")
-    ax.legend(); ax.set_xlim(-0.1, 0.7)
+    ax.legend(); ax.set_xlim(-0.1, 0.8)
 
     # (b) rolling d for a few stocks
     ax = axes[0, 1]

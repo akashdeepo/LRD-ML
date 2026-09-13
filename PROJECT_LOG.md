@@ -853,3 +853,80 @@ suggested figure-caption sentences, and a "do not remove during
 streamlining" list.
 
 *Last updated: 2026-05-04*
+
+---
+
+## Session: 2026-09-13 — JRFM resubmission fixes + GPH normalisation bug
+
+**Context.** The OUP submission (late May 2026, `paper/journal_paper.tex`) was
+rejected. Nicholas rebuilt the manuscript in the MDPI JRFM template with a new
+title ("Volatility Persistence as a Financial State Variable: Memory, Roughness,
+and Forecasting Across Market Regimes"), much more hedged claims, and HAR-X as
+the operative benchmark. His source bundle now lives in `paper_jrfm/`
+(`Memory_Roughness_edited.tex` + `Definitions/` MDPI class + tables + figures).
+
+**GPH estimator bug (found while checking Prism's proofreading note).**
+`modules/module2_lrd_estimation.py::gph` regressed the log-periodogram on
+$\log[4\sin^2(\lambda_j/2)]$ and then set `d_hat = -beta / 2`. For that
+regressor the slope is $-d$, so every GPH estimate in the project was exactly
+half its true value (rolling panel new/old ratio = 2.000000 on all cells).
+The local-Whittle and Hurst code was correct. Fixed (`d_hat = -beta`) and
+module 2 + module 3 re-run.
+
+| Quantity | Before | After |
+|---|---|---|
+| Full-sample $\bar d_{GPH}$, Parkinson RV | 0.226 | **0.451** (LW unchanged at 0.440) |
+| % stocks significant at 5% (GPH, RV) | 98% | 99% |
+| Returns $\bar d_{GPH}$ | −0.011 | −0.022 (15% significant) |
+| Rolling GPH pooled mean / 99th pct | 0.173 / 0.415 | 0.346 / 0.831 (22% of cells > 0.5) |
+| $\bar d_t$ calm 2013–14 / GFC 2008Q3–2009Q4 / COVID | 0.154 / 0.259 / 0.287 | 0.308 / 0.499 (+62%) / 0.573 (+86%) |
+| $\rho(\bar d_t, \mathrm{VIX})$ | 0.501 | 0.501 |
+
+Note the old log entry (2026-04-27) quoted GFC = 0.259 (+68%); with the stated
+window (2008-Q3 to 2009-Q4) the pre-fix value was actually 0.249 (+62%), so the
++68% was a window mismatch on top of the halving. The paper now states the
+window explicitly.
+
+**Forecasting results are unaffected.** Every persistence feature that enters
+Models A2–A5, C and D (`d_gph`, its Δ/vol/trend, `cs_mean_d`, `cs_std_d`,
+`sector_mean_d`, `d_x_vix`, `d_x_move`) scales by exactly 2; OLS forecasts are
+invariant to rescaling a regressor, Lasso/Ridge/EN standardise inputs, and
+tree splits are invariant to monotone rescaling. Verified by re-running the
+linear ladder (`module4 --only A2 A3 A4 A5 C`) on the corrected features and
+comparing with the pre-fix forecast panels: max |Δŷ| = 1.1e-10 across all
+30 files, no NaN-pattern changes. Tables 5–10 and Figures 4–8 (JRFM numbering)
+therefore stand; only Table 5 (LRD by sector), Table 4 (feature statistics),
+Figure 3 and the associated text change. Module 5 (ML) was not re-run for the
+same reason.
+
+**Regenerated.** `results/tables/table3_lrd_estimates.tex`,
+`table4_features.tex`, `results/figures/fig2_lrd_estimates.{pdf,png}` (histogram
+x-axis widened to 0.8), `results/intermediate/lrd_*.csv`, `rolling_d_gph.csv`,
+`features/*`; copies synced to `paper_jrfm/`, `paper_overleaf/`,
+`paper_overleaf_v2/`. Note: the A2 forecast files are now saved under `A2_h*`
+(previously only the legacy alias `B_h*` existed).
+
+**Manuscript fixes in `paper_jrfm/Memory_Roughness_edited.tex`.**
+- Removed the five-minute high-frequency subsample claims (§4.5, §7.1, §7.2);
+  no such analysis exists. §4.5 robustness sentence reworded to what was done.
+- Added Parkinson (1980), Newey–West (1987), Jarque–Bera (1980), Tibshirani
+  (1996), Zou–Hastie (2005), Hoerl–Kennard (1970) to `reference.bib` and cited.
+- Table 4 (JRFM): dropped the all-zero $\hat d/\mathrm{Liq}$ row and the unused
+  USYC2Y10 row; note adjusted.
+- Table 10 notes now state the GARCH QLIKE HLN-DM-t of −2.80 (p = 0.005).
+- Abstract trimmed 203 → 194 words (MDPI cap ≈200).
+- Acknowledgments: MDPI-format disclosure of OpenAI Prism use.
+- Data Availability: MDPI restricted-third-party wording (Bloomberg).
+- §7.5, §8.1, Conclusion: GPH numbers and distribution description updated;
+  GFC/COVID windows stated explicitly.
+- JRFM uses MDPI's APA author-date style, which the bundle already uses.
+
+**Build.** No TeX on this machine; compiled with a standalone Tectonic 0.17
+(XeTeX) via a temporary copy without the `pdftex` class option and with the
+class's EPS logos pointed at the bundled PDF conversions. Nicholas's pdfTeX
+build on Overleaf/Prism is the canonical one.
+
+**Open for the co-authors.** Corresponding author is Nicholas in this
+version (was Akash in the OUP version); confirm before submission.
+
+*Last updated: 2026-09-13*
