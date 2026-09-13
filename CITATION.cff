@@ -1,0 +1,51 @@
+cff-version: 1.2.0
+message: "If you use this code or the results, please cite the paper below (preferred) and the repository."
+title: "LRD-ML: Volatility persistence as a financial state variable"
+type: software
+version: "2026.09"
+date-released: "2026-09-13"
+repository-code: "https://github.com/akashdeepo/LRD-ML"
+license: MIT
+authors:
+  - family-names: Deep
+    given-names: Akash
+    affiliation: "Department of Mathematics and Statistics, Texas Tech University"
+  - family-names: Appiah
+    given-names: Nicholas
+    affiliation: "Department of Mathematics and Statistics, Texas Tech University"
+  - family-names: Rachev
+    given-names: Svetlozar T.
+    affiliation: "Department of Mathematics and Statistics, Texas Tech University"
+keywords:
+  - long memory
+  - rough volatility
+  - volatility forecasting
+  - realized volatility
+  - HAR model
+  - Geweke-Porter-Hudak
+  - local Whittle
+  - Hurst exponent
+  - volatility-managed portfolios
+  - financial econometrics
+  - S&P 500
+abstract: >-
+  Code, data pipeline, and manuscript for a study of whether volatility
+  persistence (rolling long-memory and roughness estimates on range-based
+  variance) carries forecasting information as a shared market state beyond
+  HAR and HAR-X benchmarks, on a panel of 115 S&P 500 stocks from November
+  2001 to April 2026. Includes GPH and local-Whittle estimation, a layered
+  forecasting ladder with panel-aware HLN-corrected Diebold-Mariano tests,
+  and Moreira-Muir volatility-managed portfolio evaluation.
+preferred-citation:
+  type: article
+  title: "Volatility Persistence as a Financial State Variable: Memory, Roughness, and Forecasting Across Market Regimes"
+  authors:
+    - family-names: Deep
+      given-names: Akash
+    - family-names: Appiah
+      given-names: Nicholas
+    - family-names: Rachev
+      given-names: Svetlozar T.
+  year: 2026
+  journal: "Journal of Risk and Financial Management"
+  notes: "Submitted September 2026. Texas Tech University working paper."
