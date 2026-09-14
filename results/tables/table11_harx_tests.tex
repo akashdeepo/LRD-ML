@@ -1,0 +1,53 @@
+% Table 11: incremental tests vs HAR-X (point-in-time forecasts, 2026-09-14)
+
+\begin{table}[htbp]
+\centering
+\caption{Incremental Forecast Accuracy Relative to HAR-X: Point-in-Time Out-of-Sample Tests}
+\label{tab:harx_tests}
+\small
+\begin{tabular}{llccccc}
+\toprule
+Specification & $h$ & \%$\Delta$MSE vs HAR-X & HLN DM-$t$ & CW-$t$ & CW $p$ (Holm) & QLIKE DM-$t$ \\
+\midrule
+HAR-X + cross-sectional $\bar d_t$, $\sigma_d^t$ & 1 & -0.15\% & $-0.38$ & $+3.22$$^{***}$ & 0.005 & $+1.64$ \\
+ & 5 & -0.18\% & $-0.37$ & $+3.36$$^{***}$ & 0.004 & $+2.51$$^{**}$ \\
+ & 22 & -1.66\% & $-1.67$$^{*}$ & $+1.08$ & 0.407 & $+1.03$ \\
+\midrule
+HAR-X + sector-mean $\bar d_{s(i),t}$ & 1 & -0.19\% & $-0.63$ & $+2.20$$^{**}$ & 0.069 & $+1.20$ \\
+ & 5 & -0.38\% & $-1.07$ & $+1.97$$^{**}$ & 0.099 & $+1.37$ \\
+ & 22 & -1.42\% & $-2.62$$^{***}$ & $+0.50$ & 0.407 & $+0.11$ \\
+\midrule
+HAR-X + $\bar d_t$ $\times$ HAR components & 1 & -0.61\% & $-1.12$ & $+2.96$$^{***}$ & 0.009 & $+0.87$ \\
+ & 5 & -0.60\% & $-0.80$ & $+3.12$$^{***}$ & 0.006 & $+0.93$ \\
+ & 22 & -2.25\% & $-2.07$$^{**}$ & $+1.10$ & 0.407 & $-0.07$ \\
+\midrule
+Model $C$ (full union) & 1 & -0.59\% & $-0.74$ & $+6.12$$^{***}$ & 0.000 & $+0.54$ \\
+ & 5 & +0.57\% & $+0.48$ & $+7.74$$^{***}$ & 0.000 & $+1.20$ \\
+ & 22 & -3.53\% & $-2.43$$^{**}$ & $+6.26$$^{***}$ & 0.000 & $+0.30$ \\
+\midrule
+Model $D$, Lasso & 1 & -0.92\% & $-2.75$$^{***}$ & $+5.69$$^{***}$ & -- & $+0.05$ \\
+ & 5 & -0.81\% & $-1.82$$^{*}$ & $+7.59$$^{***}$ & -- & $+0.05$ \\
+ & 22 & -2.68\% & $-2.34$$^{**}$ & $+5.01$$^{***}$ & -- & $+0.17$ \\
+\midrule
+Model $D$, Ridge & 1 & -1.69\% & $-4.25$$^{***}$ & $+5.50$$^{***}$ & -- & $-0.21$ \\
+ & 5 & -1.92\% & $-3.87$$^{***}$ & $+7.78$$^{***}$ & -- & $-0.53$ \\
+ & 22 & -3.43\% & $-2.43$$^{**}$ & $+4.68$$^{***}$ & -- & $+0.29$ \\
+\midrule
+Model $D$, Elastic Net & 1 & -0.95\% & $-2.88$$^{***}$ & $+5.44$$^{***}$ & -- & $-0.14$ \\
+ & 5 & -0.86\% & $-2.01$$^{**}$ & $+7.81$$^{***}$ & -- & $-0.01$ \\
+ & 22 & -2.70\% & $-2.28$$^{**}$ & $+4.89$$^{***}$ & -- & $+0.23$ \\
+\midrule
+Model $D$, Random Forest & 1 & -4.93\% & $-6.17$$^{***}$ & $+3.89$$^{***}$ & -- & $-1.24$ \\
+ & 5 & -5.96\% & $-5.08$$^{***}$ & $+5.70$$^{***}$ & -- & $-2.61$$^{***}$ \\
+ & 22 & -9.84\% & $-4.11$$^{***}$ & $+5.61$$^{***}$ & -- & $-1.74$$^{*}$ \\
+\midrule
+Model $D$, Gradient Boosting & 1 & -19.53\% & $-19.73$$^{***}$ & $+5.53$$^{***}$ & -- & $-3.01$$^{***}$ \\
+ & 5 & -19.06\% & $-13.30$$^{***}$ & $+7.95$$^{***}$ & -- & $-6.76$$^{***}$ \\
+ & 22 & -28.39\% & $-8.06$$^{***}$ & $+4.96$$^{***}$ & -- & $-4.94$$^{***}$ \\
+\midrule
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item Notes: All forecasts are point-in-time (training rows whose target window extends past the origin are excluded). \%$\Delta$MSE is the change in pooled MSE on $\log RV^{PK}$ relative to HAR-X (Model $A_1$); positive favours the specification. HLN DM-$t$: panel-aware Harvey--Leybourne--Newbold-corrected Diebold--Mariano statistic against HAR-X (two-sided). CW-$t$: Clark--West (2007) MSPE-adjusted statistic for the nested comparison with HAR-X (one-sided, standard normal). Both use the cross-sectional mean loss differential per date with a Newey--West bandwidth $\lceil h/5\rceil-1$. CW $p$ (Holm) adjusts the three pre-registered specifications' nine tests jointly and Model $C$'s three tests jointly; other rows are unadjusted (--). Significance of raw statistics: $^{*}$ $p<0.10$, $^{**}$ $p<0.05$, $^{***}$ $p<0.01$.
+\end{tablenotes}
+\end{table}

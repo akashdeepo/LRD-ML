@@ -34,18 +34,18 @@ Panel: 115 S&P 500 constituents, 6,136 trading days (29 Nov 2001 to 21 Apr 2026)
 | Cross-sectional mean $\bar d_t$: calm 2013–14 / GFC / COVID | 0.31 / 0.50 (+62%) / 0.57 (+86%) |
 | Correlation $\rho(\bar d_t, \mathrm{VIX})$ | +0.50 |
 
-**Own-stock persistence adds nothing to HAR; the shared state adds something to HAR-X, mostly at longer horizons.** Pooled out-of-sample MSE improvement over HAR (Model $A$), with the panel-aware HLN-corrected Diebold–Mariano statistic against HAR:
+**Own-stock persistence adds nothing to HAR, and the shared state does not beat HAR-X.** Point-in-time pooled out-of-sample MSE improvement over HAR (Model $A$), with the panel-aware HLN-corrected Diebold–Mariano statistic against HAR:
 
 | Model | $h=1$ | $h=5$ | $h=22$ |
 |---|---|---|---|
-| $A_1$ = HAR-X (HAR + VIX, MOVE) | +5.10% | +7.72% | +3.72% |
-| $A_2$ = HAR + own-stock $\hat d$ block | −0.54% | −0.03% | −0.30% |
-| $C$ = full persistence state + HAR-X | **+4.55%** (t = 3.15) | **+8.24%** (t = 3.87) | **+5.54%** (t = 2.33) |
-| $C$ minus HAR-X, in percentage points | −0.55 | +0.52 | **+1.82** |
+| $A_1$ = HAR-X (HAR + VIX, MOVE) | +5.10% (t = 5.34) | +7.72% (t = 5.31) | +2.82% (t = 1.49) |
+| $A_2$ = HAR + own-stock $\hat d$ block | −0.54% | −0.03% | −1.89% |
+| $C$ = full persistence state + HAR-X | **+4.55%** (t = 3.15) | **+8.24%** (t = 3.87) | −0.62% (t = −0.21) |
+| $C$ minus HAR-X, in percentage points | −0.55 | +0.52 | −3.53 |
 
-The incremental value of the persistence state is concentrated at the monthly horizon and in stress: +1.9 pp over HAR-X at $h=5$ in high-VIX weeks, +1.7 pp at $h=22$ during COVID. In COVID at the weekly horizon the full model actually trails HAR-X. We report these as descriptive differences; the significance tests are against HAR.
+Tested directly against HAR-X, Model $C$ is never significantly better (HLN-DM t = −0.74, +0.48, −2.43). Clark–West, the appropriate test for nested models, rejects the null that the persistence regressors have zero population coefficients at every horizon, but that information does not survive per-stock estimation: three pre-registered HAR-X-plus-one-block specifications and a variant in which the persistence state modulates the HAR weights all leave MSE within 0.6% of HAR-X, mostly below it. Regime differences (high-VIX, COVID) are not significant. Full test tables: `results/tables/table11_harx_tests.tex`, ledger in [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md).
 
-**The economics are regime-specific.** Moreira–Muir volatility-managed portfolios built on Model $C$ forecasts reach a COVID Sharpe ratio of 1.36 versus 1.06 for HAR-X management and 0.65 unmanaged (certainty-equivalent return +12.3% vs +8.6% vs −3.0%). Over the full sample the three Sharpe ratios are 0.73, 0.72 and 0.73.
+**The economics are suggestive, not significant.** Moreira–Muir volatility-managed portfolios built on Model $C$ forecasts reach a COVID Sharpe ratio of 1.36 versus 1.06 for HAR-X management and 0.65 unmanaged (certainty-equivalent return +12.3% vs +8.6% vs −3.0%). Over the full sample the three Sharpe ratios are 0.73, 0.72 and 0.73. Ledoit–Wolf tests of the Sharpe differences: COVID p = 0.13 (bootstrap 0.36, 43 weeks); full sample p = 0.62.
 
 **Flexibility does not help here.** Lasso, ridge and elastic net on the same 18 predictors roughly match the linear model at short horizons; random forests and gradient boosting are worse at every horizon.
 
@@ -155,6 +155,8 @@ LRD-ML/
 **Robustness.** The $h=5$ headline survives swapping GPH for local Whittle, 500- and 1000-day windows, a squared-returns target, and liquidity halves (+4% to +9%, HLN-DM $t > 3$). A returns-based GARCH(1,1) is far worse under MSE (−93.5%) and modestly worse under Patton's proxy-robust QLIKE (HLN-DM $t = -2.80$).
 
 **Correction (13 Sept 2026).** Earlier versions of this code divided the GPH slope by two, which is wrong for the regressor $\log[4\sin^2(\lambda_j/2)]$, so every GPH estimate reported before this date was half its true value (0.226 instead of 0.451 for the panel mean). The fix is in `module2_lrd_estimation.py`. Forecasting results are unaffected because every affected feature scales by exactly two and the estimators are scale-invariant; this was verified by re-running the linear ladder (largest change in any forecast: $10^{-10}$). Details in `PROJECT_LOG.md`.
+
+**Correction (14 Sept 2026).** The expanding training window included rows whose target window extended past the forecast origin. With a five-day stride this affected only the monthly horizon (the last four training rows carried up to 17 days of future variance) and it produced the monthly-horizon gains reported in drafts before this date (Model $C$ +5.5% over HAR at $h=22$; point-in-time it is −0.6%). Daily and weekly results were unaffected. The embargo is in `forecast_io.n_train_rows` and is applied in modules 4, 5 and 9; `tests/test_embargo.py` checks it. The ledger entries run-01 to run-04 in [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md) record the before-and-after numbers and the pre-registered follow-up tests.
 
 ## Citing
 

@@ -1,0 +1,29 @@
+% Table 12: Sharpe-ratio difference tests (Ledoit-Wolf 2008)
+
+\begin{table}[htbp]
+\centering
+\caption{Volatility-Managed Portfolios: Tests of Sharpe-Ratio Differences}
+\label{tab:sharpe_tests}
+\small
+\begin{tabular}{llcccccc}
+\toprule
+Regime & Comparison & Weeks & Sharpe (1) & Sharpe (2) & $\Delta$Sharpe & HAC $t$ & Bootstrap $p$ \\
+\midrule
+Full sample & Model C vs HAR-X & 645 & 0.73 & 0.72 & +0.01 & $+0.50$ & 0.586 \\
+Full sample & Model C vs Unmanaged & 645 & 0.73 & 0.74 & -0.01 & $-0.04$ & 0.971 \\
+Full sample & HAR-X vs Unmanaged & 645 & 0.72 & 0.74 & -0.02 & $-0.10$ & 0.914 \\
+Low VIX (Q1) & Model C vs HAR-X & 162 & 0.92 & 0.88 & +0.04 & $+1.22$ & 0.158 \\
+Low VIX (Q1) & Model C vs Unmanaged & 162 & 0.92 & 0.87 & +0.04 & $+0.41$ & 0.711 \\
+Low VIX (Q1) & HAR-X vs Unmanaged & 162 & 0.88 & 0.87 & +0.01 & $+0.06$ & 0.954 \\
+High VIX (Q4) & Model C vs HAR-X & 162 & 0.93 & 0.88 & +0.05 & $+0.80$ & 0.453 \\
+High VIX (Q4) & Model C vs Unmanaged & 162 & 0.93 & 0.91 & +0.02 & $+0.08$ & 0.943 \\
+High VIX (Q4) & HAR-X vs Unmanaged & 162 & 0.88 & 0.91 & -0.03 & $-0.10$ & 0.916 \\
+COVID 2020 & Model C vs HAR-X & 43 & 1.38 & 1.07 & +0.31 & $+1.50$ & 0.364 \\
+COVID 2020 & Model C vs Unmanaged & 43 & 1.38 & 0.66 & +0.72 & $+0.98$ & 0.456 \\
+COVID 2020 & HAR-X vs Unmanaged & 43 & 1.07 & 0.66 & +0.41 & $+0.65$ & 0.579 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item Notes: Weekly (five-trading-day, non-overlapping) portfolio returns on the forecast sample stride; Sharpe ratios annualised by $\sqrt{252/5}$. HAC $t$ is the Ledoit--Wolf (2008) delta-method statistic for the difference in Sharpe ratios; bootstrap $p$ is from a studentised circular block bootstrap (block length 5, 2000 resamples). Significance of the HAC statistic: $^{*}$ $p<0.10$, $^{**}$ $p<0.05$, $^{***}$ $p<0.01$. Regime rows use the same VIX quartiles and COVID window as Table 8.
+\end{tablenotes}
+\end{table}

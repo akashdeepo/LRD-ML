@@ -930,3 +930,90 @@ build on Overleaf/Prism is the canonical one.
 version (was Akash in the OUP version); confirm before submission.
 
 *Last updated: 2026-09-13*
+
+---
+
+## Session: 2026-09-14 — Rachev's revision requests: HAR-X tests, point-in-time audit, pre-registered follow-ups
+
+Rachev (13 Sept) asked for (i) direct DM/HLN tests of Model C vs HAR-X at
+each horizon and (ii) a check that the out-of-sample design is entirely
+point-in-time, plus S&P membership handling and proofreading. Both
+substantive requests turned out to matter. Everything below is logged as
+runs 01–04 in `docs/EXPERIMENTS.md` with numbered facts in
+`docs/FINDINGS.md`; scripts are in the repo (`modules/module12_incremental_tests.py`,
+`tests/`).
+
+### 1. Direct tests of C vs HAR-X (run-01, saved forecasts)
+Pooled HLN-DM t (H0: C = HAR-X): MSE −0.74 / +0.48 / +1.28 at h = 1/5/22;
+QLIKE +0.54 / +1.20 / +1.65. Nothing significant. Only low-VIX at h = 22
+was significant (t = 3.57) and that regime result is itself contaminated
+by the leak below.
+
+### 2. Training-window leak at h = 22 (run-01 diagnostic, run-02 fix)
+`expanding_forecast` (module 4) and `walk_forward` (module 5) fitted on
+every row j < t. With a 5-trading-day stride, at h = 22 the last four
+training rows have target windows ending up to 17 days after the origin.
+h = 1 and h = 5 are clean (row t−1's weekly target ends on the origin day).
+Fix: `forecast_io.n_train_rows(pos, t, h)` keeps row j only if
+pos_j + h ≤ pos_t; applied in modules 4, 5, 9; `tests/test_embargo.py`.
+Embargo 0 reproduces the saved files to 1e-15; C at h = 5 reproduces to 9e-11.
+
+| h = 22, pooled MSE | leaky (May) | point-in-time |
+|---|---|---|
+| A (HAR) | 0.2689 | 0.2709 |
+| A1 (HAR-X) | 0.2589 (+3.72%, t 1.98) | 0.2633 (+2.82%, t 1.49) |
+| C | 0.2540 (+5.54%, t 2.33) | 0.2726 (−0.62%, t −0.21) |
+| D_rf / D_gbm | −5.3% / −19.2% | −6.7% / −24.8% |
+
+Embargo sweep for C at h = 22 (0 → 4 rows dropped): 0.2540, 0.2628, 0.2679,
+0.2709, 0.2726. C vs HAR-X at h = 22 point-in-time: HLN-t = −2.43. Regimes
+at h = 22, C minus HAR-X: COVID −6.3 pp, high-VIX −4.5 pp. The paper's
+"largest additional gain is monthly / in stress" claim was the leak.
+
+### 3. Pre-registered follow-ups (run-03; protocol written before results)
+Three HAR-X-nesting specifications: `A1cs` (HAR-X + cross-sectional mean
+and dispersion), `A1sec` (HAR-X + sector mean), `A1mod` (HAR-X + d̄_t and
+d̄_t × HAR components, the "duration" hypothesis). Tests vs HAR-X: HLN-DM
+(two-sided) and Clark–West (2007, one-sided, nested), Holm-adjusted over
+the nine CW tests. Decision rule: Holm CW p < 0.05 AND positive MSE gain.
+
+Result: CW rejects for A1cs and A1mod at h = 1 and 5 (Holm p ≤ 0.009) and
+for C at every horizon (t = 6.1, 7.7, 6.3), but every pooled MSE gain vs
+HAR-X is negative except C at h = 5 (+0.57%, DM t = +0.48). Nothing
+satisfies the rule except that one row. Interpretation: the persistence
+regressors have non-zero population coefficients, but per-stock OLS
+(3–13 extra parameters on 430–1,000 rows) cannot convert that into
+out-of-sample accuracy. Pooled-panel estimation is the natural next test
+and was not pre-registered, so it was not run. Table 11
+(`results/tables/table11_harx_tests.tex`).
+
+### 4. Sharpe-ratio inference (run-04)
+Ledoit–Wolf (2008) HAC test plus studentised circular block bootstrap
+(block 5, B = 2000) on weekly portfolio returns. No difference is
+significant: COVID C vs HAR-X +0.31 annualised, HAC p = 0.13, bootstrap
+p = 0.36 (43 weeks); full sample +0.01, p = 0.62. Table 12
+(`results/tables/table12_sharpe_tests.tex`).
+
+### 5. Other point-in-time findings (no change made)
+Rolling d̂ and HAR components use data through t−1 (paper writes RV_t,
+code uses RV_{t−1}; notation to fix). VIX/MOVE are contemporaneous closes.
+Winsorisation uses full-sample per-stock quantiles (minor look-ahead in
+ret_lag1). Vol-managed c_i is calibrated on the full evaluation sample
+(standard Moreira–Muir, not real-time). S&P membership: constituents as
+of the April 2026 pull, selection date undocumented (Nicholas pulled it).
+
+### Regenerated
+Forecasts: all models at h = 22 (linear + 5 ML), new specs at all h.
+Tables 5–8 (module 6), Table 11, Table 12; Figures 4, 5, 8 (module 10).
+README findings and correction notes updated. `paper_jrfm/` untouched
+except a DO-NOT-SUBMIT note in `submission_checks.md`; its Tables 6, 8
+and Figures 4, 7 still carry the leaky h = 22 numbers.
+
+### What the paper can now claim
+HAR-X beats HAR at h = 1, 5 (and weakly at 22). The full persistence
+state matches HAR-X at h = 5 (+0.5 pp, insignificant) and is worse at
+h = 1 and 22. Persistence is a market state (d̄_t doubles in crises,
+ρ = 0.50 with VIX) whose forecasting content is already captured by VIX
+and MOVE at the per-stock level. The framing decision is Rachev's.
+
+*Last updated: 2026-09-14*

@@ -76,3 +76,26 @@ now also stated in the Table 10 notes.
 exists in the code or the paper); reworded the Section 4.5 robustness sentence; added the
 Parkinson (1980), Newey-West (1987), Jarque-Bera (1980), Tibshirani (1996), Zou-Hastie (2005)
 and Hoerl-Kennard (1970) references; trimmed the abstract to 194 words.
+
+## DO NOT SUBMIT THIS VERSION (Akash, 2026-09-14)
+
+Rachev's 13 Sept request for direct Model C vs HAR-X tests and a point-in-time
+audit led to two findings that invalidate parts of this draft (full record in
+`docs/EXPERIMENTS.md`, `docs/FINDINGS.md`, `PROJECT_LOG.md`):
+
+1. A training-window leak at h = 22 (last four training rows carried up to 17 days
+   of future variance). Point-in-time, Model C is -0.6% vs HAR at the monthly
+   horizon (was +5.5%) and significantly worse than HAR-X. Affected here:
+   Table 6 (h = 22 rows), Table 8 (h = 22 rows), Table 9 is unaffected (h = 5),
+   Figure 4 (h = 22 bars), Figure 7 (h = 22 column), and every sentence in the
+   abstract, Sections 8.2, 8.4, 8.5, 9 and the Conclusion that says the
+   persistence contribution is "largest at the monthly horizon" or "in stress".
+2. Tested directly, Model C is not significantly better than HAR-X at any
+   horizon (HLN-DM t = -0.74 / +0.48 / -2.43; Clark-West rejects the nested
+   null but no specification lowers MSE vs HAR-X by more than 0.6%). The
+   COVID Sharpe gap (1.36 vs 1.06) is not significant (Ledoit-Wolf p = 0.13,
+   bootstrap p = 0.36).
+
+The regenerated tables and figures live in `results/`; the manuscript text has
+not yet been rewritten around the corrected results. That rewrite requires a
+decision with Rachev on the paper's framing.
