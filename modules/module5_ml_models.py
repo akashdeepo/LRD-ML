@@ -31,6 +31,8 @@ import pandas as pd
 from sklearn.linear_model import LassoCV, RidgeCV, ElasticNetCV
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
+
+from modules.forecast_io import n_train_rows, row_positions
 import lightgbm as lgb
 
 from modules.forecast_io import (
@@ -90,9 +92,14 @@ NEEDS_SCALING = {"lasso", "ridge", "en"}
 
 # ------------------------------------------------------------------ walk-forward
 def walk_forward(X: pd.DataFrame, y: pd.Series, init_n: int,
-                 estimator_name: str, refit_stride: int = REFIT_STRIDE) -> pd.Series:
+                 estimator_name: str, h: int, full_index: pd.DatetimeIndex,
+                 refit_stride: int = REFIT_STRIDE) -> pd.Series:
+    """Walk-forward ML forecast, refit every `refit_stride` origins, with the
+    same point-in-time embargo as module 4: a refit at origin t uses only rows
+    whose target window ends on or before pos_t (docs/FINDINGS.md #1)."""
     Xa = X.values
     ya = y.values
+    pos = row_positions(X.index, full_index)
     yhat = np.full(len(ya), np.nan)
 
     last_fit_t = -10**9
@@ -102,7 +109,8 @@ def walk_forward(X: pd.DataFrame, y: pd.Series, init_n: int,
 
     for t in range(init_n, len(ya)):
         if (t - last_fit_t) >= refit_stride or model is None:
-            X_train, y_train = Xa[:t], ya[:t]
+            n = n_train_rows(pos, t, h)
+            X_train, y_train = Xa[:n], ya[:n]
             if needs_scale:
                 scaler = StandardScaler().fit(X_train)
                 X_train_s = scaler.transform(X_train)
@@ -134,7 +142,8 @@ def run_estimator_horizon(bundle, est_name: str, h: int, init_n: int,
         X, y = aligned_xy(sm, h)
         if len(X) < init_n + 5:
             continue
-        yhat = walk_forward(X, y, init_n, est_name, refit_stride)
+        yhat = walk_forward(X, y, init_n, est_name, h, bundle.rv.index,
+                            refit_stride)
         yhat_panel.loc[yhat.index, t] = yhat.values
         y_panel.loc[y.index, t] = y.values
         if verbose and (i + 1) % 25 == 0:
@@ -142,7 +151,8 @@ def run_estimator_horizon(bundle, est_name: str, h: int, init_n: int,
     return yhat_panel, y_panel
 
 
-def main() -> None:
+def main(only: tuple[str, ...] | None = None,
+         horizons: tuple[int, ...] | None = None) -> None:
     print("=" * 70)
     print("   MODULE 5: ML FORECASTS (Model D - non-linear)")
     print("=" * 70)
@@ -156,9 +166,9 @@ def main() -> None:
     print(f"  Predictor count (Model D == C): {len(MODEL_FEATURES['D'])}")
 
     coverage = []
-    for est_name in ESTIMATORS.keys():
-        for h in HORIZONS:
-            print(f"\n[D_{est_name}, h={h:2d}] walk-forward...")
+    for est_name in (only or tuple(ESTIMATORS.keys())):
+        for h in (horizons or HORIZONS):
+            print(f"\n[D_{est_name}, h={h:2d}] walk-forward...", flush=True)
             yhat_panel, y_panel = run_estimator_horizon(bundle, est_name, h, init_n)
             yhat_fp = FCST_DIR / f"D_{est_name}_h{h:02d}_yhat.csv"
             y_fp = FCST_DIR / f"D_{est_name}_h{h:02d}_y.csv"
@@ -174,10 +184,23 @@ def main() -> None:
                 "share_non_null_pct": round(cov / yhat_panel.size * 100, 2),
             })
 
-    pd.DataFrame(coverage).to_csv(FCST_DIR / "coverage_summary_D.csv", index=False)
+    cov_fp = FCST_DIR / "coverage_summary_D.csv"
+    new_cov = pd.DataFrame(coverage)
+    if cov_fp.exists() and len(new_cov):
+        old_cov = pd.read_csv(cov_fp)
+        key = ["estimator", "horizon"]
+        mask = ~old_cov.set_index(key).index.isin(new_cov.set_index(key).index)
+        new_cov = pd.concat([old_cov[mask], new_cov], ignore_index=True).sort_values(key)
+    new_cov.to_csv(cov_fp, index=False)
     print("\n" + "=" * 70)
     print(f"All Model D forecasts saved under {FCST_DIR}")
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    p = argparse.ArgumentParser()
+    p.add_argument("--only", nargs="+", default=None, help="Subset of estimators")
+    p.add_argument("--horizons", nargs="+", type=int, default=None, help="Subset of horizons")
+    a = p.parse_args()
+    main(only=tuple(a.only) if a.only else None,
+         horizons=tuple(a.horizons) if a.horizons else None)

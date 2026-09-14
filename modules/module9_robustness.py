@@ -102,7 +102,7 @@ def _refit_model_C(bundle, h: int = H,
         X, y = aligned_xy(sm, h)
         if len(X) < init_n + 5:
             continue
-        yhat = expanding_forecast(X, y, init_n)
+        yhat = expanding_forecast(X, y, init_n, h, bundle.rv.index)
         yhat_panel.loc[yhat.index, tkr] = yhat.values
         y_panel.loc[y.index, tkr] = y.values
     return yhat_panel, y_panel
@@ -212,7 +212,7 @@ def variant_target_sqret(bundle, base_yhat, base_y) -> dict:
             X, y = aligned_xy(sm, H)
             if len(X) < init_n + 5:
                 continue
-            yh.loc[X.index, tkr] = expanding_forecast(X, y, init_n).values
+            yh.loc[X.index, tkr] = expanding_forecast(X, y, init_n, H, bundle.rv.index).values
             yy.loc[y.index, tkr] = y.values
         return yh, yy
 

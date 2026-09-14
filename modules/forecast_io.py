@@ -72,6 +72,37 @@ MODEL_FEATURES["B"] = MODEL_FEATURES["A2"]
 # ML estimators: same predictor set as C
 MODEL_FEATURES["D"] = MODEL_FEATURES["C"]
 
+# Pre-registered HAR-X-nesting specifications (2026-09-14; docs/EXPERIMENTS.md
+# run-03). Each adds one persistence block to HAR-X, not to HAR, so the
+# comparison with A1 isolates the incremental information.
+MODEL_FEATURES["A1cs"] = _HAR_CORE + ["vix", "move", "cs_mean_d", "cs_std_d"]
+MODEL_FEATURES["A1sec"] = _HAR_CORE + ["vix", "move", "sector_mean_d"]
+MODEL_FEATURES["A1mod"] = _HAR_CORE + [
+    "vix", "move", "cs_mean_d",
+    "har_d_log_x_csd", "har_w_log_x_csd", "har_m_log_x_csd",
+]
+
+
+def row_positions(dates, full_index: pd.DatetimeIndex) -> np.ndarray:
+    """Position of each row's date in the full trading-day calendar."""
+    pos = full_index.get_indexer(pd.DatetimeIndex(dates))
+    if (pos < 0).any():
+        raise ValueError("row dates not found in the trading calendar")
+    return pos
+
+
+def n_train_rows(pos, t: int, h: int) -> int:
+    """Point-in-time embargo for overlapping multi-step targets.
+
+    Returns the number of rows j < t whose target window (trading days
+    pos_j + 1 .. pos_j + h) ends on or before the origin day pos_t, i.e.
+    pos_j + h <= pos_t. Rows are assumed sorted by date. With a 5-day stride
+    this drops nothing at h = 1 or h = 5 and the last four rows at h = 22
+    (docs/FINDINGS.md #1).
+    """
+    pos = np.asarray(pos)
+    return int(np.searchsorted(pos[:t], pos[t] - h, side="right"))
+
 
 @dataclass
 class StockMatrix:
@@ -181,6 +212,11 @@ def stock_matrix(bundle: Bundle, ticker: str, model: str,
         "sector_mean_d": feat["sector_mean_d"][ticker],
         "vix": mkt["VIX"], "move": mkt["MOVE"],
         "d_x_vix": feat["d_x_vix"][ticker], "d_x_move": feat["d_x_move"][ticker],
+        # HAR components modulated by the cross-sectional persistence state
+        # (spec A1mod, the "duration" hypothesis)
+        "har_d_log_x_csd": har_d_log * cs["cs_mean_d"],
+        "har_w_log_x_csd": har_w_log * cs["cs_mean_d"],
+        "har_m_log_x_csd": har_m_log * cs["cs_mean_d"],
     }
 
     cols = MODEL_FEATURES[model]

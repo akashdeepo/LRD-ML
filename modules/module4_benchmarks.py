@@ -37,6 +37,8 @@ from modules.forecast_io import (
 BASE = Path(__file__).resolve().parent.parent
 FCST_DIR = BASE / "results" / "intermediate" / "forecasts"
 
+from modules.forecast_io import n_train_rows, row_positions
+
 INIT_TRAIN_FRAC = 0.40   # use first 40% of sample dates as training warm-up
 
 LINEAR_LADDER = ("A", "A1", "A2", "A3", "A4", "A5", "C")
@@ -48,15 +50,23 @@ def _ols(X: np.ndarray, y: np.ndarray) -> np.ndarray:
     return beta
 
 
-def expanding_forecast(X: pd.DataFrame, y: pd.Series,
-                       init_n: int) -> pd.Series:
-    """Expanding-window OLS forecast: at each step t >= init_n, fit on
-    rows [0, t) and predict row t. Predictors at row t are X.iloc[t]."""
+def expanding_forecast(X: pd.DataFrame, y: pd.Series, init_n: int,
+                       h: int, full_index: pd.DatetimeIndex) -> pd.Series:
+    """Expanding-window OLS forecast with a point-in-time embargo.
+
+    At each origin t >= init_n, fit on the rows j < t whose target window
+    ends on or before the origin trading day (pos_j + h <= pos_t) and predict
+    row t from X.iloc[t]. Before 2026-09-14 the fit used all rows j < t, which
+    at h = 22 let the last four rows carry up to 17 days of future variance
+    (docs/FINDINGS.md #1, #2).
+    """
     Xa = X.values
     ya = y.values
+    pos = row_positions(X.index, full_index)
     yhat = np.full(len(ya), np.nan)
     for t in range(init_n, len(ya)):
-        beta = _ols(Xa[:t], ya[:t])
+        n = n_train_rows(pos, t, h)
+        beta = _ols(Xa[:n], ya[:n])
         yhat[t] = beta[0] + Xa[t] @ beta[1:]
     return pd.Series(yhat, index=y.index)
 
@@ -73,7 +83,7 @@ def run_model_horizon(bundle, model: str, h: int, init_n: int,
         X, y = aligned_xy(sm, h)
         if len(X) < init_n + 5:
             continue
-        yhat = expanding_forecast(X, y, init_n)
+        yhat = expanding_forecast(X, y, init_n, h, bundle.rv.index)
         yhat_panel.loc[yhat.index, t] = yhat.values
         y_panel.loc[y.index, t] = y.values
         if verbose and i % 25 == 0:
@@ -82,7 +92,8 @@ def run_model_horizon(bundle, model: str, h: int, init_n: int,
 
 
 def main(only: tuple[str, ...] | None = None,
-         skip_existing: bool = False) -> None:
+         skip_existing: bool = False,
+         horizons: tuple[int, ...] | None = None) -> None:
     """Fit the linear ladder.
 
     Parameters
@@ -112,7 +123,7 @@ def main(only: tuple[str, ...] | None = None,
             raise KeyError(f"Unknown model {model!r}; "
                            f"known: {sorted(MODEL_FEATURES)}")
         nfeat = len(MODEL_FEATURES[model])
-        for h in HORIZONS:
+        for h in (horizons or HORIZONS):
             yhat_fp = FCST_DIR / f"{model}_h{h:02d}_yhat.csv"
             y_fp = FCST_DIR / f"{model}_h{h:02d}_y.csv"
             if skip_existing and yhat_fp.exists() and y_fp.exists():
@@ -156,6 +167,9 @@ if __name__ == "__main__":
                    help="Subset of models to fit (default: full ladder)")
     p.add_argument("--skip-existing", action="store_true",
                    help="Skip (model, h) combos whose forecast file exists")
+    p.add_argument("--horizons", nargs="+", type=int, default=None,
+                   help="Subset of horizons to fit (default: 1 5 22)")
     a = p.parse_args()
     main(only=tuple(a.only) if a.only else None,
+         horizons=tuple(a.horizons) if a.horizons else None,
          skip_existing=a.skip_existing)
