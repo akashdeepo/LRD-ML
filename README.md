@@ -38,14 +38,16 @@ Panel: 115 S&P 500 constituents, 6,136 trading days (29 Nov 2001 to 21 Apr 2026)
 
 | Model | $h=1$ | $h=5$ | $h=22$ |
 |---|---|---|---|
-| $A_1$ = HAR-X (HAR + VIX, MOVE) | +5.10% (t = 5.34) | +7.72% (t = 5.31) | +2.82% (t = 1.49) |
+| $A_1$ = HAR-X (HAR + VIX, MOVE) | +5.10% (t = 5.34) | +7.73% (t = 5.31) | +2.82% (t = 1.49) |
 | $A_2$ = HAR + own-stock $\hat d$ block | −0.54% | −0.03% | −1.89% |
-| $C$ = full persistence state + HAR-X | **+4.55%** (t = 3.15) | **+8.24%** (t = 3.87) | −0.62% (t = −0.21) |
-| $C$ minus HAR-X, in percentage points | −0.55 | +0.52 | −3.53 |
+| $C$ = full persistence state + HAR-X | **+4.55%** (t = 3.15) | **+8.25%** (t = 3.88) | −0.62% (t = −0.21) |
+| $C$ minus HAR-X, in percentage points | −0.55 | +0.52 | −3.44 |
 
-Tested directly against HAR-X, Model $C$ is never significantly better (HLN-DM t = −0.74, +0.48, −2.43). Clark–West, the appropriate test for nested models, rejects the null that the persistence regressors have zero population coefficients at every horizon, but that information does not survive per-stock estimation: three pre-registered HAR-X-plus-one-block specifications and a variant in which the persistence state modulates the HAR weights all leave MSE within 0.6% of HAR-X, mostly below it. Regime differences (high-VIX, COVID) are not significant. Full test tables: `results/tables/table11_harx_tests.tex`, ledger in [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md).
+Tested directly against HAR-X, Model $C$ is never significantly better (HLN-DM t = −0.74, +0.48, −2.44). Clark–West, the appropriate test for nested models, rejects the null that the persistence regressors have zero population coefficients at every horizon, but that information does not survive per-stock estimation: three pre-registered HAR-X-plus-one-block specifications and a variant in which the persistence state modulates the HAR weights all leave MSE within 0.6% of HAR-X, mostly below it. Regime differences (high-VIX, COVID) are not significant. Full test tables: `results/tables/table11_harx_tests.tex`, ledger in [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md).
 
-**The economics are suggestive, not significant.** Moreira–Muir volatility-managed portfolios built on Model $C$ forecasts reach a COVID Sharpe ratio of 1.36 versus 1.06 for HAR-X management and 0.65 unmanaged (certainty-equivalent return +12.3% vs +8.6% vs −3.0%). Over the full sample the three Sharpe ratios are 0.73, 0.72 and 0.73. Ledoit–Wolf tests of the Sharpe differences: COVID p = 0.13 (bootstrap 0.36, 43 weeks); full sample p = 0.62.
+**Three follow-up designs, fixed before they were run, settle why.** Pooled estimation across stocks with fixed effects recovers a +0.2% gain over pooled HAR-X at the daily horizon (Clark–West Holm p = 0.03, DM t = 0.4) and nothing beyond that, so estimation noise was part of the story but the recoverable information is negligible. The persistence state does not forecast the slope of the future variance term structure, the quantity a "duration" measure should predict (−0.1% to −1.8% vs HAR-X). At the market level it adds nothing to VIX and MOVE (−1.2% to −6.7%). Table: `results/tables/table13_candidates.tex`.
+
+**The economics are suggestive, not significant.** Moreira–Muir volatility-managed portfolios with a real-time normalisation constant, built on Model $C$ forecasts, reach a COVID Sharpe ratio of 1.41 versus 1.11 for HAR-X management and 0.50 unmanaged; over the 593-week evaluation sample the three are 0.66, 0.63 and 0.61. Ledoit–Wolf tests of the differences: COVID p = 0.15 (bootstrap 0.37, 43 weeks); full sample p = 0.31.
 
 **Flexibility does not help here.** Lasso, ridge and elastic net on the same 18 predictors roughly match the linear model at short horizons; random forests and gradient boosting are worse at every horizon.
 

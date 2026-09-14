@@ -121,7 +121,8 @@ class Bundle:
     sample_dates: pd.DatetimeIndex
     rv: pd.DataFrame              # full daily Parkinson RV (T x N)
     log_rv: pd.DataFrame          # full daily log RV
-    returns: pd.DataFrame         # full daily winsorized log returns
+    returns: pd.DataFrame         # full daily log returns, winsorised point-in-time
+    returns_raw: pd.DataFrame     # full daily raw log returns (portfolio exercise)
     feat: dict[str, pd.DataFrame] # name -> (T_sample x N)
     cs: pd.DataFrame              # (T_sample x F)
     market: pd.DataFrame          # (T_sample x F) — already on sample stride
@@ -149,6 +150,7 @@ def load_bundle() -> Bundle:
         rv=panel.rv_parkinson,
         log_rv=panel.log_rv,
         returns=panel.returns,
+        returns_raw=panel.returns_raw,
         feat=feat,
         cs=cs,
         market=mkt,

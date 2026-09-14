@@ -41,3 +41,27 @@ that per-stock OLS cannot convert into out-of-sample accuracy. From run-03.
 #8 (2026-09-14): No volatility-managed Sharpe-ratio difference is significant.
 COVID C-managed 1.36 vs HAR-X-managed 1.06: Ledoit-Wolf HAC p = 0.13,
 block-bootstrap p = 0.36 (43 weeks). Full sample: +0.01, p = 0.62. From run-04.
+Unchanged with real-time normalisation (COVID 1.41 vs 1.13, p = 0.15; full
+sample 0.66 vs 0.63, p = 0.31). From run-09.
+
+#9 (2026-09-14): Pooled estimation with stock fixed effects recovers only a
++0.20% MSE gain for the full persistence set over pooled HAR-X at h = 1
+(Clark-West Holm p = 0.033, DM t = 0.36), +0.19% at h = 5 (Holm p = 0.058),
+and a loss at h = 22. Pooling does not help HAR-X itself (+0.06 / -0.72 /
+-0.01%). Estimation noise explains part of finding #7, but the recoverable
+information is economically negligible. From run-05.
+
+#10 (2026-09-14): The persistence state does not forecast the slope of the
+future variance term structure (log ratio of monthly to weekly future mean
+variance) beyond HAR-X: HAR-X + cross-sectional persistence -0.13%, full
+set -1.80% (DM t = -3.12). The "duration of uncertainty" interpretation is
+not supported as a forecastable quantity. From run-06.
+
+#11 (2026-09-14): At the market level (cross-sectional mean of the stock
+targets, one series) the persistence state adds nothing to VIX and MOVE:
+-1.2% / -1.9% / -6.7% MSE at h = 1 / 5 / 22. Its information is the VIX
+co-movement. From run-07.
+
+#12 (2026-09-14): Point-in-time winsorisation and real-time portfolio
+normalisation change no headline number by more than 0.01 pp (forecasts) or
+alter any test conclusion (portfolios). From runs 08-09.

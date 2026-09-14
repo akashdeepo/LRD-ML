@@ -66,8 +66,10 @@ ANN_PER_PERIOD = 252 / H  # annualization factor for 5-day returns
 
 
 def _five_day_log_returns(bundle, sample_dates: pd.DatetimeIndex) -> pd.DataFrame:
-    """For each sample date t, compute sum of next-H daily log returns per stock."""
-    ret_full = bundle.returns
+    """For each sample date t, compute sum of next-H daily log returns per stock.
+    Uses raw (unwinsorised) returns: the portfolio exercise should not benefit
+    from clipping realised losses (docs/EXPERIMENTS.md run-08)."""
+    ret_full = bundle.returns_raw
     full_dates = ret_full.index
     pos = full_dates.get_indexer(sample_dates)
     out = np.full((len(sample_dates), ret_full.shape[1]), np.nan)
@@ -97,11 +99,20 @@ def _stats(r: pd.Series) -> dict[str, float]:
             "n_periods": int(len(r))}
 
 
-def _vol_managed_returns(yhat: pd.DataFrame, ret_h: pd.DataFrame
+REALTIME_C = True     # normalisation constant from data through t-1 (run-09)
+C_WARMUP_WEEKS = 52   # weeks of history before the first managed position
+
+
+def _vol_managed_returns(yhat: pd.DataFrame, ret_h: pd.DataFrame,
+                         realtime: bool = REALTIME_C
                          ) -> tuple[pd.Series, pd.DataFrame]:
     """Returns (portfolio_managed, per_stock_managed_returns).
 
     Per-stock normalization: c_i = std(r_i) / std(r_i / sigma2_hat_i).
+    realtime=True (headline): c_{i,t} uses the expanding window of weeks
+    strictly before t, after a C_WARMUP_WEEKS warm-up, so the strategy is
+    implementable in real time. realtime=False: full-sample constant as in
+    Moreira-Muir (2017), kept as a robustness row.
     Then portfolio = equal-weight mean across stocks.
     """
     common_idx = yhat.index.intersection(ret_h.index)
@@ -110,9 +121,15 @@ def _vol_managed_returns(yhat: pd.DataFrame, ret_h: pd.DataFrame
     rh = ret_h.loc[common_idx, common_cols]
     sigma2 = np.exp(yh)
     raw = rh / sigma2
-    c = rh.std(axis=0, skipna=True) / raw.std(axis=0, skipna=True)
-    managed = raw.mul(c, axis=1)
+    if realtime:
+        sd_r = rh.expanding(min_periods=C_WARMUP_WEEKS).std().shift(1)
+        sd_raw = raw.expanding(min_periods=C_WARMUP_WEEKS).std().shift(1)
+        managed = raw * (sd_r / sd_raw)
+    else:
+        c = rh.std(axis=0, skipna=True) / raw.std(axis=0, skipna=True)
+        managed = raw.mul(c, axis=1)
     port = managed.mean(axis=1, skipna=True)
+    port[managed.notna().sum(axis=1) == 0] = np.nan
     return port, managed
 
 
@@ -165,6 +182,9 @@ def main() -> None:
         yhat = yhat.loc[common_idx]
         port_m, _ = _vol_managed_returns(yhat, ret_h.loc[common_idx])
         portfolios[f"{model}-managed"] = port_m
+        if model == "C":
+            port_fs, _ = _vol_managed_returns(yhat, ret_h.loc[common_idx], realtime=False)
+            portfolios["C-managed (full-sample c)"] = port_fs
 
     # Align all portfolios on a common OOS index — the intersection of
     # non-null dates across managed portfolios.
@@ -200,7 +220,7 @@ def main() -> None:
     # --- LaTeX export ---
     fp = TABLES_DIR / "table10_volmanaged.tex"
     portfolios_order = ["Unmanaged (buy-and-hold)", "A-managed",
-                        "A1-managed", "C-managed"]
+                        "A1-managed", "C-managed", "C-managed (full-sample c)"]
     portfolios_order = [p for p in portfolios_order if p in portfolios]
     cols_metric = ["mean_ann", "vol_ann", "sharpe", "max_dd", "cer"]
     metric_label = {"mean_ann": "Ann.\\ Ret.", "vol_ann": "Ann.\\ Vol.",
@@ -247,8 +267,12 @@ def main() -> None:
             "$w_{m,i,t} = c_{m,i} / \\hat\\sigma^2_{m,i,t}$ where "
             "$\\hat\\sigma^2_{m,i,t} = \\exp(\\hat y_{m,i,t})$ is the "
             "model-$m$ forecast of mean $RV^{PK}$ over $[t+1, t+5]$. The "
-            "constant $c_{m,i}$ is set so that $\\mathrm{Var}(f_{m,i}) "
-            "= \\mathrm{Var}(r_i)$ at the stock level. Annualized assuming "
+            "constant $c_{m,i,t}$ equates the variance of the managed and "
+            "unmanaged stock returns over the expanding window of weeks before "
+            "$t$ (52-week warm-up), so the strategy is implementable in real "
+            "time; the `full-sample $c$' row uses the Moreira--Muir constant "
+            "computed over the whole evaluation sample. Portfolio returns use "
+            "raw (unwinsorised) log returns. Annualized assuming "
             "$252/5$ five-day periods per year. CER computed for a "
             "mean-variance investor with risk aversion $\\gamma = 5$.\n"
         )

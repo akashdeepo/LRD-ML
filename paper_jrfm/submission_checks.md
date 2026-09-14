@@ -77,25 +77,34 @@ exists in the code or the paper); reworded the Section 4.5 robustness sentence; 
 Parkinson (1980), Newey-West (1987), Jarque-Bera (1980), Tibshirani (1996), Zou-Hastie (2005)
 and Hoerl-Kennard (1970) references; trimmed the abstract to 194 words.
 
-## DO NOT SUBMIT THIS VERSION (Akash, 2026-09-14)
+## Status (Akash, 2026-09-14, evening): rewritten around the corrected evidence; ready for Rachev's check
 
-Rachev's 13 Sept request for direct Model C vs HAR-X tests and a point-in-time
-audit led to two findings that invalidate parts of this draft (full record in
-`docs/EXPERIMENTS.md`, `docs/FINDINGS.md`, `PROJECT_LOG.md`):
+Rachev's 13 Sept items and what was done (full record: `docs/EXPERIMENTS.md` runs 01-09,
+`docs/FINDINGS.md` #1-#12, `PROJECT_LOG.md`):
 
-1. A training-window leak at h = 22 (last four training rows carried up to 17 days
-   of future variance). Point-in-time, Model C is -0.6% vs HAR at the monthly
-   horizon (was +5.5%) and significantly worse than HAR-X. Affected here:
-   Table 6 (h = 22 rows), Table 8 (h = 22 rows), Table 9 is unaffected (h = 5),
-   Figure 4 (h = 22 bars), Figure 7 (h = 22 column), and every sentence in the
-   abstract, Sections 8.2, 8.4, 8.5, 9 and the Conclusion that says the
-   persistence contribution is "largest at the monthly horizon" or "in stress".
-2. Tested directly, Model C is not significantly better than HAR-X at any
-   horizon (HLN-DM t = -0.74 / +0.48 / -2.43; Clark-West rejects the nested
-   null but no specification lowers MSE vs HAR-X by more than 0.6%). The
-   COVID Sharpe gap (1.36 vs 1.06) is not significant (Ledoit-Wolf p = 0.13,
-   bootstrap p = 0.36).
+1. **Direct DM/HLN tests of C vs HAR-X at each horizon.** Done: new Section 8.3
+   "Incremental Accuracy Relative to HAR-X" with the panel-aware HLN-DM and the
+   Clark-West (2007) nested-model test for every specification, Holm-adjusted over the
+   pre-specified comparisons (Table harx_tests), plus three follow-up designs fixed in
+   advance (pooled estimation, term-structure target, market-level target; Table
+   candidates). Result: Model C is never significantly better than HAR-X; the
+   persistence information is real (Clark-West) but economically negligible.
+2. **Point-in-time design.** A training-window leak at h = 22 was found and fixed
+   (embargo in modules 4, 5, 9, 13; `tests/test_embargo.py`); winsorisation is now
+   expanding-window; the portfolio normalisation constant is real-time (52-week
+   warm-up) with the full-sample version kept as a robustness row; timing conventions
+   (HAR components and rolling estimates end at t-1, VIX/MOVE at t) are stated in 7.6.
+   The monthly-horizon gains in the 12 Sept draft were the leak; they are gone.
+3. **S&P 500 membership.** Section 7.1 now states that the universe is the April 2026
+   membership with no point-in-time reconstruction, and what that implies.
+4. **Proofreading.** Eq. 13 punctuation, Bennedsen year (2022), new references
+   (Clark-West 2007, Holm 1979, Ledoit-Wolf 2008, plus the six added on 13 Sept),
+   Figure 8 caption, all numbers re-derived from the regenerated tables.
 
-The regenerated tables and figures live in `results/`; the manuscript text has
-not yet been rewritten around the corrected results. That rewrite requires a
-decision with Rachev on the paper's framing.
+Compiled PDF: `Memory_Roughness_edited.pdf` (XeTeX build via Tectonic with the pdftex
+option removed and the EPS logos swapped for their PDF versions; Nicholas should rebuild
+with pdfTeX on Overleaf before sending). Corresponding author unchanged (Nicholas).
+
+The framing has changed: the paper is now an honest characterisation (persistence is a
+coherent descriptive market state whose forecasting content is already in implied
+volatility). Rachev has not yet seen the GPH correction (13 Sept) or any of the above.

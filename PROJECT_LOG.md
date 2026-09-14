@@ -1017,3 +1017,68 @@ h = 1 and 22. Persistence is a market state (d̄_t doubles in crises,
 and MOVE at the per-stock level. The framing decision is Rachev's.
 
 *Last updated: 2026-09-14*
+
+---
+
+## Session: 2026-09-14 (second block) — pre-registered candidates, remaining point-in-time fixes, manuscript rewrite
+
+Protocol written into `docs/EXPERIMENTS.md` before any run (runs 05–09);
+results and verdicts there, facts #9–#12 in `docs/FINDINGS.md`.
+
+### Candidates (module 13, `results/tables/table13_candidates.tex`)
+- **run-05 pooled panel with stock fixed effects.** P-C vs P-A1: +0.20%
+  (h=1; CW Holm p 0.033, DM t 0.36), +0.19% (h=5; p 0.058), −1.6% (h=22).
+  Pooling does not help HAR-X itself (+0.06 / −0.72 / −0.01%). Estimation
+  noise explains part of the CW-yes/MSE-no pattern; the recoverable
+  information is economically nil.
+- **run-06 duration target** (log ratio of monthly to weekly future
+  variance): A1cs −0.13%, C −1.80% (DM −3.12) vs HAR-X. The duration
+  interpretation is not a forecastable quantity.
+- **run-07 market level** (cross-sectional mean target, one series):
+  M-C vs M-A1 −1.2 / −1.9 / −6.7%. Persistence adds nothing to VIX/MOVE at
+  the index level.
+
+### Remaining point-in-time fixes
+- **run-08** point-in-time winsorisation (`io_v2._winsorize_pit`, expanding
+  0.1/99.9% quantiles, 500-obs warm-up; raw returns kept as
+  `returns_raw` for the portfolio exercise). Whole pipeline re-run.
+  Forecast headline numbers move ≤0.01 pp. Descriptives change (early
+  extreme returns are no longer clipped): pooled excess kurtosis 11.6 →
+  17.4, Student-t df 2.7 → 2.6, FIGARCH mean d 0.329 → 0.336; Tables 1–3
+  and Figures 1–2 regenerated (modules 1, 1b).
+- **run-09** real-time Moreira–Muir constant (expanding, 52-week warm-up;
+  `module11.REALTIME_C`); full-sample constant kept as a table row.
+  Sharpe (593 weeks): unmanaged 0.61, HAR-X 0.63, C 0.66; COVID 0.50 /
+  1.11 / 1.41. Ledoit–Wolf: nothing significant (COVID p 0.15, full
+  sample p 0.31).
+- GARCH benchmark refit on the new returns: −95.9% MSE, QLIKE HLN-t −2.96.
+- ML estimators (module 5) re-run at all horizons on the new panel
+  (running at the time of this entry; Table 6 D rows refreshed after).
+
+### Manuscript (`paper_jrfm/Memory_Roughness_edited.tex`)
+Rewritten around the corrected evidence: new abstract (188 words);
+introduction contributions; §5 caveat pointing at the duration test; §6
+gains the three HAR-X-nesting specifications and the Clark–West / Holm /
+Ledoit–Wolf inference paragraph; §7.1 states the April-2026 membership
+and survivorship explicitly; §7.2 point-in-time winsorisation; §7.6 the
+embargo and timing conventions; §8.2 point-in-time numbers; new §8.3
+"Incremental Accuracy Relative to HAR-X" with Tables harx_tests and
+candidates; §8.4–8.6 corrected; §9.1 real-time normalisation and the
+Sharpe-test table; §9.2 and the conclusion reframed: persistence is a
+coherent descriptive state whose forecasting content is already in
+implied volatility. Proofreading: Eq. 13 punctuation, Bennedsen year,
+new references (Clark–West 2007, Holm 1979, Ledoit–Wolf 2008). Tables
+1–3, 6–11 ported into the MDPI copies; Tables 12–14 (JRFM numbering
+follows input order) added; figures refreshed.
+
+### Rachev's 13 Sept items, status
+1. Direct DM/HLN tests of C vs HAR-X at each horizon: done (Table
+   harx_tests), plus Clark–West and the pre-registered designs.
+2. Point-in-time design: training-window embargo, point-in-time
+   winsorisation, real-time portfolio normalisation; membership stated.
+3. Typos/notation/captions/references: Eq. 13, RV_{t−1} timing stated,
+   Bennedsen 2022, new references; captions unchanged where still correct.
+4. Final PDF + source: compiled with the XeTeX workaround; Nicholas to
+   rebuild with pdfTeX before it goes to Rachev.
+
+*Last updated: 2026-09-14*

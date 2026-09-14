@@ -28,6 +28,7 @@ CLEAN = RAW / "clean_panel"
 
 COVERAGE_THRESHOLD = 0.70
 WINSOR_LOWER, WINSOR_UPPER = 0.001, 0.999
+WINSOR_MIN_OBS = 500   # point-in-time winsorisation starts after this many obs
 
 
 @dataclass
@@ -35,7 +36,8 @@ class Panel:
     prices: pd.DataFrame      # close prices, T x N
     high: pd.DataFrame        # daily high
     low: pd.DataFrame         # daily low
-    returns: pd.DataFrame     # winsorized log returns
+    returns: pd.DataFrame     # log returns, winsorised point-in-time (features)
+    returns_raw: pd.DataFrame # raw log returns (portfolio exercise)
     rv_parkinson: pd.DataFrame  # range-based RV (variance scale)
     log_rv: pd.DataFrame      # log of (rv_parkinson + tiny floor)
     market: pd.DataFrame      # market_level columns + VIX
@@ -44,9 +46,21 @@ class Panel:
 
 
 def _winsorize(df: pd.DataFrame, lower: float, upper: float) -> pd.DataFrame:
+    """Full-sample winsorisation (kept for reference; not point-in-time)."""
     qlo = df.quantile(lower)
     qhi = df.quantile(upper)
     return df.clip(lower=qlo, upper=qhi, axis=1)
+
+
+def _winsorize_pit(df: pd.DataFrame, lower: float, upper: float,
+                   min_obs: int = WINSOR_MIN_OBS) -> pd.DataFrame:
+    """Point-in-time winsorisation: r_t is clipped at the quantiles of the
+    stock's own history up to and including t (expanding window); no clipping
+    until min_obs observations exist. Uses no information after t
+    (docs/EXPERIMENTS.md run-08)."""
+    qlo = df.expanding(min_periods=min_obs).quantile(lower)
+    qhi = df.expanding(min_periods=min_obs).quantile(upper)
+    return df.clip(lower=qlo, upper=qhi)
 
 
 def build_clean_panel(force: bool = False) -> Panel:
@@ -75,8 +89,8 @@ def build_clean_panel(force: bool = False) -> Panel:
     rv_pk = rv_pk[kept]
 
     # Log returns + winsorize
-    returns = np.log(prices / prices.shift(1))
-    returns = _winsorize(returns, WINSOR_LOWER, WINSOR_UPPER)
+    returns_raw = np.log(prices / prices.shift(1))
+    returns = _winsorize_pit(returns_raw, WINSOR_LOWER, WINSOR_UPPER)
 
     # Log RV (add a tiny floor to avoid log(0))
     floor = max(rv_pk.replace(0, np.nan).min().min() / 10.0, 1e-12)
@@ -93,13 +107,14 @@ def build_clean_panel(force: bool = False) -> Panel:
     high.to_csv(CLEAN / "prices_high.csv")
     low.to_csv(CLEAN / "prices_low.csv")
     returns.to_csv(CLEAN / "returns.csv")
+    returns_raw.to_csv(CLEAN / "returns_raw.csv")
     rv_pk.to_csv(CLEAN / "rv_parkinson.csv")
     log_rv.to_csv(CLEAN / "log_rv.csv")
     market.to_csv(CLEAN / "market.csv")
     meta.to_csv(CLEAN / "metadata.csv", index=False)
     (CLEAN / "kept_tickers.txt").write_text("\n".join(kept))
 
-    return Panel(prices, high, low, returns, rv_pk, log_rv, market, meta, kept)
+    return Panel(prices, high, low, returns, returns_raw, rv_pk, log_rv, market, meta, kept)
 
 
 def load_clean_panel() -> Panel:
@@ -107,12 +122,16 @@ def load_clean_panel() -> Panel:
     high = pd.read_csv(CLEAN / "prices_high.csv", index_col=0, parse_dates=True)
     low = pd.read_csv(CLEAN / "prices_low.csv", index_col=0, parse_dates=True)
     returns = pd.read_csv(CLEAN / "returns.csv", index_col=0, parse_dates=True)
+    if (CLEAN / "returns_raw.csv").exists():
+        returns_raw = pd.read_csv(CLEAN / "returns_raw.csv", index_col=0, parse_dates=True)
+    else:
+        raise FileNotFoundError("returns_raw.csv missing: rebuild with build_clean_panel(force=True)")
     rv_pk = pd.read_csv(CLEAN / "rv_parkinson.csv", index_col=0, parse_dates=True)
     log_rv = pd.read_csv(CLEAN / "log_rv.csv", index_col=0, parse_dates=True)
     market = pd.read_csv(CLEAN / "market.csv", index_col=0, parse_dates=True)
     meta = pd.read_csv(CLEAN / "metadata.csv")
     kept = (CLEAN / "kept_tickers.txt").read_text().splitlines()
-    return Panel(prices, high, low, returns, rv_pk, log_rv, market, meta, kept)
+    return Panel(prices, high, low, returns, returns_raw, rv_pk, log_rv, market, meta, kept)
 
 
 def sector_map(meta: pd.DataFrame) -> dict:

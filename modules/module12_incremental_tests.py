@@ -195,9 +195,9 @@ def _write_table11(df: pd.DataFrame) -> None:
     order = ["A1cs", "A1sec", "A1mod", "C", "D_lasso", "D_ridge", "D_en", "D_rf", "D_gbm"]
     with open(TABLES / "table11_harx_tests.tex", "w", encoding="utf-8") as f:
         f.write("% Table 11: incremental tests vs HAR-X (point-in-time forecasts, 2026-09-14)\n\n")
-        f.write("\\begin{table}[htbp]\n\\centering\n")
+        f.write("\\begin{table}[htbp]\n\\begin{adjustwidth}{-\\extralength}{0cm}\n\\centering\n")
         f.write("\\caption{Incremental Forecast Accuracy Relative to HAR-X: Point-in-Time Out-of-Sample Tests}\n")
-        f.write("\\label{tab:harx_tests}\n\\small\n")
+        f.write("\\label{tab:harx_tests}\n\\footnotesize\n\\setlength{\\tabcolsep}{4pt}\n")
         f.write("\\begin{tabular}{llccccc}\n\\toprule\n")
         f.write("Specification & $h$ & \\%$\\Delta$MSE vs HAR-X & HLN DM-$t$ & CW-$t$ & CW $p$ (Holm) & QLIKE DM-$t$ \\\\\n\\midrule\n")
         for spec in order:
@@ -224,7 +224,7 @@ def _write_table11(df: pd.DataFrame) -> None:
                 "pre-registered specifications' nine tests jointly and Model $C$'s three tests "
                 "jointly; other rows are unadjusted (--). Significance of raw statistics: "
                 "$^{*}$ $p<0.10$, $^{**}$ $p<0.05$, $^{***}$ $p<0.01$.\n")
-        f.write("\\end{tablenotes}\n\\end{table}\n")
+        f.write("\\end{tablenotes}\n\\end{adjustwidth}\n\\end{table}\n")
     print(f"Saved {TABLES / 'table11_harx_tests.tex'}")
 
 
@@ -302,9 +302,9 @@ def part_b(B: int = 2000, block: int = 5) -> pd.DataFrame:
     df.to_csv(INTERM / "sharpe_tests.csv", index=False)
     with open(TABLES / "table12_sharpe_tests.tex", "w", encoding="utf-8") as f:
         f.write("% Table 12: Sharpe-ratio difference tests (Ledoit-Wolf 2008)\n\n")
-        f.write("\\begin{table}[htbp]\n\\centering\n")
+        f.write("\\begin{table}[htbp]\n\\begin{adjustwidth}{-\\extralength}{0cm}\n\\centering\n")
         f.write("\\caption{Volatility-Managed Portfolios: Tests of Sharpe-Ratio Differences}\n")
-        f.write("\\label{tab:sharpe_tests}\n\\small\n\\begin{tabular}{llcccccc}\n\\toprule\n")
+        f.write("\\label{tab:sharpe_tests}\n\\footnotesize\n\\setlength{\\tabcolsep}{4pt}\n\\begin{tabular}{llcccccc}\n\\toprule\n")
         f.write("Regime & Comparison & Weeks & Sharpe (1) & Sharpe (2) & $\\Delta$Sharpe & HAC $t$ & Bootstrap $p$ \\\\\n\\midrule\n")
         for r in df.itertuples():
             f.write(f"{r.regime} & {r.pair.replace('A1', 'HAR-X').replace('C', 'Model C', 1)} & {r.T_weeks} & "
@@ -316,8 +316,8 @@ def part_b(B: int = 2000, block: int = 5) -> pd.DataFrame:
                 "Ledoit--Wolf (2008) delta-method statistic for the difference in Sharpe ratios; "
                 f"bootstrap $p$ is from a studentised circular block bootstrap (block length {block}, "
                 f"{B} resamples). Significance of the HAC statistic: $^{{*}}$ $p<0.10$, $^{{**}}$ $p<0.05$, "
-                "$^{***}$ $p<0.01$. Regime rows use the same VIX quartiles and COVID window as Table 8.\n")
-        f.write("\\end{tablenotes}\n\\end{table}\n")
+                "$^{***}$ $p<0.01$. Regime rows use the same VIX quartiles and COVID window as the regime table.\n")
+        f.write("\\end{tablenotes}\n\\end{adjustwidth}\n\\end{table}\n")
     print(f"Saved {TABLES / 'table12_sharpe_tests.tex'}")
     return df
 

@@ -24,26 +24,26 @@ Lubbock, TX 79409, USA}
 \corres{Correspondence:  \href{mailto:niappiah@ttu.edu}{niappiah@ttu.edu}}
 
 \abstract{
-This paper examines whether volatility persistence provides more forecasting
-information as a shared financial state than as a stock-specific parameter. Using 115 equities drawn from the S\&P~500 over November
-2001--April 2026, we combine memory estimates, roughness diagnostics, and heterogeneous
-autoregressive (HAR), market-state-augmented HAR (HAR-X), and
-persistence-augmented forecasts.
-Volatility proxies display persistent dependence and low estimated Hurst
-exponents. Own-stock persistence and roughness add little beyond HAR, while
-a joint specification incorporating cross-sectional and sectoral persistence
-states and persistence--stress interactions improves on HAR-X at weekly and
-monthly, but not daily, horizons under mean squared error. Market-state
-variables account for much of the short-horizon improvement over HAR; the
-additional contribution of persistence features is largest at the monthly
-horizon and varies across stress regimes. The full model reduces mean squared error by 4.55--8.24\% relative to HAR. A
-volatility-managed portfolio application shows a COVID Sharpe ratio of 1.36
-versus 1.06 for HAR-X management, although full-sample Sharpe ratios are
-similar. Tree-based estimators do not improve on the structured linear
-specification. These findings support persistence states
-as complementary forecasting inputs and are consistent with a reduced-form
-interpretation in terms of uncertainty propagation, without identifying
-causal mechanisms or estimating stress duration.}
+This paper asks whether volatility persistence carries forecasting
+information as a shared financial state beyond what standard benchmarks
+already contain. Using 115 equities drawn from the S\&P~500 over November
+2001--April 2026, we estimate rolling long-memory (GPH and local-Whittle)
+and roughness measures on Parkinson range-based variance and evaluate them
+in a walk-forward, point-in-time design against HAR and HAR-X (HAR with VIX
+and MOVE) benchmarks, using panel-aware Diebold--Mariano and Clark--West
+tests. Volatility proxies display strong persistence and low Hurst
+exponents, and the cross-sectional persistence state nearly doubles in the
+2008 and 2020 crises and co-moves with the VIX. Its forecasting content,
+however, is largely redundant with the market-state controls: the full
+persistence specification improves on HAR by 4.5--8.3\% at daily and
+weekly horizons but never significantly on HAR-X; pre-specified variants
+that add persistence to HAR-X directly do not lower forecast error; pooled
+estimation recovers only a negligible gain; and the persistence state
+predicts neither the term-structure slope of future variance nor
+market-level variance beyond VIX and MOVE. Volatility-managed portfolio
+differences are not statistically significant. Persistence is a coherent
+descriptive market state whose forecasting information is already
+contained in implied volatility.}
 
 \keyword{long memory; rough volatility; volatility forecasting; financial econometrics;
 realized volatility; persistence dynamics}
@@ -131,38 +131,45 @@ autoregressive (HAR) models, HAR models with market-state controls (HAR-X),
 persistence-augmented regressions, shrinkage estimators, and tree-based
 machine-learning methods.
 
-The central contribution is a distinction between stock-specific
-persistence and shared persistence states. The own-stock persistence and
-roughness block adds little beyond HAR, whereas the full specification,
-which combines cross-sectional and sectoral states with persistence--stress
-interactions and market controls, improves on HAR-X at weekly and monthly
-horizons. The results favor modeling persistence jointly with market
-conditions rather than treating an individual memory estimate as a
-stand-alone predictor. They do not establish that every aggregate block
-independently improves forecasts or that persistence is causally systemic.
+The central finding is negative in a specific and, we argue, useful
+way. Own-stock persistence and roughness add nothing to HAR. The shared
+persistence state, meaning cross-sectional and sectoral averages of rolling
+memory estimates and their interactions with market stress, does improve on
+HAR, but its improvement is almost entirely the improvement that VIX and
+MOVE deliver on their own. Tested directly against HAR-X with the
+appropriate nested-model statistics, no persistence specification lowers
+forecast error at any horizon, and a set of follow-up designs fixed in
+advance (adding persistence blocks to HAR-X one at a time, letting
+persistence modulate the HAR weights, pooled estimation across stocks, a
+term-structure target, and a market-level target) shows that the
+information the persistence state carries is small and already contained
+in implied volatility.
 
 The paper makes three contributions. First, it documents persistent
 low-frequency dependence alongside roughness diagnostics across a broad
 equity panel, distinguishing these temporal characteristics without treating
-either as proof of a particular stochastic law. Second, it evaluates the
-forecasting content of persistence at the stock, cross-sectional, sectoral,
-and interaction levels using common benchmarks. HAR-X is central to this
-comparison: market-state controls explain much of the gain over HAR, and
-the full persistence feature set contributes additional accuracy primarily
-at longer horizons. Third, it relates this evidence to a volatility-managed
-portfolio application and compares linear, shrinkage, and tree-based
-estimators using the same feature space. The reported results favor
-structured linear forecasts in this setting, not a general rejection of
-nonlinear methods.
+either as proof of a particular stochastic law, and shows that a
+cross-sectional persistence state is a coherent market variable that nearly
+doubles in the global financial crisis and in COVID and co-moves with the
+VIX. Second, it provides a complete, point-in-time forecasting evaluation of
+persistence at the stock, cross-sectional, sectoral, and interaction levels
+against both HAR and HAR-X, with panel-aware Diebold--Mariano and
+Clark--West inference and pre-specified follow-up designs, and reports the
+direct comparisons with HAR-X that work on persistence features typically
+omits. Third, it relates this evidence to a volatility-managed portfolio
+application with formal tests of Sharpe-ratio differences and compares
+linear, shrinkage, and tree-based estimators on the same feature space. The
+reported results favor structured linear forecasts in this setting, not a
+general rejection of nonlinear methods.
 
 The scope of the evidence is deliberately reduced-form. Persistence rises
 during major stress episodes and co-moves with the VIX, but the lead--lag
-diagnostic does not establish a leading stress signal. The reported
-significance tests compare forecasts with HAR; numerical gains relative to
-HAR-X are not accompanied by direct significance tests against that
-stronger benchmark. The contribution is therefore that shared persistence
-states can complement conventional volatility and market-stress information,
-with value that varies across horizons and regimes.
+diagnostic does not establish a leading stress signal, and the persistence
+state does not forecast how slowly variance decays. Every specification is
+tested against both HAR and HAR-X. The contribution is therefore a
+characterization: shared persistence states are informative descriptions
+of market conditions whose forecasting content, for stock-level variance,
+is captured by implied-volatility indices.
 
 The remainder of the paper proceeds as follows. Section~\ref{sec:literature}
 reviews the literature. Section~\ref{sec:theory} discusses the theoretical
@@ -678,8 +685,11 @@ motivate slow dependence decay, as discussed in Section~\ref{sec:theory}.
 However, this paper does not estimate shock half-lives, crisis exit
 probabilities, or the expected time until volatility normalizes.
 Consequently, $\hat d_{i,t}$ is not a calibrated measure of stress duration.
-The evidence can be consistent with uncertainty propagation without
-identifying or measuring that mechanism directly.
+Section~\ref{subsec:beyond_harx} tests one implication of the duration
+interpretation directly: if persistence measured how long shocks linger, it
+should help forecast the slope of the future variance term structure. It
+does not, so the evidence is consistent with uncertainty propagation only
+in the weak sense that persistence rises when stress rises.
 
 The distinction from market-state controls is empirical, not absolute.
 VIX and MOVE already contain forward-looking volatility information, and
@@ -832,6 +842,26 @@ feature blocks without duplicating shared predictors; its comparison with
 HAR-X assesses their joint incremental contribution conditional on
 market-state controls.
 
+Because Models~$A_2$--$A_5$ add persistence blocks to HAR rather than to
+HAR-X, their comparison with HAR-X is indirect. Three further
+specifications, fixed before the corresponding results were computed, add
+one persistence block to HAR-X directly:
+\begin{align}
+  \textbf{Model }A_1^{cs}:\quad &A_1 + \bigl(\overline{d}_t,\;\sigma_d^t\bigr),
+  \notag\\
+  \textbf{Model }A_1^{sec}:\quad &A_1 + \overline{d}_{s(i),t},
+  \notag\\
+  \textbf{Model }A_1^{mod}:\quad &A_1 + \overline{d}_t
+  + \overline{d}_t\!\cdot\!\bigl(\log\mathrm{RV}^{(d)}_t,\;
+  \log\mathrm{RV}^{(w)}_t,\;\log\mathrm{RV}^{(m)}_t\bigr).
+  \notag
+\end{align}
+The last specification lets the persistence state modulate the weights on
+the HAR components, which is the form the duration interpretation of
+Section~\ref{sec:structural} implies: if shocks decay more slowly when
+persistence is high, the weight on the monthly component should rise with
+$\overline d_t$.
+
 The common feature space for Models~C and D also permits comparison of
 linear, shrinkage, and tree-based estimators. This comparison evaluates the
 implemented algorithms and tuning procedures in this dataset rather than
@@ -861,6 +891,22 @@ conducted using panel-aware cross-sectional aggregation rather than naive
 pooled-cell independence assumptions. This distinction is critical because
 ignoring within-date cross-sectional dependence substantially inflates
 apparent statistical significance.
+
+Comparisons with HAR-X involve nested models, for which the
+Diebold--Mariano statistic is conservative: under the null hypothesis the
+larger model's additional coefficients are estimation noise that raises its
+out-of-sample loss. We therefore also report the MSPE-adjusted statistic of
+\citet{clark2007approximately}, computed on the same cross-sectional mean
+differential with the same HAC bandwidth and compared with standard normal
+critical values (one-sided), and we adjust the $p$-values of the
+pre-specified HAR-X comparisons for multiplicity with the step-down
+procedure of \citet{holm1979simple}. A specification is said to add
+information beyond HAR-X only if its adjusted Clark--West $p$-value is
+below 0.05 and its pooled MSE is lower than that of HAR-X; the
+Diebold--Mariano statistic against HAR-X is reported as the stricter
+criterion. Differences in Sharpe ratios in Section~\ref{sec:economic} are
+tested with the HAC procedure of \citet{ledoit2008robust} and a
+studentized circular block bootstrap.
 
 The forecasting structure assesses whether estimated persistence states
 provide useful conditional information. Horizon and regime comparisons
@@ -898,13 +944,19 @@ requirement over the sample period, the final analysis panel contains
 115 stocks observed over 6,136 trading days from November~29, 2001 through
 April~21, 2026.\footnote{Data accessed through Bloomberg Terminal on April 21, 2026.}
 
-This coverage-based sample is not presented as a point-in-time reconstruction
-of S\&P~500 membership. Requiring long histories may favor surviving,
-established firms and exclude shorter-lived or less-completely observed
-securities. The results are therefore conditional on the selected panel
-rather than representative of all firms that belonged to the index during
-2001--2026. The coverage threshold alone does not establish that every
-retained stock is observed on every date.
+The 125-security universe is the S\&P~500 membership at the time of the
+Bloomberg pull (April 2026). Index membership is not reconstructed
+point-in-time, and no stock enters or leaves the panel over the sample, so
+the sample is a fixed cross-section of firms that were constituents in
+2026 and had sufficiently long histories. Requiring long histories favors
+surviving, established firms and excludes shorter-lived or less-completely
+observed securities. The results are therefore conditional on the selected
+panel rather than representative of all firms that belonged to the index
+during 2001--2026, and the coverage threshold alone does not guarantee that
+every retained stock is observed on every date. This selection determines
+which stocks are forecast; it does not change the information available at
+any forecast origin, because every forecast below is per-stock and
+walk-forward.
 
 The sample spans several major financial regimes, including the post-2001
 recovery period, the credit expansion preceding the global financial
@@ -932,16 +984,19 @@ indices.
 \subsection{Volatility Proxies}
 
 Daily logarithmic returns are computed from adjusted closing prices and
-winsorized at the 0.1\% and 99.9\% percentiles within each stock in order
-to reduce the influence of recording errors, corporate actions, and
-isolated outlier observations. Because volatility measurement plays a
+winsorized at the 0.1\% and 99.9\% quantiles of each stock's own history
+up to and including the current day (an expanding window, applied once 500
+observations are available), so that the clipping thresholds use no future
+information. Winsorization reduces the influence of recording errors,
+corporate actions, and isolated outlier observations in the predictors; the
+portfolio exercise of Section~\ref{sec:economic} uses raw returns. Because volatility measurement plays a
 central role in persistence estimation, the choice of volatility proxy is
 particularly important.
 
 The primary volatility measure used throughout the paper is the range-based
 variance estimator of \citet{parkinson1980extreme},
 \begin{equation}
-  \mathrm{RVPK}_t \;=\; \frac{(\ln H_t - \ln L_t)^2}{4\ln 2},
+  \mathrm{RVPK}_t \;=\; \frac{(\ln H_t - \ln L_t)^2}{4\ln 2}.
   \label{eq:parkinson}
 \end{equation}
 In Equation~\eqref{eq:parkinson}, $H_t$ and $L_t$ denote the daily high
@@ -974,13 +1029,13 @@ forecast horizon rather than assuming a uniform benefit.
 
 Table~\ref{tab:summary_stats} reports summary statistics for daily log
 returns pooled across the 115-stock panel and reported separately by GICS sector.
-The pooled annualized mean return equals approximately 9.4\%, while the
-pooled annualized standard deviation equals approximately 31.5\%.
+The pooled annualized mean return equals approximately 9.3\%, while the
+pooled annualized standard deviation equals approximately 31.7\%.
 
 More importantly, the distribution of returns displays substantial
-non-normality. The pooled excess kurtosis exceeds 11, and the Jarque--Bera
+non-normality. The pooled excess kurtosis exceeds 17, and the Jarque--Bera
 statistic \citep{jarque1980efficient} overwhelmingly rejects Gaussianity. The fitted Student-$t$
-distribution has approximately 2.7 degrees of freedom, indicating heavy
+distribution has approximately 2.6 degrees of freedom, indicating heavy
 tails. Substantial cross-sectional heterogeneity is also present
 across sectors. Information Technology and Financials display the largest
 annualized volatility levels, whereas Utilities and Consumer Staples
@@ -1102,7 +1157,7 @@ fluctuations differ. This is a descriptive comparison of the
 fractional-volatility model and the observed proxy, not a formal validation
 of the model. Table~\ref{tab:figarch_estimates} gives FIGARCH point estimates
 for ten stocks with normal innovations: the mean estimate is
-$\hat d = 0.329$ with values in $[0.237,\,0.461]$, all below
+$\hat d = 0.336$ with values in $[0.238,\,0.480]$, all below
 $\frac{1}{2}$. These FIGARCH parameters are model-specific and should not
 be equated with the semiparametric memory estimates or treated as a
 stationarity test.
@@ -1250,19 +1305,29 @@ object underlying the forecasting analysis developed in the next section.
 
 \subsection{Out-of-Sample Forecasting Protocol}
 
-The forecast evaluation is strictly walk-forward. We use the first 40\%
-of the sample dates (sample dates 1 through 431, ending in mid-2013) as the
-initial training window; thereafter, we produce forecasts at every
-subsequent sample date. For the linear specifications
-(Models~$A,A_1,A_2,A_3,A_4,A_5,C$) we refit by ordinary least squares
-at every step (expanding window). For Model~$D$ we refit every twenty
-sample steps to keep the computational burden tractable for the tree-based
-estimators; results are not sensitive to this stride. All feature
-standardization, hyperparameter selection, and model selection are
-performed on training-window information only. Both the realized target
-and the forecast are recorded as $(T_{\mathrm{eval}}\!\times\!N)$ panels,
-which are then used to calculate forecast losses, the Diebold--Mariano
-statistics, and the regime and sector comparisons in Section~\ref{sec:results}.
+The forecast evaluation is strictly walk-forward and point-in-time. We use
+the first 40\% of the sample dates (sample dates 1 through 431, ending in
+June 2013) as the initial training window; thereafter, we produce forecasts
+at every subsequent sample date. At each origin $t$ the training sample
+contains only rows whose target window ends on or before the origin day,
+that is, rows $j$ with $\mathrm{pos}_j + h \le \mathrm{pos}_t$ in trading
+days. With a five-day sampling stride this excludes no rows at $h=1$ or
+$h=5$ (the weekly target of the preceding row ends exactly on the origin
+day) and the four most recent rows at $h=22$, whose monthly windows would
+otherwise extend up to 17 trading days past the origin. All predictors
+dated $t$ are known at the close of day $t$: the HAR components and the
+rolling persistence and roughness estimates end on day $t-1$, the last
+completed observation before the origin, while VIX and MOVE are the closes
+on day $t$. For the linear specifications we refit by ordinary least
+squares at every step (expanding window). For Model~$D$ we refit every
+twenty sample steps to keep the computational burden tractable for the
+tree-based estimators, applying the same exclusion rule at each refit;
+results are not sensitive to this stride. All feature standardization,
+hyperparameter selection, and model selection are performed on
+training-window information only. Both the realized target and the
+forecast are recorded as $(T_{\mathrm{eval}}\!\times\!N)$ panels, which are
+then used to calculate forecast losses, the test statistics, and the regime
+and sector comparisons in Section~\ref{sec:results}.
 
 % =============================================================================
 \section{Numerical Analysis and Forecasting Results}
@@ -1412,49 +1477,51 @@ HAR-X.
 \input{tables/table5_model_comparison.tex}
 
 The HAR-X benchmark is essential for interpreting the results. Adding VIX
-and MOVE alone ($A_1$) reduces MSE relative to HAR by 5.10\%, 7.72\%, and
-3.72\% at the daily, weekly, and monthly horizons. The reported tests reject
-equal predictive accuracy against HAR at conventional levels. Market-state
-variables therefore account for a substantial part of the improvement
-available over volatility lags alone.
+and MOVE alone ($A_1$) reduces MSE relative to HAR by 5.10\%, 7.73\%, and
+2.82\% at the daily, weekly, and monthly horizons. The reported tests reject
+equal predictive accuracy against HAR at the daily and weekly horizons
+($t = 5.34$ and $5.31$) but not at the monthly horizon ($t = 1.49$).
+Market-state variables therefore account for a substantial part of the
+improvement available over volatility lags alone at short horizons.
 
 Adding only own-stock persistence and roughness ($A_2$) does not improve
 MSE: the corresponding changes relative to HAR are $-0.54\%$, $-0.03\%$,
-and $-0.30\%$. The daily deterioration is statistically significant under
-the reported test. This result shows that estimating individual persistence does not
+and $-1.89\%$. The daily and monthly deteriorations are statistically
+significant under the reported test. This result shows that estimating individual persistence does not
 automatically provide information beyond the multi-horizon HAR components.
 
 Cross-sectional aggregates alone ($A_3$) yield changes of $-0.10\%$,
-$+0.37\%$, and $+1.26\%$, while sectoral persistence alone ($A_4$) yields
-$-0.05\%$, $+0.21\%$, and $+0.29\%$. The positive weekly and monthly
-changes are modest and not statistically significant at the reported
-levels. These blocks are therefore potential components of a joint state
+$+0.37\%$, and $+0.05\%$, while sectoral persistence alone ($A_4$) yields
+$-0.05\%$, $+0.21\%$, and $-0.16\%$. None of these changes is statistically
+significant at the reported levels. These blocks are therefore potential components of a joint state
 representation, not independently established sources of forecast gains.
 
 Model~$A_5$, which includes market controls as well as persistence--stress
-interactions, improves on HAR by 4.91\%, 7.63\%, and 2.87\%. Each of these
+interactions, improves on HAR by 4.91\%, 7.63\%, and 0.39\%. Each of these
 MSE gains is smaller than the corresponding HAR-X gain. Its performance
 cannot be read as evidence that interactions alone outperform market-state
-controls, although its QLIKE values are lower than those of HAR-X.
+controls, although its QLIKE values are slightly lower than those of HAR-X
+at the daily and weekly horizons.
 
 The full persistence-augmented specification (C) reduces MSE relative to
-HAR by 4.55\%, 8.24\%, and 5.54\%. Its reported HLN statistics are 3.15,
-3.87, and 2.33, respectively, indicating significance against HAR at the
-1\%, 1\%, and 5\% levels. Relative to HAR-X, however, the pattern is more
-selective. Model~C has higher daily MSE (0.6382 versus 0.6345), slightly
-lower weekly MSE (0.3334 versus 0.3353), and lower monthly MSE (0.2540
-versus 0.2589). Expressed on the common HAR-relative improvement scale,
-these differences are $-0.55$, $+0.52$, and $+1.82$ percentage points.
-They are descriptive differences between the reported gains, not percentage
-MSE reductions using HAR-X as the denominator. Direct significance tests
-of C against HAR-X are not reported.
+HAR by 4.55\%, 8.25\%, and $-0.62\%$. Its reported HLN statistics are 3.15,
+3.88, and $-0.21$, respectively, indicating significance against HAR at
+the 1\% level at the daily and weekly horizons and no difference at the
+monthly horizon. Relative to HAR-X the pattern is stark. Model~C has higher
+daily MSE (0.6382 versus 0.6345), slightly lower weekly MSE (0.3335 versus
+0.3353), and higher monthly MSE (0.2726 versus 0.2633). Expressed on the
+common HAR-relative improvement scale, these differences are $-0.55$,
+$+0.52$, and $-3.44$ percentage points. Direct significance tests of C and
+of every other specification against HAR-X are reported in
+Section~\ref{subsec:beyond_harx}.
 
-Thus, market-state variables account for much of the short-horizon gain,
-while the additional contribution of the joint persistence feature set is
-largest at the monthly horizon. The full model also has lower QLIKE than
-HAR-X at all three horizons, showing that the daily ranking depends on the
-loss function. This evidence supports persistence as a complement to
-established predictors, not as a uniformly superior substitute.
+Thus, market-state variables account for essentially all of the gain over
+HAR, and at the monthly horizon the joint persistence set is worse than
+HAR-X. Under QLIKE the full model is marginally below HAR-X at the daily
+and weekly horizons and above it at the monthly horizon, so the ranking is
+not an artifact of the loss function. This evidence supports persistence at
+most as a complement to established predictors, not as a source of
+additional accuracy.
 
 \begin{figure}[htbp]
 \begin{adjustwidth}{-\extralength}{0cm}
@@ -1481,10 +1548,9 @@ Figure~\ref{fig:stock_distribution} shows that the weekly gains over HAR
 are broadly distributed: approximately 99\% of stocks improve under HAR-X
 and 94\% under Model~C. These shares concern comparisons with HAR, not the
 fraction of stocks benefiting incrementally from persistence beyond HAR-X.
-Together with Table~\ref{tab:model_comparison}, they support a focused
-conclusion: own-stock persistence alone is unhelpful, while its joint use
-with shared states and stress information is more promising, particularly
-at longer horizons.
+Together with Table~\ref{tab:model_comparison}, they support a narrower
+conclusion: own-stock persistence alone is unhelpful, and the breadth of
+the joint specification's gains over HAR is the breadth of HAR-X's gains.
 
 
 \begin{figure}[htbp]
@@ -1498,6 +1564,52 @@ forecasting specifications.}
 \end{adjustwidth}
 \end{figure}
 
+
+\subsection{Incremental Accuracy Relative to HAR-X}
+\label{subsec:beyond_harx}
+
+\input{tables/table11_harx_tests.tex}
+
+Table~\ref{tab:harx_tests} tests every specification directly against
+HAR-X. Three facts stand out. First, by the Diebold--Mariano criterion
+Model~C is never significantly more accurate than HAR-X: the HLN statistics
+are $-0.74$, $+0.48$, and $-2.44$ at the daily, weekly, and monthly
+horizons. Second, the Clark--West statistic rejects the nested null for
+Model~C at every horizon ($t = 6.1$, $7.7$, $6.3$) and for the pre-specified
+$A_1^{cs}$ and $A_1^{mod}$ specifications at the daily and weekly horizons
+(Holm-adjusted $p \le 0.009$): the persistence regressors have non-zero
+population coefficients. Third, that information does not survive
+estimation. None of the three HAR-X-nesting specifications lowers pooled
+MSE relative to HAR-X at any horizon (the changes range from $-0.15\%$ to
+$-2.25\%$), and Model~C does so only at the weekly horizon and only by
+$0.57\%$. Under the decision rule stated in Section~\ref{sec:ml}, Model~C at
+$h=5$ is the single case that qualifies, and its Diebold--Mariano statistic
+against HAR-X is $+0.48$. The $A_1^{mod}$ specification, which lets the
+persistence state modulate the HAR weights as the duration interpretation
+implies, is worse than HAR-X at all three horizons.
+
+\input{tables/table13_candidates.tex}
+
+The combination of Clark--West rejections and flat or negative MSE
+differences points to estimation noise: each per-stock regression estimates
+between three and thirteen additional coefficients on a few hundred weekly
+observations. Table~\ref{tab:candidates} reports three designs, fixed in
+advance, that address this and test the economic interpretation directly.
+Pooled estimation with stock fixed effects (Panel~A) recovers a gain of
+$0.20\%$ for the full persistence set over pooled HAR-X at the daily
+horizon (Clark--West Holm-adjusted $p = 0.033$, Diebold--Mariano
+$t = 0.36$), $0.19\%$ at the weekly horizon ($p = 0.058$), and a loss at
+the monthly horizon; pooling does not improve HAR-X itself. The
+estimation-noise explanation is therefore correct, but the recoverable
+information is economically negligible. Panel~B replaces the level target
+with the log ratio of monthly to weekly future variance, the quantity that
+a duration measure should predict: adding the cross-sectional persistence
+state to HAR-X changes MSE by $-0.13\%$, and the full set by $-1.80\%$
+(Diebold--Mariano $t = -3.12$). Panel~C forecasts the cross-sectional mean
+of the stock targets as a single market series: the persistence state
+lowers accuracy relative to market HAR-X at every horizon ($-1.2\%$,
+$-1.9\%$, $-6.7\%$). To a close approximation, the persistence state's
+forecasting content is its co-movement with the VIX.
 
 \subsection{Descriptive Coefficient Diagnostics}
 
@@ -1544,29 +1656,25 @@ regime-specific tests of C against HAR-X.
 
 \input{tables/table7_subsamples.tex}
 
-During high-VIX states, Model~C improves on HAR by 11.84\%, 17.94\%, and
-8.75\% at the daily, weekly, and monthly horizons, compared with HAR-X gains
-of 11.45\%, 16.05\%, and 6.87\%. The full model therefore adds 0.39,
-1.89, and 1.88 percentage points on the HAR-relative improvement scale.
-These results are consistent with shared persistence features providing
-additional information when market stress is elevated, especially beyond
-the daily horizon.
+During high-VIX states, Model~C improves on HAR by 11.83\%, 17.93\%, and
+1.07\% at the daily, weekly, and monthly horizons, compared with HAR-X gains
+of 11.44\%, 16.03\%, and 5.58\%. The full model therefore adds 0.39 and
+1.90 percentage points at the daily and weekly horizons and loses 4.51
+percentage points at the monthly horizon on the HAR-relative improvement
+scale. The daily and weekly differences are of the size that
+Section~\ref{subsec:beyond_harx} shows to be statistically indistinguishable
+from zero.
 
-COVID provides an important qualification. Model~C improves on HAR by
-6.83\%, 18.88\%, and 17.49\%, whereas HAR-X improves by 11.81\%, 20.67\%,
-and 15.81\%. Thus, the full model underperforms HAR-X at daily and weekly
-horizons during COVID and improves on it only at the monthly horizon.
-The weekly 18.88\% gain is therefore relative to HAR, not HAR-X, and
-cannot be attributed entirely to persistence. The monthly
-comparison instead provides the clearest COVID evidence for incremental
-forecasting value from the full feature set.
+COVID is starker. Model~C improves on HAR by 6.87\%, 18.92\%, and 7.24\%,
+whereas HAR-X improves by 11.84\%, 20.68\%, and 13.56\%. The full model
+therefore underperforms HAR-X at all three horizons during COVID. The
+weekly 18.92\% gain is relative to HAR, not HAR-X, and is HAR-X's gain.
 
 Gains over HAR also occur in calm states. At the weekly horizon, Model~C
-improves by 6.57\% in the low-VIX regime, versus 5.58\% for HAR-X.
-Persistence-related information is therefore not exclusively useful during
-stress. The more defensible finding is that its additional value varies
-with both horizon and regime, while the combined model's gains over HAR
-are particularly large in stressed periods.
+improves by 6.59\% in the low-VIX regime, versus 5.60\% for HAR-X. The
+regime pattern therefore does not support the idea that persistence pays
+in stress: the combined model's large gains over HAR in stressed periods
+are the gains of the market-state controls.
 
 Figure~\ref{fig:leadlag} compares the cross-sectional persistence state
 with VIX across leads and lags. Correlations are positive across the
@@ -1590,10 +1698,11 @@ Positive $k$ denotes persistence leading VIX. The persistence estimates use
 \end{adjustwidth}
 \end{figure}
 
-Taken together, the regime comparisons support a state-dependent
-forecasting interpretation. They are consistent with uncertainty
-propagation but neither identify that mechanism nor validate persistence
-as a direct measure or leading predictor of stress duration.
+Taken together, the regime comparisons do not support a state-dependent
+contribution of persistence beyond the market-state controls. They are
+consistent with persistence rising when stress rises, but they neither
+identify a propagation mechanism nor validate persistence as a direct
+measure or leading predictor of stress duration.
 
 \subsection{Sector Split}
 
@@ -1627,12 +1736,12 @@ sector and forecast horizon. Sectors are sorted by the $h=5$ gain.}
 \end{figure}
 
 Figure~\ref{fig:sector_heatmap} extends the comparison with HAR across
-horizons. Materials records a monthly improvement of approximately 12.6\%,
-and Health Care and Industrials also show relatively large monthly gains.
-However, improvements do not increase monotonically with horizon: several
-sectors have their largest gains at $h=5$, and Energy underperforms HAR
-at $h=22$. The evidence favors horizon-specific evaluation rather than a
-uniform long-horizon benefit across industries.
+horizons. Every sector has its largest gain at the weekly horizon. At the
+monthly horizon the picture reverses: only Materials ($+6.8\%$), Health
+Care ($+3.6\%$), Industrials ($+2.8\%$), and Real Estate ($+2.0\%$) retain
+gains over HAR, while seven sectors, including Energy ($-9.9\%$),
+Information Technology ($-4.8\%$), and Communication Services ($-4.6\%$),
+are worse than HAR. There is no long-horizon benefit across industries.
 
 Sectoral heterogeneity is compatible with differences in common exposures
 and adjustment dynamics, but the table does not identify liquidity,
@@ -1658,14 +1767,14 @@ benchmark and measurement qualifications discussed below.
 Replacing the GPH persistence estimator throughout the feature set with
 the local-Whittle estimator produces forecasting improvements almost
 identical to the headline specification: $+8.21\%$ versus the baseline
-$+8.24\%$. This result is important because it demonstrates that the
+$+8.25\%$. This result is important because it demonstrates that the
 forecasting gains are not driven by the particular semiparametric estimator
 used to construct the persistence variables.
 
 The rolling-window robustness checks produce similarly stable results.
 Using a shorter 500-day rolling estimation window yields approximately
 $+9.13\%$ forecast improvement, while using a longer 1000-day window
-yields approximately $+8.67\%$. Both forecasting gains remain statistically
+yields approximately $+8.68\%$. Both forecasting gains remain statistically
 significant. These findings indicate that the forecasting gains are not
 artifacts of a particular rolling-window length. Persistence-based
 forecasting variables remain informative across substantially different
@@ -1675,14 +1784,14 @@ The volatility-proxy robustness checks are also revealing. Replacing the
 Parkinson realized-variance target with the logarithm of future mean
 squared returns, a substantially noisier volatility proxy, reduces
 the magnitude of the forecasting gains but still produces statistically
-significant improvement: $+4.16\%$. This result suggests that the
+significant improvement: $+4.19\%$. This result suggests that the
 persistence-based forecasting gains are not specific to the Parkinson
 volatility estimator itself. The smaller gain is consistent with
 sensitivity to the volatility proxy, but the comparison does not isolate
 measurement noise as its cause.
 
 Liquidity splits show gains over HAR in both groups: 8.95\% in the
-low-liquidity half and 7.51\% in the high-liquidity half. The larger gain in
+low-liquidity half and 7.52\% in the high-liquidity half. The larger gain in
 the former is consistent with a liquidity-related interpretation, but the
 split does not identify a liquidity mechanism. These groups use a static
 full-sample liquidity classification and are retrospective diagnostics,
@@ -1691,8 +1800,8 @@ not real-time trading rules.
 The GARCH(1,1) benchmark row warrants comment. A conventional GARCH(1,1)
 model estimated directly on returns performs substantially worse than the
 HAR benchmark when evaluated against the Parkinson range-based variance
-target: $-93.5\%$ relative performance under mean squared error loss.
-Under QLIKE, the reported HLN DM statistic is $-2.80$. This statistic
+target: $-95.9\%$ relative performance under mean squared error loss.
+Under QLIKE, the reported HLN DM statistic is $-2.96$. This statistic
 is not directly comparable to a percentage MSE change, since the loss
 functions use different scales. Comparisons between returns-based
 conditional variance models and range-based proxies involve substantial scale mismatch
@@ -1704,31 +1813,31 @@ rejection of all conditional-variance models.
 Finally, the robustness analysis again illustrates the importance of
 correct statistical inference. The naive pooled-cell Diebold--Mariano
 statistic ignoring cross-sectional dependence equals approximately
-$+23.97$, whereas the properly panel-aware HLN-corrected statistic equals
-approximately $+3.87$. This difference illustrates how
+$+23.99$, whereas the properly panel-aware HLN-corrected statistic equals
+approximately $+3.88$. This difference illustrates how
 apparent statistical significance may be inflated when within-date
 cross-sectional dependence is ignored.
 
-Taken together, the robustness checks show that the combined model's gains
-against HAR persist under the reported estimator, window, proxy, and
-liquidity variations. Because these checks compare C with HAR rather than
-HAR-X, they do not separately establish robustness of the incremental
-persistence contribution conditional on market-state controls. They also
-do not resolve sample selection, structural-break identification, or
-direct measurement of uncertainty duration.
+Taken together, the robustness checks show that the combined model's
+weekly gains against HAR persist under the reported estimator, window,
+proxy, and liquidity variations. They compare C with HAR; the comparison
+that matters, C against HAR-X, is in Section~\ref{subsec:beyond_harx} and
+is not favorable. The checks also do not resolve sample selection or
+structural-break identification.
 
 % =============================================================================
 \section{Economic Interpretation and Implications}
 \label{sec:economic}
 % =============================================================================
 
-The forecasting evidence supports using persistence states alongside
-conventional volatility and market-stress predictors. Their economic
-interpretation concerns shared dependence and uncertainty propagation,
-rather than an identified structural mechanism. The portfolio exercise
-provides an application of the existing forecasts; the broader implications
-for stress monitoring remain potential uses rather than separately
-validated results.
+The forecasting evidence does not support using persistence states as
+additional predictors once implied-volatility indices are available; it
+does support treating the cross-sectional persistence state as a
+descriptive indicator of market conditions. The portfolio exercise applies
+the existing forecasts and tests whether the small forecast differences
+translate into risk-adjusted performance; the broader implications for
+stress monitoring remain potential uses rather than separately validated
+results.
 
 \subsection{Volatility-Managed Portfolios}
 \label{subsec:volmanaged}
@@ -1740,27 +1849,44 @@ $i$ at date $t$, the managed five-day return is
   f_{m,i,t} \;=\; \frac{c_{m,i}}{\hat{\sigma}^2_{m,i,t}}\,r_{i,t\to t+5},
 \end{equation}
 where $\hat\sigma^2_{m,i,t}=\exp(\hat y_{m,i,t})$ is the exponentiated
-log-variance forecast and $c_{m,i}$ is a stock- and model-specific variance
-normalization constant. The Parkinson proxy is the forecast target; this
-construction should not be interpreted as directly forecasting the
-conditional variance of portfolio returns.
+log-variance forecast and $c_{m,i,t}$ is a stock- and model-specific
+normalization constant that equates the variance of the managed and
+unmanaged stock returns over the expanding window of weeks strictly before
+$t$, after a 52-week warm-up, so that the strategy is implementable in real
+time; the \citet{moreira2017volatility} constant computed over the full
+evaluation sample is reported as a robustness row. Portfolio returns use
+raw (unwinsorized) log returns. The Parkinson proxy is the forecast
+target; this construction should not be interpreted as directly forecasting
+the conditional variance of portfolio returns.
 
-Table~\ref{tab:volmanaged} shows similar Sharpe ratios over the full evaluation
-sample: 0.73 for the unmanaged portfolio, 0.72 for HAR-X management, and
-0.73 for Model~C management. Model~C has a smaller maximum drawdown than
-both comparators, but its full-sample certainty-equivalent return is below
-that of the unmanaged portfolio (5.23\% versus 5.40\%). The evidence does
-not support a claim of uniformly superior risk-adjusted performance.
+Table~\ref{tab:volmanaged} shows similar Sharpe ratios over the 593-week
+evaluation sample that follows the normalization warm-up: 0.61 for the
+unmanaged portfolio, 0.63 for HAR-X management, and 0.66 for Model~C
+management. Model~C has a smaller maximum drawdown than both comparators
+($-17.4\%$ versus $-18.2\%$ and $-31.9\%$) and a marginally higher
+certainty-equivalent return (4.19\% versus 3.93\% and 3.34\%). The
+full-sample-constant construction of \citet{moreira2017volatility} gives
+a lower Sharpe ratio (0.59) for the same forecasts, so the real-time
+version does not flatter the strategy.
 
-During COVID, Model~C management produces a Sharpe ratio of 1.36, compared
-with 1.06 for HAR-X management and 0.65 for the unmanaged portfolio. Its
-certainty-equivalent return is 12.30\%, versus 8.55\% and $-2.98\%$,
-respectively. However, its COVID maximum drawdown is larger than that of
-HAR-X management in absolute magnitude (5.04\% versus 4.33\%). In high-VIX
-states, the Sharpe ratios for Model~C and HAR-X management are 0.93 and
-0.88; in low-VIX states, they are 0.92 and 0.88. The particularly large COVID Sharpe
-difference is therefore a regime-specific result, not a uniform advantage
-across all metrics or market states.
+During COVID, Model~C management produces a Sharpe ratio of 1.41, compared
+with 1.11 for HAR-X management and 0.50 for the unmanaged portfolio. Its
+certainty-equivalent return is 12.04\%, versus 8.57\% and $-11.12\%$,
+respectively. Its COVID maximum drawdown is larger than that of HAR-X
+management in absolute magnitude (4.73\% versus 4.04\%). In high-VIX states,
+the Sharpe ratios for Model~C and HAR-X management are 0.78 and 0.71; in
+low-VIX states, they are 1.15 and 1.14.
+
+\input{tables/table12_sharpe_tests.tex}
+
+Table~\ref{tab:sharpe_tests} asks whether any of these differences is
+distinguishable from zero. None is. The annualized Sharpe difference
+between Model~C and HAR-X management is $+0.03$ over the full sample
+(Ledoit--Wolf HAC $p = 0.31$, bootstrap $p = 0.29$), $+0.07$ in high-VIX
+weeks ($p = 0.29$), and $+0.30$ in COVID ($p = 0.15$, bootstrap $p = 0.37$,
+on 43 weekly observations). The COVID gap is the largest number in the
+table and the least informative: 43 weeks cannot separate Sharpe ratios of
+1.41 and 1.11.
 
 These portfolio comparisons need not reproduce the MSE ranking. During
 COVID at $h=5$, HAR-X has lower forecast MSE than Model~C, yet the
@@ -1776,8 +1902,11 @@ weekly forecast accuracy or uniquely causes the Sharpe difference.
 \centering
 \includegraphics[width=\linewidth]{figures/fig9_volmanaged_cumulative.pdf}
 \caption{Cumulative wealth (log scale) of the unmanaged equal-weight
-portfolio and three volatility-managed variants over the out-of-sample
-window. The shaded band marks March--December 2020.}
+portfolio, the three volatility-managed variants with real-time
+normalization, and Model~C management with the full-sample
+\citet{moreira2017volatility} constant, over the evaluation window that
+follows the 52-week normalization warm-up. The shaded band marks
+March--December 2020.}
 \label{fig:volmanaged}
 \end{adjustwidth}
 \end{figure}
@@ -1792,12 +1921,11 @@ predates the stated forecast evaluation start. The exercise illustrates
 the consequences of forecast-based exposure scaling rather than identifying
 how uncertainty is transmitted or resolved.
 
-The portfolio statistics are descriptive. The reported table does not
-provide inference for Sharpe differences, transaction-cost-adjusted results,
-or sufficient detail about the calibration period for $c_{m,i}$ to establish
-that the variance normalization is implementable in real time. Accordingly,
-the exercise is evidence about the reported strategy construction, not a
-verified net-of-cost investment recommendation.
+The normalization is real-time and Table~\ref{tab:sharpe_tests} supplies
+the inference, but transaction costs, financing, and exposure constraints
+are not modeled. Accordingly, the exercise is evidence about the reported
+strategy construction, not a verified net-of-cost investment
+recommendation.
 
 \subsection{Implications for Risk Monitoring}
 
@@ -1809,10 +1937,11 @@ the onset of stress or the time until conditions normalize. The lead--lag
 correlations and the smoothing induced by rolling estimation do not
 establish a directional forecasting relationship.
 
-For risk management, the immediate implication is to evaluate persistence
-features as complementary inputs to multi-horizon volatility forecasts.
-They may also motivate scenarios involving more persistent volatility or
-sectorally concentrated dependence. Applications to crisis-duration
+For risk management, the immediate implication is that a persistence state
+is a useful monitoring variable but not a forecasting input once
+implied-volatility indices are available. It may still motivate scenarios
+involving more persistent volatility or sectorally concentrated
+dependence. Applications to crisis-duration
 forecasting, systemic early warning, multivariate risk, and volatility
 trading remain extensions requiring their own evaluation. The current
 results do not validate those uses.
@@ -1843,63 +1972,57 @@ exponents. The cross-sectional mean GPH and local-Whittle estimates are
 and local irregularity, without identifying a unique latent volatility
 process or establishing stationarity in every rolling window.
 
-The main contribution is the distinction between individual persistence and
-its joint use with shared market states. The own-stock persistence and
-roughness block adds little beyond HAR. Cross-sectional and sectoral blocks
-in isolation deliver small, statistically insignificant gains at weekly and
-monthly horizons. Their joint inclusion with persistence--stress
-interactions and market controls is more useful, supporting the use of
-persistence as part of a conditional state representation rather than as a
-stand-alone stock-level predictor.
+The main finding is that the forecasting content of this state is already
+contained in the market-state controls. The own-stock persistence and
+roughness block adds nothing to HAR. The shared persistence state,
+combined with VIX and MOVE, improves on HAR by 4.5\% and 8.3\% at the
+daily and weekly horizons, but HAR-X alone achieves 5.1\% and 7.7\%, and
+at the monthly horizon neither the full model nor any persistence block
+improves on HAR once the training window is restricted to information
+available at the forecast origin.
 
-Benchmark choice is central to this conclusion. Model~C reduces MSE by
-4.55\%, 8.24\%, and 5.54\% relative to HAR at daily, weekly, and monthly
-horizons, with significance under the reported panel-aware HLN tests.
-However, HAR-X already achieves reductions of 5.10\%, 7.72\%, and 3.72\%.
-The full model therefore improves on HAR-X at weekly and monthly horizons,
-not daily, under MSE; its largest additional gain is monthly. These
-HAR-X comparisons are descriptive because direct significance tests against
-that benchmark are not reported. Market-state information explains much of
-the short-horizon gain, while persistence features provide a complementary,
-horizon-dependent contribution.
+Tested directly, the full model is never significantly more accurate than
+HAR-X (Diebold--Mariano statistics of $-0.74$, $+0.48$, and $-2.44$).
+Clark--West tests show that the persistence regressors do carry
+population information, but three specifications fixed in advance that add
+persistence to HAR-X directly, including one in which persistence
+modulates the HAR weights, all fail to lower forecast error. Pooled
+estimation across stocks recovers a gain of two tenths of one percent at
+the daily horizon, the persistence state does not forecast the slope of the
+future variance term structure, and it adds nothing to VIX and MOVE at
+the market level. The duration interpretation that motivates persistence
+as a state variable is therefore not supported as a forecastable quantity.
 
-The same qualification applies across regimes. In high-VIX states the full
-model improves on HAR-X at all three horizons, but during COVID it does so
-only at the monthly horizon. Its weekly COVID gain of 18.88\% over HAR is
-smaller than HAR-X's 20.67\% gain. Sectoral comparisons likewise show
-heterogeneous incremental value rather than universal improvement. These
-patterns sharpen the contribution: the usefulness of shared persistence
-states depends on the forecasting horizon, market conditions, and benchmark.
+The same holds across regimes and sectors. The full model's large gains
+over HAR in stressed periods are HAR-X's gains; it trails HAR-X at every
+horizon during COVID; and its weekly sectoral advantages are not
+accompanied by significant differences from HAR-X.
 
-The volatility-managed portfolio exercise offers an economic application.
-Model~C management has a COVID Sharpe ratio of 1.36 versus 1.06 for HAR-X
-management, although their full-sample Sharpe ratios are similar and
-Model~C does not dominate every risk metric. These descriptive results do
-not establish net-of-cost implementability or statistical significance of
-the portfolio differences. The estimator comparisons similarly favor the
-structured linear specification over the evaluated tree-based procedures
-within this setting, not linear methods in general.
+The volatility-managed portfolio exercise, with real-time normalization,
+gives Model~C management a COVID Sharpe ratio of 1.41 versus 1.11 for
+HAR-X management and 0.66 versus 0.63 over the full sample; neither
+difference is statistically significant ($p = 0.15$ and $0.31$). The
+estimator comparisons favor the structured linear specification over the
+evaluated tree-based procedures within this setting, not linear methods in
+general.
 
-Several limitations define the scope of the findings. The coverage-selected
-panel may be subject to survivorship and selection effects, and range-based
-volatility measurement is not equivalent to observing latent volatility.
-Rolling estimates can reflect regime changes as well as fractional
-dependence, with some local-Whittle values outside the stationary range.
-The evidence is consistent with interpreting persistence as a reduced-form
-indicator of uncertainty propagation, but no duration outcome or causal
-transmission mechanism is identified. The VIX lead--lag diagnostic
-documents an association with market stress, not a validated leading
-stress indicator.
+Several limitations define the scope of the findings. The panel is the
+S\&P~500 membership of April 2026 and is subject to survivorship and
+selection effects; range-based volatility measurement is not equivalent to
+observing latent volatility; and rolling estimates can reflect regime
+changes as well as fractional dependence, with some values outside the
+stationary range. The persistence state is a coherent descriptive indicator
+of market stress, but no causal mechanism is identified, and the VIX
+lead--lag diagnostic documents an association, not a validated leading
+indicator.
 
 Future work could assess point-in-time constituent panels, richer
-high-frequency measurements, other asset classes, and multivariate
-covariance forecasts. Direct modeling of stress duration would provide a
-separate test of the economic interpretation, while implementation-aware
-portfolio evaluation would clarify its practical value. The present
-contribution does not depend on those extensions: it shows how a joint
-persistence-state specification can complement established volatility
-predictors, and identifies where the existing evidence supports that use
-and where it does not.
+high-frequency measurements, other asset classes, and settings without a
+liquid implied-volatility index, where the information that persistence
+shares with the VIX would have to come from persistence itself. The present
+contribution is the characterization: a shared persistence state describes
+market conditions well, and its forecasting content for stock-level
+variance is already priced in implied volatility.
 
 \authorcontributions{Conceptualization, A.D., N.A. and S.T.R.; methodology,
 A.D. and N.A.; software, A.D.; formal analysis, A.D.; data curation, N.A.;

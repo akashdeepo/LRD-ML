@@ -38,7 +38,126 @@ promotion power.
    differences C-managed vs HAR-X-managed and vs unmanaged, full sample and
    COVID, with the Ledoit-Wolf (2008) HAC test and a circular block bootstrap.
 
+**Pre-registered protocol, second block (written 2026-09-14 after runs 01-04,
+before any of the runs below).** Same floor, metric, tests and decision rule
+as above (Holm-adjusted Clark-West p < 0.05 AND positive MSE gain against the
+run's own HAR-X-type baseline; DM reported as the stricter criterion).
+Motivation: Clark-West rejects while MSE does not improve (finding #7), so
+the information is there and per-stock estimation noise is the suspect.
+
+- run-05 (pooling). Estimate each specification ONCE on the stacked panel of
+  all stocks with stock fixed effects (within transformation using training
+  means only), expanding window, refit at every origin, same embargo.
+  Specifications: P-A, P-A1, P-C, P-A1cs at h = 1, 5, 22. Comparisons:
+  P-C vs P-A1 and P-A1cs vs P-A1 (does pooling unlock the persistence
+  information?), and P-A1 vs per-stock A1 (does pooling help HAR-X itself?).
+  Six CW tests Holm-adjusted.
+- run-06 (duration). Target D_t = y_{t,22} - y_{t,5}, the log ratio of monthly
+  to weekly future mean Parkinson variance (how slowly the next month's
+  variance decays relative to next week's). Per-stock expanding OLS with the
+  h = 22 embargo. Specifications A, A1, A1cs, C on this target. Comparisons:
+  A1cs vs A1, C vs A1. Two CW tests Holm-adjusted. If persistence measures
+  duration, it should help here even though it does not help the level.
+- run-07 (market level). One series: the cross-sectional mean of the stock
+  targets, y^M_{t,h} = mean_i y_{i,t,h}. Market HAR components from the
+  cross-sectional mean daily log RV (same t-1 convention), VIX, MOVE, and the
+  persistence state (d-bar_t, sigma_d, d-bar x VIX, d-bar x MOVE).
+  Specifications M-A, M-A1, M-C at h = 1, 5, 22; expanding OLS with embargo.
+  Comparison M-C vs M-A1, three CW tests Holm-adjusted. Low power by
+  construction (one series, ~645 origins); reported as such.
+- run-08 (point-in-time winsorisation). Returns are winsorised at expanding
+  0.1%/99.9% quantiles (minimum 500 observations) instead of full-sample
+  quantiles; the portfolio exercise uses raw returns. Expect negligible
+  changes; every table is regenerated from this panel so the whole paper is
+  point-in-time. Reported as a reproduction check (max change in any
+  headline number).
+- run-09 (real-time portfolio normalisation). The Moreira-Muir constant
+  c_{m,i} is computed from data through t-1 (expanding, 52-week warm-up)
+  instead of the full evaluation sample. Headline Table 10 and the Sharpe
+  tests use the real-time version; the full-sample version is kept as a
+  robustness row.
+- Documentation only: S&P 500 membership (constituents at the April 2026
+  pull; no point-in-time reconstruction), HAR components at t-1 (notation).
+
+Nothing else will be added to this block after results are seen.
+
 ---
+
+## 2026-09-14  run-09  Real-time portfolio normalisation
+- Setup: `module11_economic.REALTIME_C = True`, c_{i,t} from the expanding
+  window of weeks before t with a 52-week warm-up (evaluation window 593
+  weeks instead of 645); full-sample-c version kept as a table row; raw
+  returns for portfolio P&L (run-08). Sharpe tests re-run (module 12 part B).
+- Result: annualised Sharpe, full sample: unmanaged 0.61, HAR-X-managed
+  0.63, C-managed 0.66 (full-sample c: 0.59). COVID: 0.50 / 1.13 / 1.41
+  (full-sample c 1.27). Ledoit-Wolf tests: full-sample C vs HAR-X +0.025,
+  p = 0.31 (bootstrap 0.29); COVID +0.30, p = 0.15 (bootstrap 0.37);
+  high-VIX +0.07, p = 0.29. Nothing significant.
+- Verdict: KEEP as the headline construction (implementable); conclusions
+  of run-04 unchanged (finding #8 stands).
+- Cost: seconds.
+- Lesson: the full-sample constant flattered nothing systematically; the
+  real-time version is slightly better for C and slightly worse overall.
+
+## 2026-09-14  run-08  Point-in-time winsorisation (reproduction check)
+- Setup: `io_v2._winsorize_pit` (expanding 0.1%/99.9% quantiles, 500-obs
+  warm-up; 1,470 of 698,837 return cells clipped), raw returns kept for the
+  portfolio exercise; entire pipeline re-run from module 4 (ML in progress
+  at time of writing; linear rows below).
+- Result: headline numbers move by at most 0.01 pp: C vs HAR +4.55/+8.25/-0.62%
+  (was +4.55/+8.24/-0.62), HLN-t 3.15/3.88/-0.21; HAR-X +5.10/+7.73/+2.82%.
+  Table 9 headline +8.25% (was +8.24%); GARCH row -95.9% (was -93.5%,
+  GARCH refit on the new returns). HAR-X tests (Table 11) identical to two
+  decimals.
+- Verdict: KEEP (the paper is now point-in-time end to end); no finding
+  changes.
+- Cost: ~20 min linear; ML ~3 h.
+- Lesson: full-sample winsorisation was a disclosure problem, not a
+  results problem.
+
+## 2026-09-14  run-07  Market-level target: does the persistence state help forecast market variance?
+- Setup: one series, y^M = cross-sectional mean of the stock targets;
+  M-A (market HAR), M-A1 (+VIX, MOVE), M-C (+d-bar, sigma_d, d-bar x VIX,
+  d-bar x MOVE); expanding OLS with embargo; `module13_candidates.run07`.
+- Result (M-C vs M-A1): h=1 -1.22% (DM -0.49, CW +1.72, Holm p 0.13);
+  h=5 -1.90% (DM -0.93, CW +1.09, p 0.28); h=22 -6.66% (DM -3.13, CW -2.22).
+  For reference M-A1 vs M-A: +11.5% / +10.9% / +0.7%.
+- Verdict: REVERT. At the market level the persistence state adds nothing
+  to VIX and MOVE and hurts at the monthly horizon (finding #11).
+- Cost: seconds.
+- Lesson: the co-movement of d-bar with the VIX (rho 0.50) is the whole
+  story at the index level.
+
+## 2026-09-14  run-06  Duration target: does persistence predict how slowly variance decays?
+- Setup: target D_t = y_{t,22} - y_{t,5}; per-stock expanding OLS with the
+  h=22 embargo; A, A1, A1cs, C on this target; `module13_candidates.run06`.
+- Result: A1cs vs A1 -0.13% (DM -0.44, CW +1.07, Holm p 0.14);
+  C vs A1 -1.80% (DM -3.12, CW +2.34, p 0.02, but MSE worse so fails the
+  rule). A1 vs A +0.14%.
+- Verdict: REVERT. The persistence state does not forecast the term-structure
+  slope of future variance beyond HAR-X; the "duration" interpretation is
+  not supported as a forecastable quantity (finding #10).
+- Cost: seconds.
+- Lesson: this is the cleanest test of the paper's economic story and it
+  is negative; the paper must say so.
+
+## 2026-09-14  run-05  Pooled panel with stock fixed effects
+- Setup: one regression per origin on the stacked panel (within
+  transformation on training rows), embargo, P-A, P-A1, P-C, P-A1cs at
+  h = 1, 5, 22; `module13_candidates.run05`; tests P-C vs P-A1 and
+  P-A1cs vs P-A1 (Holm over 6), plus P-A1 vs per-stock A1.
+- Result: P-C vs P-A1: h=1 +0.20% (DM +0.36, CW +2.55, Holm p 0.033,
+  passes the rule); h=5 +0.19% (DM +0.25, CW +2.27, Holm p 0.058);
+  h=22 -1.61% (DM -1.31). P-A1cs vs P-A1: -0.05% / -0.36% / -1.57%.
+  Pooling itself: P-A1 vs per-stock A1 +0.06% / -0.72% (DM -2.18) / -0.01%.
+- Verdict: KEEP as a result, but it does not change the paper's answer:
+  pooling recovers a statistically detectable and economically negligible
+  gain (+0.2% MSE) at the daily horizon only (finding #9). Not promoted to
+  a headline specification.
+- Cost: ~6 min (12 model-horizon fits on a 74k-row panel, 646 refits each).
+- Lesson: estimation noise was part of the story, but the recoverable
+  information is tiny; the persistence state is nearly redundant with VIX
+  and MOVE for stock-level HAR forecasting.
 
 ## 2026-09-14  run-04  Are the vol-managed Sharpe differences distinguishable from zero?
 - Setup: protocol step 6; `module12_incremental_tests.part_b` on the h = 5

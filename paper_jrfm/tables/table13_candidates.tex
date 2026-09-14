@@ -1,0 +1,43 @@
+% Table 13: pre-registered candidate designs (docs/EXPERIMENTS.md runs 05-07)
+
+\begin{table}[htbp]
+\centering
+\caption{Pre-Registered Follow-Up Designs: Does the Persistence Information Become Usable?}
+\label{tab:candidates}
+\small
+\begin{tabular}{llcccc}
+\toprule
+Comparison & $h$ & \%$\Delta$MSE & HLN DM-$t$ & CW-$t$ & CW $p$ (Holm) \\
+\midrule
+\multicolumn{6}{l}{\textit{Panel A: pooled estimation with stock fixed effects (level target)}} \\
+P-C vs P-A1 & 1 & +0.19\% & $+0.36$ & $+2.55$$^{***}$ & 0.033 \\
+P-A1cs vs P-A1 & 1 & -0.05\% & $-0.13$ & $+1.65$$^{**}$ & 0.199 \\
+P-A1 vs per-stock A1 & 1 & +0.06\% & $+0.71$ & $+9.73$$^{***}$ & -- \\
+P-A1 vs P-A & 1 & +4.80\% & $+5.53$$^{***}$ & $+6.74$$^{***}$ & -- \\
+P-C vs P-A1 & 5 & +0.19\% & $+0.25$ & $+2.27$$^{**}$ & 0.058 \\
+P-A1cs vs P-A1 & 5 & -0.36\% & $-0.81$ & $+0.65$ & 0.770 \\
+P-A1 vs per-stock A1 & 5 & -0.72\% & $-2.18$$^{**}$ & $+7.05$$^{***}$ & -- \\
+P-A1 vs P-A & 5 & +6.87\% & $+5.30$$^{***}$ & $+7.10$$^{***}$ & -- \\
+P-C vs P-A1 & 22 & -1.60\% & $-1.31$ & $-0.10$ & 1.000 \\
+P-A1cs vs P-A1 & 22 & -1.57\% & $-1.84$$^{*}$ & $-1.11$ & 1.000 \\
+P-A1 vs per-stock A1 & 22 & -0.01\% & $+0.03$ & $+6.47$$^{***}$ & -- \\
+P-A1 vs P-A & 22 & +2.65\% & $+1.62$ & $+4.72$$^{***}$ & -- \\
+\midrule
+\multicolumn{6}{l}{\textit{Panel B: duration target $D_t=y_{t,22}-y_{t,5}$, per-stock OLS}} \\
+A1 vs A (duration target) & 22 & +0.14\% & $+0.20$ & $+2.25$$^{**}$ & -- \\
+A1cs vs A1 (duration target) & 22 & -0.13\% & $-0.44$ & $+1.07$ & 0.142 \\
+C vs A1 (duration target) & 22 & -1.79\% & $-3.12$$^{***}$ & $+2.34$$^{***}$ & 0.020 \\
+\midrule
+\multicolumn{6}{l}{\textit{Panel C: market-level target (cross-sectional mean), single series}} \\
+M-A1 vs M-A & 1 & +11.51\% & $+5.05$$^{***}$ & $+6.13$$^{***}$ & -- \\
+M-C vs M-A1 & 1 & -1.22\% & $-0.49$ & $+1.72$$^{**}$ & 0.129 \\
+M-A1 vs M-A & 5 & +10.86\% & $+4.44$$^{***}$ & $+6.26$$^{***}$ & -- \\
+M-C vs M-A1 & 5 & -1.90\% & $-0.93$ & $+1.09$ & 0.276 \\
+M-A1 vs M-A & 22 & +0.73\% & $+0.22$ & $+2.51$$^{***}$ & -- \\
+M-C vs M-A1 & 22 & -6.66\% & $-3.13$$^{***}$ & $-2.22$ & 0.987 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item Notes: All forecasts are point-in-time expanding-window OLS. \%$\Delta$MSE is the change in pooled MSE of the second-named model relative to the first (positive favours the second). HLN DM-$t$ (two-sided) and Clark--West CW-$t$ (one-sided, nested) as in Table~\ref{tab:harx_tests}. Holm adjustment is applied within each panel to the pre-registered comparisons; other rows are unadjusted (--). Panel A: one regression per origin on the stacked panel of all stocks with stock fixed effects (within transformation on training rows). Panel B: the target is the log ratio of monthly to weekly future mean variance. Panel C: a single market series with HAR components of the cross-sectional mean log variance; $T\approx645$ evaluation dates. $^{*}$ $p<0.10$, $^{**}$ $p<0.05$, $^{***}$ $p<0.01$.
+\end{tablenotes}
+\end{table}
