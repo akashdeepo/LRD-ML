@@ -110,8 +110,11 @@ Nothing else will be added to this block after results are seen.
   GARCH refit on the new returns). HAR-X tests (Table 11) identical to two
   decimals.
 - Verdict: KEEP (the paper is now point-in-time end to end); no finding
-  changes.
-- Cost: ~20 min linear; ML ~3 h.
+  changes. ML refresh completed 20:15: every D row moved by at most
+  0.06 pp (e.g. GBM h=5 -9.86% -> -9.80%, Lasso h=22 +0.23% -> +0.21%);
+  Tables 5-8 and 11 and Figures 4-8 regenerated and ported to the bundle.
+- Cost: ~20 min linear; ML 6 h 19 min (Random Forest 78-91 min per
+  horizon on 12 cores; scikit-learn forests have no GPU path).
 - Lesson: full-sample winsorisation was a disclosure problem, not a
   results problem.
 
