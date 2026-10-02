@@ -9,7 +9,7 @@ Builds the persistence feature vector Z_t per Rachev's framework Sec. 6:
           d̄_t,      σ_d^t,    skew_d^t,   kurt_d^t,   range_d^t,
           d̄_{s,t}  (per-sector mean),
           1{d_t > τ}_τ  (threshold indicators),
-          d_t * VIX_t,  d_t * MOVE_t,  d_t * (1/Liq_t)  (interactions),
+          d_t * VIX_t,  d_t * MOVE_t  (interactions),
           HAR components: RV_d, RV_w, RV_m on Parkinson RV )
 
 The module consumes Phase 2 outputs (rolling_d_gph.csv, rolling_d_lw.csv,
@@ -92,7 +92,7 @@ def cross_sectional_features(d: pd.DataFrame) -> pd.DataFrame:
         "cs_median_d": d.median(axis=1),
         "cs_skew_d": d.apply(lambda r: stats.skew(r.dropna()), axis=1),
         "cs_kurt_d": d.apply(lambda r: stats.kurtosis(r.dropna()), axis=1),
-        "cs_pct_above_30": (d > 0.30).mean(axis=1),
+        "cs_pct_above_30": (d > 0.30).sum(axis=1) / d.notna().sum(axis=1),
         "cs_range_d": d.max(axis=1) - d.min(axis=1),
     })
 
@@ -104,16 +104,22 @@ def sector_mean_panel(d: pd.DataFrame, sectors: dict) -> pd.DataFrame:
     sec_series = sec_series.reindex(d.columns)
     out = pd.DataFrame(index=d.index, columns=d.columns, dtype=float)
     for sec, tickers in sec_series.groupby(sec_series).groups.items():
+        tickers = list(tickers)
         if len(tickers) == 0:
             continue
-        sec_mean = d[list(tickers)].mean(axis=1)
+        block = d[tickers]
+        tot, cnt = block.sum(axis=1, min_count=1), block.notna().sum(axis=1)
         for t in tickers:
-            out[t] = sec_mean
+            own = block[t]
+            # leave-one-out mean of the OTHER stocks in the sector (audit I20)
+            loo_sum = tot - own.fillna(0.0)
+            loo_cnt = cnt - own.notna().astype(int)
+            out[t] = (loo_sum / loo_cnt.where(loo_cnt > 0)).where(loo_cnt > 0)
     return out
 
 
 def threshold_flags(d: pd.DataFrame, taus: tuple[float, ...] = THRESHOLDS) -> dict[float, pd.DataFrame]:
-    return {tau: (d > tau).astype(float) for tau in taus}
+    return {tau: (d > tau).astype(float).where(d.notna()) for tau in taus}
 
 
 def interaction_panels(d: pd.DataFrame, market_axis: pd.DataFrame,
@@ -124,21 +130,24 @@ def interaction_panels(d: pd.DataFrame, market_axis: pd.DataFrame,
     vix = market_axis["VIX"].reindex(d.index).ffill()
     move = market_axis["MOVE"].reindex(d.index).ffill()
 
-    illiq = liquidity.reindex(d.index).clip(lower=LIQUIDITY_FLOOR)
-    illiq_inv = 1.0 / illiq
-
+    # The former d x (1/liquidity) interaction divided by dollar volume
+    # (1e8-1e10) and was numerically zero; it was never a model input and is
+    # removed (audit I21).
     return {
         "d_x_vix": d.multiply(vix, axis=0),
         "d_x_move": d.multiply(move, axis=0),
-        "d_x_illiq": d * illiq_inv,
     }
 
 
 def build_har(rv: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    """HAR components dated t use RV through day t: RV_t, mean RV_{t-4..t},
+    mean RV_{t-21..t}. Day t's range is known at the close of t, the forecast
+    origin; the target covers days t+1..t+h. (Before 2026-10-02 these were
+    lagged one day, leaving HAR one day stale relative to VIX/MOVE; audit I1.)"""
     return {
-        "har_d": rv.shift(HAR_DAILY),
-        "har_w": rv.rolling(HAR_WEEKLY).mean().shift(1),
-        "har_m": rv.rolling(HAR_MONTHLY).mean().shift(1),
+        "har_d": rv.copy(),
+        "har_w": rv.rolling(HAR_WEEKLY).mean(),
+        "har_m": rv.rolling(HAR_MONTHLY).mean(),
     }
 
 
@@ -194,7 +203,7 @@ def export_table4(panels: dict[str, pd.DataFrame],
                          dict(mean=r["mean"], std=r["std"], p1=r["p1"], p99=r["p99"], n=int(r["n"]))))
 
     mkt_summary = mkt_axis.describe().T
-    for k in ["VIX", "MOVE", "USYC2Y10"]:
+    for k in ["VIX", "MOVE"]:   # USYC2Y10 is not a model input (audit I16)
         if k in mkt_summary.index:
             r = mkt_summary.loc[k]
             rows.append(("Market",
@@ -208,8 +217,7 @@ def export_table4(panels: dict[str, pd.DataFrame],
                  _stats_panel(panels["d_x_vix"])))
     rows.append(("Interaction", "$\\hat d_t \\cdot \\mathrm{MOVE}_t$",
                  _stats_panel(panels["d_x_move"])))
-    rows.append(("Interaction", "$\\hat d_t / \\mathrm{Liq}_t$",
-                 _stats_panel(panels["d_x_illiq"])))
+    # (liquidity interaction removed; audit I21)
 
     with open(fp, "w") as f:
         f.write("% Table 4: Persistence Feature Vector -- definitions and pooled statistics\n\n")
@@ -273,7 +281,7 @@ def main() -> None:
     dyn_lw = memory_dynamics(d_lw)
     dyn_h = memory_dynamics(h)
 
-    print("\n[3] HAR components on Parkinson RV (forward-aligned to forecast next-day)...")
+    print("\n[3] HAR components on Parkinson RV, through day t...")
     har = build_har(panel.rv_parkinson)
     har_on_stride = {k: v.reindex(sample_dates).ffill() for k, v in har.items()}
 
@@ -291,12 +299,8 @@ def main() -> None:
     mkt_cols = [c for c in mkt_cols if c in panel.market.columns]
     mkt_axis = panel.market[mkt_cols].reindex(sample_dates).ffill()
 
-    print("\n[8] Liquidity proxy (rolling 22d dollar volume) and interactions...")
-    volume = pd.read_csv(BASE / "bloomberg_pull/processed/volume.csv",
-                         index_col=0, parse_dates=True)
-    volume = volume.reindex(panel.prices.index)[panel.kept]
-    illiq_proxy = liquidity_proxy(volume, panel.prices).reindex(sample_dates).ffill()
-    interactions = interaction_panels(d_gph, mkt_axis, illiq_proxy)
+    print("\n[8] Persistence-by-stress interactions...")
+    interactions = interaction_panels(d_gph, mkt_axis, None)
 
     panels = {
         "d_gph": d_gph, "d_lw": d_lw, "h": h,
@@ -307,7 +311,6 @@ def main() -> None:
         "sector_mean_d": sector_mean_d,
         "d_x_vix": interactions["d_x_vix"],
         "d_x_move": interactions["d_x_move"],
-        "d_x_illiq": interactions["d_x_illiq"],
     }
 
     print("\n[9] Saving panels and Table 4...")

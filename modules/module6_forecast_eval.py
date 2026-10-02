@@ -27,7 +27,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from modules.forecast_io import HORIZONS, load_bundle
+from modules.forecast_io import HORIZONS, load_bundle, pit_level_correction
 
 warnings.filterwarnings("ignore")
 
@@ -64,8 +64,18 @@ def qlike_loss(yhat_log: pd.DataFrame, y_log: pd.DataFrame) -> pd.DataFrame:
         return yhat_log + sig2 / sig2_hat
 
 
+def hac_bandwidth(T: int, h: int, stride: int = SAMPLE_STRIDE) -> int:
+    """Newey-West lag length used for every DM and Clark-West statistic:
+    max(MA order of the overlapping target, floor(4 (T/100)^(2/9))).
+    The MA order alone (ceil(h/stride) - 1) understated the autocorrelation
+    of the cross-sectional mean loss differentials (audit I11)."""
+    q = max(int(np.ceil(h / stride)), 1) - 1
+    return max(q, int(np.floor(4 * (T / 100.0) ** (2.0 / 9.0))))
+
+
 def diebold_mariano(loss_a: pd.DataFrame, loss_b: pd.DataFrame,
-                    h: int = 1, stride: int = SAMPLE_STRIDE
+                    h: int = 1, stride: int = SAMPLE_STRIDE,
+                    bandwidth: int | None = None
                     ) -> tuple[float, float, float, int]:
     """Panel-aware HLN-corrected Diebold-Mariano test.
 
@@ -92,11 +102,12 @@ def diebold_mariano(loss_a: pd.DataFrame, loss_b: pd.DataFrame,
     centered = d - mean_d
 
     h_eff = max(int(np.ceil(h / stride)), 1)
-    bandwidth = h_eff - 1
+    if bandwidth is None:
+        bandwidth = hac_bandwidth(T, h, stride)
     gamma0 = float((centered ** 2).mean())
     var_hac = gamma0
     for k in range(1, bandwidth + 1):
-        gamma_k = float((centered[k:] * centered[:-k]).mean())
+        gamma_k = float((centered[k:] * centered[:-k]).sum() / T)   # Newey-West: divide by T (audit I31)
         weight = 1.0 - k / (bandwidth + 1)  # Bartlett kernel
         var_hac += 2.0 * weight * gamma_k
 
@@ -113,6 +124,19 @@ def diebold_mariano(loss_a: pd.DataFrame, loss_b: pd.DataFrame,
 
 
 # --------------------------------------------------------------- table 5
+def common_cells(a: pd.DataFrame, b: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Restrict two loss panels to the (date, stock) cells both have."""
+    a, b = a.align(b, join="inner")
+    m = a.notna() & b.notna()
+    return a.where(m), b.where(m)
+
+
+def eval_dates(loss_panels: dict) -> pd.DatetimeIndex:
+    """Out-of-sample forecast dates: those where HAR has a forecast."""
+    L = loss_panels["A"][1]
+    return L.index[L.notna().any(axis=1)]
+
+
 def _stars(p: float) -> str:
     if pd.isna(p):
         return ""
@@ -135,12 +159,12 @@ def table5_main_comparison(loss_panels: dict[str, dict[int, pd.DataFrame]],
         for h in HORIZONS:
             if h not in loss_panels[model]:
                 continue
-            mse = loss_panels[model][h].values
-            mse = float(np.nanmean(mse))
-            ql = qlike_panels[model][h].values
-            ql = float(np.nanmean(ql))
-            base_mse = loss_panels["A"][h].values
-            base_mse = float(np.nanmean(base_mse))
+            # common (date, stock) cells with HAR, for MSE and QLIKE alike
+            Lm, La = common_cells(loss_panels[model][h], loss_panels["A"][h])
+            Qm, _ = common_cells(qlike_panels[model][h], qlike_panels["A"][h])
+            mse = float(np.nanmean(Lm.values))
+            ql = float(np.nanmean(Qm.values))
+            base_mse = float(np.nanmean(La.values))
             imp_pct = 100 * (1 - mse / base_mse)
             if model == "A":
                 dm_t, dm_p = np.nan, np.nan
@@ -191,12 +215,11 @@ def table5_main_comparison(loss_panels: dict[str, dict[int, pd.DataFrame]],
         f.write(
             "\\item Notes: pooled across all stocks and out-of-sample dates "
             "(post 40\\% warm-up). MSE on $\\log RV^{PK}$ scale "
-            "(range-based variance proxy); QLIKE on the variance scale. "
+            "(range-based variance proxy); QLIKE on the variance scale, using a point-in-time smeared variance forecast. All comparisons are on the (date, stock) cells both models forecast. "
             "HLN DM-$t$ is the Harvey-Leybourne-Newbold finite-sample-corrected "
             "Diebold-Mariano statistic, computed on the cross-sectional mean "
             "loss differential per date with Newey-West HAC variance "
-            "(bandwidth tied to $\\lceil h / 5 \\rceil - 1$ to handle "
-            "overlapping multi-step forecasts on a weekly sample stride) and "
+            "(bandwidth $\\max(\\lceil h/5 \\rceil - 1, \\lfloor 4 (T/100)^{2/9} \\rfloor)$, six lags here) and "
             "Student-$t(T-1)$ reference. Positive values indicate the model "
             "beats Model A. Significance: $^{*}$ $p<0.10$, "
             "$^{**}$ $p<0.05$, $^{***}$ $p<0.01$. "
@@ -212,20 +235,26 @@ def table5_main_comparison(loss_panels: dict[str, dict[int, pd.DataFrame]],
 
 
 # --------------------------------------------------------------- table 7 (regime)
-def regime_masks(idx: pd.DatetimeIndex, market: pd.DataFrame) -> dict[str, np.ndarray]:
-    vix = market["VIX"].reindex(idx).ffill()
-    q1, q3 = vix.quantile(0.25), vix.quantile(0.75)
+def regime_masks(idx: pd.DatetimeIndex, market: pd.DataFrame,
+                 ref_idx: pd.DatetimeIndex | None = None) -> dict[str, np.ndarray]:
+    """The single regime definition used by every regime table (audit I10).
+    VIX quartiles are computed over `ref_idx`, the out-of-sample forecast
+    dates (an ex-post classification); masks are returned on `idx`. The GFC
+    window has no out-of-sample dates and is not reported."""
+    vix_all = market["VIX"].ffill()
+    ref = vix_all.reindex(ref_idx if ref_idx is not None else idx)
+    q1, q3 = ref.quantile(0.25), ref.quantile(0.75)
+    vix = vix_all.reindex(idx)
     return {
         "Low VIX (Q1)": (vix <= q1).values,
         "High VIX (Q4)": (vix >= q3).values,
-        "GFC (2008-Q3 to 2009-Q4)": ((idx >= "2008-09-01") & (idx <= "2009-12-31")),
         "COVID (2020)": ((idx >= "2020-03-01") & (idx <= "2020-12-31")),
     }
 
 
 def table7_regimes(loss_panels: dict, market: pd.DataFrame, fp: Path) -> None:
     idx = loss_panels["A"][1].index
-    masks = regime_masks(idx, market)
+    masks = regime_masks(idx, market, eval_dates(loss_panels))
     rows = []
     for regime, mask in masks.items():
         for model in DISPLAY_ORDER:
@@ -234,11 +263,12 @@ def table7_regimes(loss_panels: dict, market: pd.DataFrame, fp: Path) -> None:
             for h in HORIZONS:
                 if h not in loss_panels[model]:
                     continue
-                arr = loss_panels[model][h].loc[mask].values
+                Lm, La = common_cells(loss_panels[model][h], loss_panels["A"][h])
+                arr = Lm.loc[mask].values
                 arr = arr[~np.isnan(arr)]
                 if arr.size == 0:
                     continue
-                base = loss_panels["A"][h].loc[mask].values
+                base = La.loc[mask].values
                 base = base[~np.isnan(base)].mean()
                 rows.append({
                     "regime": regime, "model": model, "h": h,
@@ -279,8 +309,8 @@ def table7_regimes(loss_panels: dict, market: pd.DataFrame, fp: Path) -> None:
         f.write(
             "\\item Notes: Out-of-sample MSE improvement on $\\log RV^{PK}$ "
             "relative to Model A, computed within each regime. "
-            "VIX quartiles are computed on the out-of-sample evaluation window. "
-            "Crisis windows are 2008-Q3 to 2009-Q4 (GFC) and Mar--Dec 2020 (COVID). "
+            "VIX quartiles are computed over the out-of-sample forecast dates (an ex-post classification). "
+            "COVID is March--December 2020. "
             "Positive values indicate the model beats HAR within the regime.\n"
         )
         f.write("\\end{tablenotes}\n\\end{table}\n")
@@ -302,7 +332,7 @@ def table8_sectors(loss_panels: dict, sectors: dict, fp: Path) -> None:
             for h in HORIZONS:
                 if h not in loss_panels.get(model, {}):
                     continue
-                lp = loss_panels[model][h]
+                lp, la = common_cells(loss_panels[model][h], loss_panels["A"][h])
                 cols_in = [c for c in cols if c in lp.columns]
                 if not cols_in:
                     continue
@@ -310,7 +340,7 @@ def table8_sectors(loss_panels: dict, sectors: dict, fp: Path) -> None:
                 arr = arr[~np.isnan(arr)]
                 if arr.size == 0:
                     continue
-                base = loss_panels["A"][h][cols_in].values
+                base = la[cols_in].values
                 base = base[~np.isnan(base)].mean()
                 rows.append({
                     "sector": sec, "model": model, "h": h,
@@ -446,7 +476,9 @@ def load_forecast_panels() -> tuple[dict, dict]:
         yhat = pd.read_csv(fp, index_col=0, parse_dates=True)
         y = pd.read_csv(y_fp, index_col=0, parse_dates=True)
         loss.setdefault(model, {})[h] = squared_loss(yhat, y)
-        ql.setdefault(model, {})[h] = qlike_loss(yhat, y)
+        # QLIKE on a point-in-time smeared variance forecast (audit I12)
+        ql.setdefault(model, {})[h] = qlike_loss(
+            pit_level_correction(yhat, y, h, kind="smear"), y)
 
     # Pass 2: fill A2 from legacy B if no native A2 fit on disk
     for fp in files:
@@ -465,7 +497,8 @@ def load_forecast_panels() -> tuple[dict, dict]:
         yhat = pd.read_csv(fp, index_col=0, parse_dates=True)
         y = pd.read_csv(y_fp, index_col=0, parse_dates=True)
         loss.setdefault(new, {})[h] = squared_loss(yhat, y)
-        ql.setdefault(new, {})[h] = qlike_loss(yhat, y)
+        ql.setdefault(new, {})[h] = qlike_loss(
+            pit_level_correction(yhat, y, h, kind="smear"), y)
 
     return loss, ql
 

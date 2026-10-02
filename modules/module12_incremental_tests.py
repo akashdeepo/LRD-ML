@@ -36,9 +36,10 @@ import pandas as pd
 from scipy import stats
 
 from modules.forecast_io import HORIZONS, load_bundle
+from modules.forecast_io import pit_level_correction
 from modules.module6_forecast_eval import (
-    SAMPLE_STRIDE, diebold_mariano, load_forecast_panels, qlike_loss, regime_masks,
-    squared_loss,
+    SAMPLE_STRIDE, diebold_mariano, hac_bandwidth, load_forecast_panels, qlike_loss,
+    regime_masks, squared_loss,
 )
 from modules import module11_economic as m11
 
@@ -53,6 +54,8 @@ BASELINE = "A1"
 PREREG_SPECS = ["A1cs", "A1sec", "A1mod"]          # the nine Holm-adjusted tests
 OTHER_SPECS = ["C", "A2", "A3", "A4", "A5",
                "D_lasso", "D_ridge", "D_en", "D_rf", "D_gbm"]
+# Clark-West is valid only for OLS specifications that nest HAR-X (audit I24)
+NESTED_OLS = {"A5", "A1cs", "A1sec", "A1mod", "C"}
 
 
 # ------------------------------------------------------------------ helpers
@@ -65,25 +68,27 @@ def _panels(model: str, h: int) -> tuple[pd.DataFrame, pd.DataFrame] | None:
             pd.read_csv(y, index_col=0, parse_dates=True))
 
 
-def _hac_mean_test(d: np.ndarray, h: int) -> tuple[float, float, float, int]:
-    """t-statistic for mean(d) = 0 with Newey-West (Bartlett) HAC variance at
-    bandwidth ceil(h/stride) - 1. Returns (mean, se, t, T)."""
+def _hac_mean_test(d: np.ndarray, h: int, bandwidth: int | None = None
+                   ) -> tuple[float, float, float, int]:
+    """t-statistic for mean(d) = 0 with Newey-West (Bartlett) HAC variance.
+    Default bandwidth = module 6's hac_bandwidth (audit I11). Returns
+    (mean, se, t, T)."""
     d = d[~np.isnan(d)]
     T = len(d)
     if T < 5:
         return np.nan, np.nan, np.nan, T
     m = d.mean()
     c = d - m
-    bw = max(int(np.ceil(h / SAMPLE_STRIDE)), 1) - 1
+    bw = hac_bandwidth(T, h) if bandwidth is None else bandwidth
     v = float((c ** 2).mean())
     for k in range(1, bw + 1):
-        v += 2.0 * (1.0 - k / (bw + 1)) * float((c[k:] * c[:-k]).mean())
+        v += 2.0 * (1.0 - k / (bw + 1)) * float((c[k:] * c[:-k]).sum() / T)   # NW: divide by T (audit I31)
     se = float(np.sqrt(max(v, 1e-300) / T))
     return float(m), se, float(m / se), T
 
 
 def clark_west(yhat_small: pd.DataFrame, yhat_big: pd.DataFrame, y: pd.DataFrame,
-               h: int, mask=None) -> dict:
+               h: int, mask=None, bandwidth: int | None = None) -> dict:
     """Clark-West (2007) test that the nested (small) model's population MSPE
     equals the larger model's. Adjusted differential
         f_t = e_small^2 - [ e_big^2 - (yhat_small - yhat_big)^2 ],
@@ -96,7 +101,7 @@ def clark_west(yhat_small: pd.DataFrame, yhat_big: pd.DataFrame, y: pd.DataFrame
     if mask is not None:
         f = f.loc[mask]
     d = f.mean(axis=1).values
-    m, se, t, T = _hac_mean_test(d, h)
+    m, se, t, T = _hac_mean_test(d, h, bandwidth)
     p = float(1 - stats.norm.cdf(t)) if np.isfinite(t) else np.nan
     return {"cw_mean": m, "cw_t": t, "cw_p_one_sided": p, "T": T}
 
@@ -121,6 +126,8 @@ def part_a() -> tuple[pd.DataFrame, pd.DataFrame]:
     rows, rows_reg = [], []
     base = {h: _panels(BASELINE, h) for h in HORIZONS}
     har = {h: _panels("A", h) for h in HORIZONS}
+    ref = har[1][0]
+    ref_idx = ref.index[ref.notna().any(axis=1)]     # out-of-sample forecast dates
     for spec in PREREG_SPECS + OTHER_SPECS:
         for h in HORIZONS:
             got = _panels(spec, h)
@@ -130,12 +137,22 @@ def part_a() -> tuple[pd.DataFrame, pd.DataFrame]:
             yh_b, y_b = base[h]
             yh_a, y_a = har[h]
             L, Lb, La = squared_loss(yh, y), squared_loss(yh_b, y_b), squared_loss(yh_a, y_a)
-            Q, Qb = qlike_loss(yh, y), qlike_loss(yh_b, y_b)
+            Q = qlike_loss(pit_level_correction(yh, y, h, kind="smear"), y)
+            Qb = qlike_loss(pit_level_correction(yh_b, y_b, h, kind="smear"), y_b)
+            # common (date, stock) cells across the spec, HAR-X and HAR (audit I23)
+            cm = L.notna() & Lb.notna() & La.notna()
+            L, Lb, La = L.where(cm), Lb.where(cm), La.where(cm)
+            cq = Q.notna() & Qb.notna()
+            Q, Qb = Q.where(cq), Qb.where(cq)
             mse, mse_b, mse_a = (float(np.nanmean(x.values)) for x in (L, Lb, La))
             _, t_dm, p_dm, T = diebold_mariano(Lb, L, h=h)
             _, t_dm_q, p_dm_q, _ = diebold_mariano(Qb, Q, h=h)
             _, t_dm_a, p_dm_a, _ = diebold_mariano(La, L, h=h)
-            cw = clark_west(yh_b, yh, y, h)
+            nested = spec in NESTED_OLS
+            nan_cw = {"cw_t": np.nan, "cw_p_one_sided": np.nan}
+            cw = clark_west(yh_b, yh, y, h) if nested else nan_cw
+            q_short = max(int(np.ceil(h / SAMPLE_STRIDE)), 1) - 1
+            cw_short = clark_west(yh_b, yh, y, h, bandwidth=q_short) if nested else nan_cw
             rows.append({
                 "spec": spec, "h": h, "T_dates": T,
                 "mse": mse, "mse_harx": mse_b, "mse_har": mse_a,
@@ -146,17 +163,18 @@ def part_a() -> tuple[pd.DataFrame, pd.DataFrame]:
                 "dm_t_vs_harx": t_dm, "dm_p_vs_harx": p_dm,
                 "dm_t_vs_harx_qlike": t_dm_q, "dm_p_vs_harx_qlike": p_dm_q,
                 "cw_t_vs_harx": cw["cw_t"], "cw_p_vs_harx": cw["cw_p_one_sided"],
+                "cw_t_short_bw": cw_short["cw_t"], "cw_p_short_bw": cw_short["cw_p_one_sided"],
             })
             # regimes (descriptive)
             idx = L.index
-            for name, m in regime_masks(idx, bundle.market).items():
+            for name, m in regime_masks(idx, bundle.market, ref_idx).items():
                 if m.sum() < 20:
                     continue
                 mse_r = float(np.nanmean(L.loc[m].values))
                 mse_br = float(np.nanmean(Lb.loc[m].values))
                 mse_ar = float(np.nanmean(La.loc[m].values))
                 _, t_r, p_r, T_r = diebold_mariano(Lb.loc[m], L.loc[m], h=h)
-                cw_r = clark_west(yh_b, yh, y, h, mask=m)
+                cw_r = clark_west(yh_b, yh, y, h, mask=m) if nested else nan_cw
                 rows_reg.append({
                     "spec": spec, "h": h, "regime": name, "T_dates": T_r,
                     "gain_vs_har_pct": 100 * (1 - mse_r / mse_ar),
@@ -207,9 +225,11 @@ def _write_table11(df: pd.DataFrame) -> None:
             for i, r in enumerate(sub.itertuples()):
                 lab = names.get(spec, spec) if i == 0 else ""
                 holm_p = f"{r.cw_p_holm:.3f}" if np.isfinite(r.cw_p_holm) else "--"
+                cw_cell = (f"${r.cw_t_vs_harx:+.2f}${_stars(r.cw_p_vs_harx)}"
+                           if np.isfinite(r.cw_t_vs_harx) else "--")
                 f.write(f"{lab} & {r.h} & {r.gain_vs_harx_pct:+.2f}\\% & "
                         f"${r.dm_t_vs_harx:+.2f}${_stars(r.dm_p_vs_harx)} & "
-                        f"${r.cw_t_vs_harx:+.2f}${_stars(r.cw_p_vs_harx)} & {holm_p} & "
+                        f"{cw_cell} & {holm_p} & "
                         f"${r.dm_t_vs_harx_qlike:+.2f}${_stars(r.dm_p_vs_harx_qlike)} \\\\\n")
             f.write("\\midrule\n")
         f.write("\\bottomrule\n\\end{tabular}\n\\begin{tablenotes}\\small\n")
@@ -220,7 +240,7 @@ def _write_table11(df: pd.DataFrame) -> None:
                 "Diebold--Mariano statistic against HAR-X (two-sided). CW-$t$: Clark--West (2007) "
                 "MSPE-adjusted statistic for the nested comparison with HAR-X (one-sided, standard "
                 "normal). Both use the cross-sectional mean loss differential per date with a "
-                "Newey--West bandwidth $\\lceil h/5\\rceil-1$. CW $p$ (Holm) adjusts the three "
+                "Newey--West bandwidth $\\max(\\lceil h/5\\rceil-1, \\lfloor 4(T/100)^{2/9}\\rfloor)$ (six lags). Clark--West is reported only for OLS specifications that nest HAR-X; the shrinkage and tree estimators show --. QLIKE uses point-in-time smeared variance forecasts. CW $p$ (Holm) adjusts the three "
                 "pre-registered specifications' nine tests jointly and Model $C$'s three tests "
                 "jointly; other rows are unadjusted (--). Significance of raw statistics: "
                 "$^{*}$ $p<0.10$, $^{**}$ $p<0.05$, $^{***}$ $p<0.01$.\n")
@@ -269,32 +289,25 @@ def _circular_block_bootstrap_p(r1: np.ndarray, r2: np.ndarray, bw: int,
 
 def part_b(B: int = 2000, block: int = 5) -> pd.DataFrame:
     bundle = load_bundle()
-    sd = bundle.sample_dates
-    ret_h = m11._five_day_log_returns(bundle, sd)
-    port = {"Unmanaged": ret_h.mean(axis=1, skipna=True)}
-    for model in ["A1", "C"]:
-        yhat = m11._load_model_yhat(model)
-        common = yhat.index.intersection(ret_h.index)
-        keep = yhat.loc[common].notna().any(axis=1)
-        common = common[keep]
-        port[model], _ = m11._vol_managed_returns(yhat.loc[common], ret_h.loc[common])
-    common = port["A1"].dropna().index.intersection(port["C"].dropna().index)
-    P = pd.DataFrame({k: v.reindex(common) for k, v in port.items()}).dropna()
-    masks = m11.regime_masks_5d(P.index, bundle.market)
-    ann = np.sqrt(m11.ANN_PER_PERIOD) if hasattr(m11, "ANN_PER_PERIOD") else np.sqrt(252 / 5)
+    # excess-return portfolios on common cells (audit I2, I5, I6, I26)
+    Pfull, _ = m11.build_portfolios(bundle)
+    P = pd.DataFrame({"C": Pfull["C-managed"], "A1": Pfull["HAR-X-managed"],
+                      "Naive": Pfull[m11.NAIVE], "Unmanaged": Pfull[m11.UNMANAGED]}).dropna()
+    masks = m11.regime_masks_weekly(P.index, bundle)
+    ann = np.sqrt(m11.ANN_PER_PERIOD)
     rows = []
     for regime, m in masks.items():
         sub = P.loc[m]
         if len(sub) < 20:
             continue
-        for a, b in [("C", "A1"), ("C", "Unmanaged"), ("A1", "Unmanaged")]:
+        for a, b in [("C", "A1"), ("C", "Naive"), ("A1", "Naive"), ("C", "Unmanaged"), ("A1", "Unmanaged")]:
             r1, r2 = sub[a].values, sub[b].values
             d, se, t = _sharpe_diff_hac(r1, r2, bw=0)          # non-overlapping weekly returns
             p_hac = float(2 * (1 - stats.norm.cdf(abs(t))))
             p_boot = _circular_block_bootstrap_p(r1, r2, bw=0, block=block, B=B)
             rows.append({"regime": regime, "pair": f"{a} vs {b}", "T_weeks": len(sub),
-                         "sharpe_1_ann": float(r1.mean() / r1.std(ddof=0) * ann),
-                         "sharpe_2_ann": float(r2.mean() / r2.std(ddof=0) * ann),
+                         "sharpe_1_ann": float(r1.mean() / r1.std(ddof=1) * ann),
+                         "sharpe_2_ann": float(r2.mean() / r2.std(ddof=1) * ann),
                          "delta_sharpe_ann": d * ann, "hac_t": t, "hac_p": p_hac,
                          "boot_p": p_boot, "block": block, "B": B})
             print(f"  {regime:14s} {a:>3s} vs {b:9s}  dSR={d*ann:+.3f}  t={t:+.2f}  p_HAC={p_hac:.3f}  p_boot={p_boot:.3f}", flush=True)
@@ -307,7 +320,7 @@ def part_b(B: int = 2000, block: int = 5) -> pd.DataFrame:
         f.write("\\label{tab:sharpe_tests}\n\\footnotesize\n\\setlength{\\tabcolsep}{4pt}\n\\begin{tabular}{llcccccc}\n\\toprule\n")
         f.write("Regime & Comparison & Weeks & Sharpe (1) & Sharpe (2) & $\\Delta$Sharpe & HAC $t$ & Bootstrap $p$ \\\\\n\\midrule\n")
         for r in df.itertuples():
-            f.write(f"{r.regime} & {r.pair.replace('A1', 'HAR-X').replace('C', 'Model C', 1)} & {r.T_weeks} & "
+            f.write(f"{r.regime} & {r.pair.replace('A1', 'HAR-X').replace('Naive', 'Trailing-RV').replace('C vs', 'Model C vs', 1)} & {r.T_weeks} & "
                     f"{r.sharpe_1_ann:.2f} & {r.sharpe_2_ann:.2f} & {r.delta_sharpe_ann:+.2f} & "
                     f"${r.hac_t:+.2f}${_stars(r.hac_p)} & {r.boot_p:.3f} \\\\\n")
         f.write("\\bottomrule\n\\end{tabular}\n\\begin{tablenotes}\\small\n")

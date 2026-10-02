@@ -37,7 +37,7 @@ from modules.forecast_io import (
 BASE = Path(__file__).resolve().parent.parent
 FCST_DIR = BASE / "results" / "intermediate" / "forecasts"
 
-from modules.forecast_io import n_train_rows, row_positions
+from modules.forecast_io import first_eval_row, n_train_rows, row_positions
 
 INIT_TRAIN_FRAC = 0.40   # use first 40% of sample dates as training warm-up
 
@@ -50,7 +50,7 @@ def _ols(X: np.ndarray, y: np.ndarray) -> np.ndarray:
     return beta
 
 
-def expanding_forecast(X: pd.DataFrame, y: pd.Series, init_n: int,
+def expanding_forecast(X: pd.DataFrame, y: pd.Series, init_date,
                        h: int, full_index: pd.DatetimeIndex) -> pd.Series:
     """Expanding-window OLS forecast with a point-in-time embargo.
 
@@ -64,7 +64,8 @@ def expanding_forecast(X: pd.DataFrame, y: pd.Series, init_n: int,
     ya = y.values
     pos = row_positions(X.index, full_index)
     yhat = np.full(len(ya), np.nan)
-    for t in range(init_n, len(ya)):
+    # evaluation starts on a common DATE for every model (audit I23)
+    for t in range(first_eval_row(X.index, init_date), len(ya)):
         n = n_train_rows(pos, t, h)
         beta = _ols(Xa[:n], ya[:n])
         yhat[t] = beta[0] + Xa[t] @ beta[1:]
@@ -81,9 +82,9 @@ def run_model_horizon(bundle, model: str, h: int, init_n: int,
     for i, t in enumerate(bundle.panel.kept):
         sm = stock_matrix(bundle, t, model, targets)
         X, y = aligned_xy(sm, h)
-        if len(X) < init_n + 5:
+        if len(X) < 60:
             continue
-        yhat = expanding_forecast(X, y, init_n, h, bundle.rv.index)
+        yhat = expanding_forecast(X, y, bundle.sample_dates[init_n], h, bundle.rv.index)
         yhat_panel.loc[yhat.index, t] = yhat.values
         y_panel.loc[y.index, t] = y.values
         if verbose and i % 25 == 0:

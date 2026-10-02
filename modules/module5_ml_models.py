@@ -32,7 +32,9 @@ from sklearn.linear_model import LassoCV, RidgeCV, ElasticNetCV
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 
-from modules.forecast_io import n_train_rows, row_positions
+from sklearn.model_selection import TimeSeriesSplit
+
+from modules.forecast_io import first_eval_row, n_train_rows, row_positions
 import lightgbm as lgb
 
 from modules.forecast_io import (
@@ -58,25 +60,33 @@ GBM_PARAMS = dict(
 
 
 # ------------------------------------------------------------------ estimators
-def _lasso(seed: int = 0):
-    return LassoCV(cv=5, n_alphas=20, max_iter=2000, n_jobs=1, random_state=seed)
+# Hyperparameters of the shrinkage estimators are chosen by time-series
+# cross-validation: expanding folds that validate on later data only, with a
+# gap of ceil(h/5) rows so overlapping targets do not straddle a fold boundary
+# (audit I13; the old cv=5 was unshuffled K-fold, validating on the past).
+def _tscv(h: int) -> TimeSeriesSplit:
+    return TimeSeriesSplit(n_splits=5, gap=int(np.ceil(h / 5)))
 
 
-def _ridge():
-    return RidgeCV(alphas=np.logspace(-3, 3, 25), cv=5)
+def _lasso(h: int, seed: int = 0):
+    return LassoCV(cv=_tscv(h), n_alphas=20, max_iter=2000, n_jobs=1, random_state=seed)
 
 
-def _en(seed: int = 0):
-    return ElasticNetCV(cv=5, l1_ratio=[0.1, 0.3, 0.5, 0.7, 0.9],
+def _ridge(h: int):
+    return RidgeCV(alphas=np.logspace(-3, 3, 25), cv=_tscv(h))
+
+
+def _en(h: int, seed: int = 0):
+    return ElasticNetCV(cv=_tscv(h), l1_ratio=[0.1, 0.3, 0.5, 0.7, 0.9],
                         n_alphas=15, max_iter=2000, n_jobs=1, random_state=seed)
 
 
-def _rf(seed: int = 0):
+def _rf(h: int, seed: int = 0):
     return RandomForestRegressor(n_estimators=RF_TREES, max_depth=None,
                                  min_samples_leaf=20, n_jobs=-1, random_state=seed)
 
 
-def _gbm():
+def _gbm(h: int):
     return lgb.LGBMRegressor(**GBM_PARAMS, random_state=0)
 
 
@@ -91,7 +101,7 @@ NEEDS_SCALING = {"lasso", "ridge", "en"}
 
 
 # ------------------------------------------------------------------ walk-forward
-def walk_forward(X: pd.DataFrame, y: pd.Series, init_n: int,
+def walk_forward(X: pd.DataFrame, y: pd.Series, init_date,
                  estimator_name: str, h: int, full_index: pd.DatetimeIndex,
                  refit_stride: int = REFIT_STRIDE) -> pd.Series:
     """Walk-forward ML forecast, refit every `refit_stride` origins, with the
@@ -107,7 +117,7 @@ def walk_forward(X: pd.DataFrame, y: pd.Series, init_n: int,
     scaler = None
     needs_scale = estimator_name in NEEDS_SCALING
 
-    for t in range(init_n, len(ya)):
+    for t in range(first_eval_row(X.index, init_date), len(ya)):
         if (t - last_fit_t) >= refit_stride or model is None:
             n = n_train_rows(pos, t, h)
             X_train, y_train = Xa[:n], ya[:n]
@@ -116,7 +126,7 @@ def walk_forward(X: pd.DataFrame, y: pd.Series, init_n: int,
                 X_train_s = scaler.transform(X_train)
             else:
                 X_train_s = X_train
-            model = ESTIMATORS[estimator_name]()
+            model = ESTIMATORS[estimator_name](h)
             model.fit(X_train_s, y_train)
             last_fit_t = t
 
@@ -140,10 +150,10 @@ def run_estimator_horizon(bundle, est_name: str, h: int, init_n: int,
     for i, t in enumerate(bundle.panel.kept):
         sm = stock_matrix(bundle, t, "D", targets)
         X, y = aligned_xy(sm, h)
-        if len(X) < init_n + 5:
+        if len(X) < 60:
             continue
-        yhat = walk_forward(X, y, init_n, est_name, h, bundle.rv.index,
-                            refit_stride)
+        yhat = walk_forward(X, y, bundle.sample_dates[init_n], est_name, h,
+                            bundle.rv.index, refit_stride)
         yhat_panel.loc[yhat.index, t] = yhat.values
         y_panel.loc[y.index, t] = y.values
         if verbose and (i + 1) % 25 == 0:

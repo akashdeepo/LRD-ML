@@ -104,6 +104,53 @@ def n_train_rows(pos, t: int, h: int) -> int:
     return int(np.searchsorted(pos[:t], pos[t] - h, side="right"))
 
 
+MIN_TRAIN_ROWS = 52   # weekly rows required before a stock gets forecasts
+
+
+def first_eval_row(index: pd.DatetimeIndex, init_date: pd.Timestamp,
+                   min_train: int = MIN_TRAIN_ROWS) -> int:
+    """Row at which out-of-sample forecasting starts for one stock: the first
+    row dated on or after the common evaluation start `init_date`, and never
+    before `min_train` training rows exist. Anchoring on a date (not a row
+    count) gives every model the same evaluation window (audit I23)."""
+    return max(int(np.searchsorted(np.asarray(index), np.datetime64(init_date))), min_train)
+
+
+def pit_level_correction(yhat: pd.DataFrame, y: pd.DataFrame, h: int,
+                         stride: int = 5, min_obs: int = 26,
+                         kind: str = "smear") -> pd.DataFrame:
+    """Point-in-time level correction of log-variance forecasts, per stock.
+
+    Uses only past out-of-sample errors e_j = y_j - yhat_j whose targets were
+    observed by the origin, i.e. rows j <= t - ceil(h/stride) on the regular
+    sample stride. kind='smear': correction = log(mean exp(e_j)), so that
+    exp(yhat + correction) is an unbiased variance forecast (Duan smearing;
+    audit I12). kind='mean': correction = mean(e_j) (level bias; audit I14).
+    Returns the corrected forecast panel; rows with fewer than `min_obs`
+    usable errors are NaN.
+    """
+    lag = int(np.ceil(h / stride))
+    e = (y - yhat)
+    out = pd.DataFrame(np.nan, index=yhat.index, columns=yhat.columns)
+    for c in yhat.columns:
+        ec = e[c].values
+        ok = ~np.isnan(ec)
+        rows = np.flatnonzero(ok)
+        if rows.size == 0:
+            continue
+        vals = np.exp(ec[rows]) if kind == "smear" else ec[rows]
+        csum = np.cumsum(vals)
+        corr = np.full(len(ec), np.nan)
+        yh = yhat[c].values
+        for k in np.flatnonzero(~np.isnan(yh)):
+            n = int(np.searchsorted(rows, k - lag, side="right"))
+            if n >= min_obs:
+                m = csum[n - 1] / n
+                corr[k] = np.log(m) if kind == "smear" else m
+        out[c] = yh + corr
+    return out
+
+
 @dataclass
 class StockMatrix:
     ticker: str
@@ -195,13 +242,14 @@ def stock_matrix(bundle: Bundle, ticker: str, model: str,
     har_w_log = np.log(har_w.where(har_w > 0))
     har_m_log = np.log(har_m.where(har_m > 0))
 
-    # lagged-return feature evaluated at the trading day before each sample date
+    # Return term: r_t, the origin day's return, known at the close of t.
+    # (Before 2026-10-02 this was r_{t-1}, one day stale relative to VIX/MOVE
+    # at the close of t; audit I1. The column keeps its historical name.)
     ret = bundle.returns[ticker]
     sample_dates = bundle.sample_dates
     pos = ret.index.get_indexer(sample_dates)
-    lag_idx = np.where(pos > 0, pos - 1, -1)
-    lag_vals = np.where(lag_idx >= 0, ret.values[lag_idx], np.nan)
-    ret_lag1 = pd.Series(lag_vals, index=sample_dates, dtype=float)
+    vals = np.where(pos >= 0, ret.values[np.clip(pos, 0, None)], np.nan)
+    ret_lag1 = pd.Series(vals, index=sample_dates, dtype=float)
     ret_lag1_abs = ret_lag1.abs()
 
     sources = {

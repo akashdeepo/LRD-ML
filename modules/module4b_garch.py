@@ -124,8 +124,10 @@ def _forecast_one_stock(returns: pd.Series, log_rv: pd.Series,
             # Advance recursion forward from last_pos+1 to p using the fixed
             # parameters and the actual returns observed in between.
             omega, alpha, beta, mu = params
+            # sigma^2_j = omega + alpha * eps_{j-1}^2 + beta * sigma^2_{j-1};
+            # the old loop used eps_j (off by one; audit I14)
             for j in range(last_pos + 1, p + 1):
-                eps = ret.values[j] * RETURN_SCALE - mu
+                eps = ret.values[j - 1] * RETURN_SCALE - mu
                 var_t = omega + alpha * eps * eps + beta * var_t
             last_pos = p
 
@@ -178,6 +180,16 @@ def main() -> None:
         for h in HORIZONS:
             yhat[h][t] = per_h[h].values
             yreal[h][t] = targets[h][t].values
+
+    # Point-in-time level correction (audit I14): returns-GARCH variance sits
+    # about 0.5 log points above the range-based target, so each forecast is
+    # shifted by the mean of the stock's own past embargoed errors (26-error
+    # warm-up). The uncorrected forecasts are kept as G_raw.
+    from modules.forecast_io import pit_level_correction
+    for h in HORIZONS:
+        yhat[h].to_csv(FCST_DIR / f"G_raw_h{h:02d}_yhat.csv")
+        yreal[h].to_csv(FCST_DIR / f"G_raw_h{h:02d}_y.csv")
+        yhat[h] = pit_level_correction(yhat[h], yreal[h], h, kind="mean")
 
     cov_rows = []
     for h in HORIZONS:

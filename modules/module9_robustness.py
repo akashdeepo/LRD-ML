@@ -36,7 +36,7 @@ from modules.forecast_io import (
     aligned_xy, stock_matrix,
 )
 from modules.module2_lrd_estimation import (
-    gph, local_whittle, rolling_panel,
+    gph, hurst_scaling, local_whittle, rolling_panel,
 )
 from modules.module3_feature_engineering import (
     cross_sectional_features, memory_dynamics, sector_mean_panel,
@@ -75,6 +75,10 @@ def _evaluate(yhat: pd.DataFrame, y: pd.DataFrame,
         base_yhat = base_yhat[cols]; base_y = base_y[cols]
     L = squared_loss(yhat, y)
     L_base = squared_loss(base_yhat, base_y)
+    # compare on common (date, stock) cells only (audit I15, I23)
+    L, L_base = L.align(L_base, join="inner")
+    common = L.notna() & L_base.notna()
+    L, L_base = L.where(common), L_base.where(common)
     mse = float(np.nanmean(L.values))
     mse_base = float(np.nanmean(L_base.values))
     imp_pct = 100 * (1 - mse / mse_base)
@@ -100,9 +104,9 @@ def _refit_model_C(bundle, h: int = H,
     for tkr in bundle.panel.kept:
         sm = stock_matrix(bundle, tkr, "C", targets)
         X, y = aligned_xy(sm, h)
-        if len(X) < init_n + 5:
+        if len(X) < 60:
             continue
-        yhat = expanding_forecast(X, y, init_n, h, bundle.rv.index)
+        yhat = expanding_forecast(X, y, bundle.sample_dates[init_n], h, bundle.rv.index)
         yhat_panel.loc[yhat.index, tkr] = yhat.values
         y_panel.loc[y.index, tkr] = y.values
     return yhat_panel, y_panel
@@ -153,7 +157,7 @@ def _rolling_d_at_window(bundle, window: int, estimator) -> pd.DataFrame:
     log_rv = bundle.log_rv
     panel = rolling_panel(log_rv, estimator, window=window, stride=STRIDE,
                           label=f"rolling-d (window={window})")
-    return panel.reindex(bundle.sample_dates).ffill()
+    return panel.reindex(bundle.sample_dates)
 
 
 # ---------------------------------------------------------------- variant runners
@@ -179,6 +183,10 @@ def variant_window(bundle, window: int, base_yhat, base_y) -> dict:
     new_d = _rolling_d_at_window(bundle, window=window, estimator=gph)
     derived = _build_derived_from_d(new_d, bundle.sectors)
     _apply_d_overrides(bundle, derived)
+    # roughness re-estimated at the same window (audit I15)
+    new_h = _rolling_d_at_window(bundle, window=window, estimator=hurst_scaling)
+    bundle.feat["h"] = new_h
+    bundle.feat["delta_h"] = new_h.diff()
     yhat, y = _refit_model_C(bundle)
     return _evaluate(yhat, y, base_yhat, base_y, H)
 
@@ -210,9 +218,9 @@ def variant_target_sqret(bundle, base_yhat, base_y) -> dict:
         for tkr in bundle.panel.kept:
             sm = stock_matrix(bundle, tkr, model, targets)
             X, y = aligned_xy(sm, H)
-            if len(X) < init_n + 5:
+            if len(X) < 60:
                 continue
-            yh.loc[X.index, tkr] = expanding_forecast(X, y, init_n, H, bundle.rv.index).values
+            yh.loc[X.index, tkr] = expanding_forecast(X, y, sd[init_n], H, bundle.rv.index).values
             yy.loc[y.index, tkr] = y.values
         return yh, yy
 

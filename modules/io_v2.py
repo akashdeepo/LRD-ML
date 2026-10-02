@@ -63,6 +63,30 @@ def _winsorize_pit(df: pd.DataFrame, lower: float, upper: float,
     return df.clip(lower=qlo, upper=qhi)
 
 
+def log_variance(rv: pd.DataFrame) -> pd.DataFrame:
+    """log of Parkinson variance with zero and missing values left as NaN."""
+    return np.log(rv.where(rv > 0))
+
+
+# Special cash dividends large enough to distort price returns. Only KDP's
+# $103.75 special dividend (ex-date 2018-07-10, Keurig Dr Pepper merger) is
+# material in this panel (audit I7).
+SPECIAL_DIVIDENDS = {("KDP", "2018-07-10"): 103.75}
+
+
+def _patch_special_dividends(log_ret: pd.DataFrame, prices: pd.DataFrame) -> pd.DataFrame:
+    out = log_ret.copy()
+    for (tkr, day), div in SPECIAL_DIVIDENDS.items():
+        d = pd.Timestamp(day)
+        if tkr in out.columns and d in out.index:
+            p = out.index.get_loc(d)
+            prev = prices[tkr].iloc[:p].dropna()
+            if len(prev) and pd.notna(prices[tkr].iloc[p]):
+                out.iat[p, out.columns.get_loc(tkr)] = float(
+                    np.log((prices[tkr].iloc[p] + div) / prev.iloc[-1]))
+    return out
+
+
 def build_clean_panel(force: bool = False) -> Panel:
     if (not force) and CLEAN.exists() and (CLEAN / "kept_tickers.txt").exists():
         return load_clean_panel()
@@ -88,13 +112,22 @@ def build_clean_panel(force: bool = False) -> Panel:
     low = low[kept]
     rv_pk = rv_pk[kept]
 
-    # Log returns + winsorize
-    returns_raw = np.log(prices / prices.shift(1))
+    # High/Low were swapped in 36 source sheets (audit I18). Parkinson is
+    # symmetric in (H, L) so rv_parkinson is unaffected, but store them in
+    # the right order and assert it.
+    hi = high.where(high.isna() | low.isna() | (high >= low), low)
+    lo = low.where(high.isna() | low.isna() | (high >= low), high)
+    high, low = hi, lo
+    assert not (high < low).any().any(), "High < Low after ordering"
+
+    # Log returns (price returns: closes are split- but not dividend-adjusted,
+    # audit I7) with one corporate-action patch, then point-in-time winsorising
+    returns_raw = _patch_special_dividends(np.log(prices / prices.shift(1)), prices)
     returns = _winsorize_pit(returns_raw, WINSOR_LOWER, WINSOR_UPPER)
 
-    # Log RV (add a tiny floor to avoid log(0))
-    floor = max(rv_pk.replace(0, np.nan).min().min() / 10.0, 1e-12)
-    log_rv = np.log(rv_pk.where(rv_pk > 0, floor))
+    # Log variance: zero-range and missing days are NaN (audit I4; the old
+    # code mapped both to a log floor of about -17.5)
+    log_rv = log_variance(rv_pk)
 
     # Align market data to the price calendar; forward-fill modest gaps
     market = mkt.reindex(prices.index).ffill(limit=3)

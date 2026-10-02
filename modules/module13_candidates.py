@@ -47,6 +47,9 @@ def _save(tag: str, h: int, yhat: pd.DataFrame, y: pd.DataFrame) -> None:
 
 def _compare(label: str, yh_base, y_base, yh_new, y_new, h: int) -> dict:
     Lb, Ln = squared_loss(yh_base, y_base), squared_loss(yh_new, y_new)
+    Lb, Ln = Lb.align(Ln, join="inner")
+    common = Lb.notna() & Ln.notna()                 # common cells (audit I23)
+    Lb, Ln = Lb.where(common), Ln.where(common)
     mse_b, mse_n = float(np.nanmean(Lb.values)), float(np.nanmean(Ln.values))
     _, t_dm, p_dm, T = diebold_mariano(Lb, Ln, h=h)
     cw = clark_west(yh_base, yh_new, y_new, h)
@@ -61,7 +64,7 @@ def _stack(bundle, targets, model: str, h: int, init_n: int):
     for tkr in bundle.panel.kept:
         sm = stock_matrix(bundle, tkr, model, targets)
         X, y = aligned_xy(sm, h)
-        if len(X) < init_n + 5:
+        if len(X) < 60:
             continue
         df = X.copy()
         df["__y__"] = y.values
@@ -160,20 +163,39 @@ def run06(bundle, targets, init_n) -> pd.DataFrame:
         for tkr in bundle.panel.kept:
             sm = stock_matrix(bundle, tkr, model, dtargets)
             X, y = aligned_xy(sm, 22)
-            if len(X) < init_n + 5:
+            if len(X) < 60:
                 continue
-            yh = expanding_forecast(X, y, init_n, 22, bundle.rv.index)
+            yh = expanding_forecast(X, y, bundle.sample_dates[init_n], 22, bundle.rv.index)
             yhat.loc[yh.index, tkr] = yh.values
             ytrue.loc[y.index, tkr] = y.values
         _save(f"DUR_{model}", 22, yhat, ytrue)
         got[model] = (yhat, ytrue)
         print(f"   DUR_{model:5s} MSE={float(np.nanmean(((yhat - ytrue)**2).values)):.4f}", flush=True)
-    # unconditional benchmark: expanding mean of D per stock (no regressors)
-    rows = [_compare("A1 vs A (duration target)", *got["A"], *got["A1"], 22),
+    # No-regressor benchmark (audit I25): the stock's expanding mean of D over
+    # past embargoed rows, so out-of-sample R^2 can be reported for each model.
+    from modules.forecast_io import first_eval_row, n_train_rows, row_positions
+    bm = pd.DataFrame(index=bundle.sample_dates, columns=bundle.panel.kept, dtype=float)
+    for tkr in bundle.panel.kept:
+        s = D[tkr].dropna()
+        if len(s) < 60:
+            continue
+        pos = row_positions(s.index, bundle.rv.index)
+        vals, out = s.values, np.full(len(s), np.nan)
+        for t in range(first_eval_row(s.index, bundle.sample_dates[init_n]), len(s)):
+            n = n_train_rows(pos, t, 22)
+            if n > 0:
+                out[t] = vals[:n].mean()
+        bm.loc[s.index, tkr] = out
+    _save("DUR_mean", 22, bm, D.reindex(bm.index))
+    got["mean"] = (bm, D.reindex(bm.index))
+    rows = [_compare("A vs expanding mean (duration target)", *got["mean"], *got["A"], 22),
+            _compare("A1 vs expanding mean (duration target)", *got["mean"], *got["A1"], 22),
+            _compare("C vs expanding mean (duration target)", *got["mean"], *got["C"], 22),
+            _compare("A1 vs A (duration target)", *got["A"], *got["A1"], 22),
             _compare("A1cs vs A1 (duration target)", *got["A1"], *got["A1cs"], 22),
             _compare("C vs A1 (duration target)", *got["A1"], *got["C"], 22)]
     df = pd.DataFrame(rows)
-    pre = df["comparison"].str.startswith(("A1cs", "C vs"))
+    pre = df["comparison"].isin(["A1cs vs A1 (duration target)", "C vs A1 (duration target)"])   # pre-registered pair only
     df["cw_p_holm"] = np.nan
     df.loc[pre, "cw_p_holm"] = holm(df.loc[pre, "cw_p"].tolist())
     df["passes_rule"] = (df["cw_p_holm"] < 0.05) & (df["gain_pct"] > 0)
@@ -195,9 +217,11 @@ def run07(bundle, targets, init_n) -> pd.DataFrame:
     sd = bundle.sample_dates
     m_daily = bundle.log_rv.mean(axis=1)                       # cross-sectional mean daily log RV
     feats = pd.DataFrame(index=sd)
-    feats["m_har_d"] = m_daily.shift(1).reindex(sd)
-    feats["m_har_w"] = m_daily.rolling(5).mean().shift(1).reindex(sd)
-    feats["m_har_m"] = m_daily.rolling(22).mean().shift(1).reindex(sd)
+    # market HAR terms through day t (audit I1); m_daily now excludes the
+    # former -17.5 log floor for missing stocks (audit I4)
+    feats["m_har_d"] = m_daily.reindex(sd)
+    feats["m_har_w"] = m_daily.rolling(5).mean().reindex(sd)
+    feats["m_har_m"] = m_daily.rolling(22).mean().reindex(sd)
     feats["vix"] = bundle.market["VIX"].reindex(sd)
     feats["move"] = bundle.market["MOVE"].reindex(sd)
     feats["cs_mean_d"] = bundle.cs["cs_mean_d"].reindex(sd)
@@ -212,7 +236,7 @@ def run07(bundle, targets, init_n) -> pd.DataFrame:
             df = feats[cols].copy(); df["__y__"] = yM
             df = df.dropna()
             X, y = df[cols], df["__y__"]
-            yh = expanding_forecast(X, y, init_n, h, bundle.rv.index)
+            yh = expanding_forecast(X, y, sd[init_n], h, bundle.rv.index)
             yhat = yh.to_frame("MKT"); ytrue = y.to_frame("MKT")
             _save(model, h, yhat, ytrue)
             got[model] = (yhat, ytrue)

@@ -71,11 +71,11 @@ fig, (ax1, ax2) = plt.subplots(
 )
 fig.subplots_adjust(left=0.075, right=0.985, top=0.80, bottom=0.09)
 
-fig.text(0.075, 0.965, "Estimated volatility persistence rises in every major stress episode",
+fig.text(0.075, 0.965, "Volatility 'persistence' jumps with each crisis and drops exactly 750 days later",
          fontsize=14, fontweight="semibold", color=INK, ha="left", va="top")
 fig.text(0.075, 0.915,
          "Cross-sectional mean of the rolling long-memory parameter $\\hat d$ (GPH, 750-day window) "
-         "of Parkinson variance\nacross 115 S&P 500 stocks, 2004–2026, with the VIX beneath on its own axis",
+         "of log Parkinson variance\nacross 115 S&P 500 stocks, 2004–2026, with the VIX beneath on its own axis",
          fontsize=9.5, color=INK2, ha="left", va="top", linespacing=1.5)
 
 for ax in (ax1, ax2):
@@ -100,6 +100,11 @@ ax1.set_xlim(d_bar.index[0], d_bar.index[-1] + pd.Timedelta(days=200))
 # crisis labels (context, in muted ink)
 ax1.text(pd.Timestamp("2009-03-15"), 0.72, "GFC", color=MUTED, fontsize=9, ha="center", va="top")
 ax1.text(pd.Timestamp("2020-08-01"), 0.72, "COVID", color=MUTED, fontsize=9, ha="center", va="top")
+# the day the 18 Mar 2020 spike leaves the 750-day window (audit finding #14)
+EXIT = pd.Timestamp("2023-03-10")
+ax1.axvline(EXIT, color=MUTED, linewidth=1)
+ax1.text(EXIT + pd.Timedelta(days=40), 0.70, "18 Mar 2020 spike\nleaves the window", color=MUTED,
+         fontsize=8.5, ha="left", va="top")
 
 # calm baseline segment (a reference level, solid hairline)
 ax1.hlines(calm_level, pd.Timestamp(CALM[0]), pd.Timestamp(CALM[1]),
@@ -116,7 +121,7 @@ dot1 = ax1.scatter([], [], s=70, color=SERIES_1, edgecolor=SURFACE, linewidth=2,
 dot2 = ax2.scatter([], [], s=70, color=SERIES_2, edgecolor=SURFACE, linewidth=2, zorder=5)
 date_txt = fig.text(0.985, 0.955, "", fontsize=11, color=INK2, ha="right", va="top")
 # selective direct labels, revealed once the cursor passes them
-lab_gfc = ax1.text(pd.Timestamp("2009-03-15"), gfc_level + 0.105,
+lab_gfc = ax1.text(pd.Timestamp("2010-10-01"), gfc_level + 0.07,
                    f"{gfc_level:.2f}  (+{100*(gfc_level/calm_level-1):.0f}% vs calm)",
                    color=INK2, fontsize=9, ha="center", va="bottom", visible=False)
 lab_cov = ax1.text(pd.Timestamp("2020-08-01"), covid_level + 0.07,

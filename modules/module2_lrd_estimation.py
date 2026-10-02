@@ -167,7 +167,9 @@ def rolling_panel(data: pd.DataFrame, estimator: callable,
     for k, end in enumerate(end_indices):
         if k % 50 == 0 and k > 0:
             print(f"    {k}/{len(end_indices)}  ({sample_dates[k].date()})")
-        block = data.iloc[end - window:end].values
+        # window ends on the sample date itself (day t), whose close is known
+        # at the forecast origin (audit I1; previously ended at t-1)
+        block = data.iloc[end - window + 1:end + 1].values
         for j in range(N):
             x = block[:, j]
             x = x[~np.isnan(x)]
@@ -213,7 +215,7 @@ def export_table3(returns_gph: pd.DataFrame, returns_lw: pd.DataFrame,
         f.write("\\label{tab:lrd_estimates}\n\\small\n")
         f.write("\\begin{tabular}{lccccccc}\n\\toprule\n")
         f.write(" & \\multicolumn{2}{c}{Returns} "
-                "& \\multicolumn{3}{c}{Parkinson RV} "
+                "& \\multicolumn{3}{c}{log Parkinson RV} "
                 "& Roughness & \\\\\n")
         f.write("\\cmidrule(lr){2-3} \\cmidrule(lr){4-6}\n")
         f.write("Sector & $\\bar d_{GPH}$ & $\\bar d_{LW}$ "
@@ -244,7 +246,7 @@ def export_table3(returns_gph: pd.DataFrame, returns_lw: pd.DataFrame,
             "GPH is the Geweke--Porter--Hudak log-periodogram estimator "
             f"(bandwidth $m = T^{{{BANDWIDTH_POWER}}}$); "
             "LW is the local-Whittle semiparametric estimator. "
-            "Returns are daily log returns; Parkinson RV is the range-based "
+            "Returns are daily log returns; volatility memory is estimated on the log of the daily Parkinson range-based variance, "
             "realized variance from daily H/L. $H$ is the Hurst exponent of "
             "$\\log\\mathrm{RV}^{PK}$ estimated by the scaling of the $q=2$ "
             "moment of increments over lags $\\{1,2,3,5,8,13,21\\}$. "
@@ -268,7 +270,7 @@ def figure2(rv_gph: pd.DataFrame, rolling_d: pd.DataFrame,
     ax.axvline(0.5, color="gray", linestyle=":", linewidth=1)
     ax.set_xlabel(r"$\hat d$ (memory parameter)")
     ax.set_ylabel("Density")
-    ax.set_title(r"(a) Distribution of $\hat d$ for Parkinson RV (GPH)",
+    ax.set_title(r"(a) Distribution of $\hat d$ for log Parkinson RV (GPH)",
                  fontweight="bold")
     ax.legend(); ax.set_xlim(-0.1, 0.8)
 
@@ -280,7 +282,7 @@ def figure2(rv_gph: pd.DataFrame, rolling_d: pd.DataFrame,
     ax.axhline(0, color="gray", linestyle=":", linewidth=1)
     ax.axhline(0.5, color="gray", linestyle=":", linewidth=1)
     ax.set_ylabel(r"$\hat d_t$")
-    ax.set_title(f"(b) Rolling $\\hat d$ on Parkinson RV "
+    ax.set_title(f"(b) Rolling $\\hat d$ on log Parkinson RV "
                  f"(window {ROLLING_WINDOW}, stride {ROLLING_STRIDE})",
                  fontweight="bold")
     ax.legend(loc="upper right", ncol=3)
@@ -352,13 +354,15 @@ def main() -> None:
     print(f"   mean d = {returns_lw['d_hat'].mean():.3f}, "
           f"% sig = {(returns_lw['p_value']<0.05).mean()*100:.1f}%")
 
-    print("[3/5] Cross-sectional GPH on Parkinson RV...")
-    rv_gph = cross_sectional_estimates(panel.rv_parkinson, gph)
+    # Memory is estimated on LOG Parkinson variance throughout (audit I8):
+    # the standard transform, and the one the standard errors suit.
+    print("[3/5] Cross-sectional GPH on log Parkinson RV...")
+    rv_gph = cross_sectional_estimates(panel.log_rv, gph)
     print(f"   mean d = {rv_gph['d_hat'].mean():.3f}, "
           f"% sig = {(rv_gph['p_value']<0.05).mean()*100:.1f}%")
 
-    print("[4/5] Cross-sectional Local Whittle on Parkinson RV...")
-    rv_lw = cross_sectional_estimates(panel.rv_parkinson, local_whittle)
+    print("[4/5] Cross-sectional Local Whittle on log Parkinson RV...")
+    rv_lw = cross_sectional_estimates(panel.log_rv, local_whittle)
     print(f"   mean d = {rv_lw['d_hat'].mean():.3f}, "
           f"% sig = {(rv_lw['p_value']<0.05).mean()*100:.1f}%")
 
@@ -368,8 +372,8 @@ def main() -> None:
           f"share H<0.5 = {(hurst<0.5).mean()*100:.1f}%")
 
     print("\n[Rolling] panels (this is the slow part)...")
-    rolling_d_gph = rolling_panel(panel.rv_parkinson, gph, label="d_GPH on RV_PK")
-    rolling_d_lw = rolling_panel(panel.rv_parkinson, local_whittle, label="d_LW on RV_PK")
+    rolling_d_gph = rolling_panel(panel.log_rv, gph, label="d_GPH on log RV_PK")
+    rolling_d_lw = rolling_panel(panel.log_rv, local_whittle, label="d_LW on log RV_PK")
     rolling_h = rolling_panel(panel.log_rv, hurst_scaling, label="H on log_RV")
 
     print("\nSaving intermediate panels...")
