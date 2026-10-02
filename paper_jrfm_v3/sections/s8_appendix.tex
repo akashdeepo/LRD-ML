@@ -1,0 +1,94 @@
+\section[\appendixname~\thesection]{Roughness at the daily frequency}\label{app:rough}
+
+The increment-scaling estimate of the Hurst exponent of daily log Parkinson
+variance averages 0.060 across stocks (10th--90th percentile 0.053--0.069).
+Read literally, this indicates very rough volatility. We ask whether a
+process without fractional roughness, observed through the Parkinson
+estimator, produces the same value. Latent log variance is the sum of two
+independent AR(1) components, a Markovian model. The observed series adds the
+sampling error of the range estimator, $\eta_t = \ln(R_t^2/4\ln 2)$ minus its
+mean, where $R_t$ is the range of a standard Brownian motion over one day
+sampled at 390 one-minute steps; its variance, 0.36, is fixed by theory and
+is about a third of the variance of observed log variance. The two
+autoregressive coefficients and the variance split are fitted to the median
+autocorrelations of observed log variance at nine lags from 1 to 250 days,
+which gives a fast component with coefficient 0.66 and a slow one with
+coefficient 0.995. Over 200 simulated paths of 6136 days the same estimator
+gives 0.064 (standard deviation 0.004) on the observed series, matching the
+data, and 0.19 on the noise-free latent series. Two features of daily data
+therefore produce the low estimate without any roughness: the sampling noise
+of the range, which lowers the estimate from 0.19 to 0.06, and a fast
+mean-reverting component, which already holds it well below 0.5 at lags of up
+to 21 days. Daily range data cannot identify roughness, in line with
+\citet{cont2024rough}. The code is module 16 of the repository.
+
+\section[\appendixname~\thesection]{Additional forecast results}\label{app:extra}
+
+\textit{QLIKE.} Variance forecasts are obtained from the log forecasts with a
+point-in-time smearing correction: the mean of the exponentiated past
+out-of-sample errors whose targets had been observed by the origin, with at
+least 26 such errors. Against HAR-X, no specification has a significantly
+lower QLIKE loss at the 5\% level; the largest Diebold--Mariano statistic in
+favour of persistence is 1.67 (cross-sectional extension, one day), and model
+$C$ is significantly worse at one month ($-2.08$).
+
+\textit{Machine learning.} The lasso, ridge and elastic-net penalties are
+chosen by five-fold expanding time-series cross-validation with a gap of
+$\lceil h/5\rceil$ rows between training and validation folds. Gradient
+boosting (LightGBM, learning rate 0.05) chooses the number of leaves
+$\{2,4,15\}$, the minimum leaf size $\{20,50\}$ and the number of trees
+$\{25,\dots,800\}$ by three-fold time-series cross-validation in each
+training window. The random forest uses 200 trees with a minimum leaf of 20.
+Each learner is refit every 20 weeks on the embargoed training rows. With
+fixed defaults (400 trees, 31 leaves) gradient boosting loses 15.9\%,
+11.9\% and 21.2\% to HAR at the three horizons; tuned, it loses 2.9\%, 0.2\%
+and 8.3\%.
+
+\section[\appendixname~\thesection]{The market-level gain}\label{app:market}
+
+On the market-level series the persistence state improves on market HAR-X by
+3.4\% and 2.0\% at one day and one week (Table~\ref{tab:designs}). An
+exploratory analysis, specified after that result and therefore not a test,
+asks what carries the gain. In a levels specification, the product of the VIX
+and the largest VIX of the previous three years has a negative coefficient
+($t=-2.7$ at both horizons): the slope of future realized variance on the VIX
+is about 40\% lower when a crisis is recent. In logs the interaction
+disappears ($t=0.33$ and $0.26$) and the three-year maximum enters only as a
+level shift, which the trailing 250-day gap between VIX-implied and realized
+variance absorbs; that gap alone improves on log market HAR-X by 5.0\% to
+6.3\% (Diebold--Mariano 2.7 to 3.5). The market-level gain is therefore best
+read as the slowly decaying variance risk premium after crises
+\citep{bates2000post, andersen2015risk}, which the persistence state proxies
+because both depend on how recently the last crisis occurred. A test of this
+reading requires data not used here, such as earlier index history or other
+markets.
+
+\section[\appendixname~\thesection]{Registration record and audit}\label{app:ledger}
+
+The study was carried out in stages. Before each stage the specifications,
+comparisons, tests and decision rules were written into an experiment ledger
+kept under version control; results were added afterwards and earlier entries
+were not edited. The ledger, the code and a list of every correction are in
+the repository named in the Data Availability Statement. The main stages
+were:
+\begin{itemize}
+\item a point-in-time embargo for overlapping targets, which removed an
+apparent monthly-horizon gain of the persistence model that came from
+training rows whose targets were not yet observed;
+\item three HAR-X extensions with a fixed decision rule and Holm adjustment;
+\item pooled, term-structure and market-level designs, point-in-time
+winsorization and real-time portfolio normalization;
+\item a full audit of the pipeline, whose corrections were registered before
+the final run: aligned information timing (Table~\ref{tab:timing}), missing
+rather than floored zero-range days, memory estimated on log variance
+throughout, a Newey--West bandwidth that grows with the sample, point-in-time
+QLIKE, time-series cross-validation for every learner, a level-corrected
+GARCH benchmark, common evaluation cells and dates, and portfolio returns in
+excess of the bill rate;
+\item the window-inclusion analysis (Table~\ref{tab:window}), the
+Giacomini--White tests and the timing comparison, each registered with a
+prediction before it was run.
+\end{itemize}
+% CO-AUTHORS: decide whether to add one sentence noting that an earlier
+% version (arXiv:2605.24285) reported larger gains, and that the
+% differences come from the corrections listed above.

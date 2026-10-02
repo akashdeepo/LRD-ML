@@ -1,0 +1,17 @@
+\begin{table}[H]
+\caption{Volatility-managed portfolios (excess returns, weekly, 2014--2026).}
+\label{tab:portfolios}
+\footnotesize
+\begin{tabularx}{\textwidth}{Xrrrrr}
+\toprule
+Portfolio & Sharpe & Sharpe, 10 bp & Turnover & Sharpe, COVID & Max drawdown \\
+\midrule
+Equal weight & 0.76 & 0.76 & 1.1 & 0.88 & -30.6\% \\
+Trailing 22-day variance & 0.76 & 0.69 & 6.6 & 1.09 & -15.7\% \\
+HAR & 0.75 & 0.64 & 11.5 & 1.29 & -17.3\% \\
+HAR-X & 0.76 & 0.66 & 10.5 & 1.38 & -15.6\% \\
+Model $C$ & 0.76 & 0.66 & 10.3 & 1.62 & -15.8\% \\
+\bottomrule
+\end{tabularx}
+\noindent{\footnotesize{\textit{Notes:} Each stock's position is scaled by $c_{i,t}/\hat\sigma^2_{i,t+5|t}$ with $c_{i,t}$ set in real time so that the managed and unmanaged positions have equal past variance; positions are funded at the three-month Treasury bill rate; 594 weeks after a 52-week warm-up. Turnover: notional traded per unit of capital per year, including drift. COVID: March to December 2020 (43 weeks). Sharpe differences, Ledoit--Wolf HAC $p$ (block bootstrap $p$): model $C$ vs HAR-X 0.94 (0.93) full sample, 0.10 (0.31) COVID; model $C$ vs equal weight 0.97 (0.98).}}
+\end{table}

@@ -1,0 +1,27 @@
+\begin{table}[H]
+\caption{Does persistence add to HAR-X?}
+\label{tab:harx}
+\footnotesize
+\begin{tabularx}{\textwidth}{Xcrrrrr}
+\toprule
+Specification & $h$ & $\Delta$MSE & DM & CW & CW $p$ (Holm) & GW $p$ \\
+\midrule
+HAR-X + cross-sectional state$^{\dagger}$ & 1 & -0.03\% & -0.10 & +3.76$^{***}$ & 0.001 & 0.743 \\
+ & 5 & +0.00\% & +0.01 & +4.44$^{***}$ & 0.000 & 0.923 \\
+ & 22 & -2.01\% & -1.77$^{*}$ & +1.11 & 0.403 & 0.133 \\
+\midrule
+HAR-X + sector state$^{\dagger}$ & 1 & -0.10\% & -0.35 & +2.77$^{***}$ & 0.017 & 0.668 \\
+ & 5 & -0.13\% & -0.34 & +2.49$^{***}$ & 0.032 & 0.543 \\
+ & 22 & -0.86\% & -1.30 & +0.94 & 0.403 & 0.418 \\
+\midrule
+HAR-X + state $\times$ HAR terms$^{\dagger}$ & 1 & -0.37\% & -0.93 & +3.09$^{***}$ & 0.007 & 0.401 \\
+ & 5 & -0.39\% & -0.66 & +2.44$^{***}$ & 0.032 & 0.282 \\
+ & 22 & -1.77\% & -2.04$^{**}$ & +0.61 & 0.403 & 0.108 \\
+\midrule
+Full model $C$ & 1 & -1.00\% & -2.14$^{**}$ & +5.96$^{***}$ & 0.000 & 0.064 \\
+ & 5 & +0.26\% & +0.41 & +8.31$^{***}$ & 0.000 & 0.697 \\
+ & 22 & -3.37\% & -2.69$^{***}$ & +6.63$^{***}$ & 0.000 & 0.018 \\
+\bottomrule
+\end{tabularx}
+\noindent{\footnotesize{\textit{Notes:} $\Delta$MSE: percentage reduction in pooled MSE relative to HAR-X (positive favours the specification). DM: panel HLN Diebold--Mariano statistic (two-sided). CW: Clark--West statistic for the nested comparison (one-sided). Holm adjusts the nine tests of the three pre-registered specifications ($^{\dagger}$) jointly and model $C$'s three tests jointly. GW: Giacomini--White conditional predictive ability test with instruments $(1, d_{t-k})$, $k=\lceil h/5\rceil$. All statistics use the cross-sectional mean loss differential per date and a Newey--West bandwidth of $\max(\lceil h/5\rceil-1,\lfloor 4(T/100)^{2/9}\rfloor)=6$.}}
+\end{table}

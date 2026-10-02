@@ -1,10 +1,10 @@
-# Volatility Persistence as a Financial State Variable
+# Does Volatility Persistence Forecast Volatility?
 
-**Memory, roughness, and forecasting across market regimes.** Code, data pipeline, and manuscript for Deep, Appiah & Rachev (2026), Texas Tech University.
+**Rolling long memory, crisis windows, and implied volatility.** Code, data pipeline, and manuscript for Deep, Appiah, Mei & Rachev (2026), Texas Tech University.
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Paper](https://img.shields.io/badge/paper-JRFM%20(submitted%20Sept%202026)-6f42c1.svg)](paper_jrfm/Memory_Roughness_edited.pdf)
+[![Paper](https://img.shields.io/badge/paper-JRFM%20draft%20(Oct%202026)-6f42c1.svg)](paper_jrfm_v3/main_draft.pdf)
 [![Cite](https://img.shields.io/badge/cite-CITATION.cff-2a78d6.svg)](CITATION.cff)
 
 <p align="center">
@@ -31,7 +31,7 @@ Panel: 115 S&P 500 constituents, 6,136 trading days (29 Nov 2001 to 21 Apr 2026)
 |---|---|
 | Long memory of log Parkinson variance, GPH / local Whittle (cross-sectional mean) | $\hat d = 0.538$ / $0.516$; 84% of stocks above 0.5 |
 | Cross-sectional mean $\bar d_t$: calm 2013–14 / GFC / COVID | 0.41 / 0.56 (+38%) / 0.55 (+35%) |
-| Variation in $\bar d_t$ explained by today's VIX / by the highest VIX in its 750-day window | 27% / 79% |
+| Variation in $\bar d_t$ explained by today's VIX / by the highest VIX in its 750-day window | 27% / 83% |
 | End of the COVID plateau, for 500 / 750 / 1,000-day windows | exactly 500 / 750 / 1,000 trading days after 18 Mar 2020 |
 
 A short-memory simulation with one year-long crisis episode reproduces the rise and fall, so the "persistence rises in crises" pattern is a window-inclusion effect, not evidence about how long shocks last. The Hurst estimate of about 0.06 is reproduced by a non-rough model plus the Parkinson estimator's measurement noise, so roughness is not identifiable from daily range data.
@@ -47,17 +47,17 @@ A short-memory simulation with one year-long crisis episode reproduces the rise 
 
 Model $C$ is never significantly better than HAR-X and is significantly worse at the daily and monthly horizons. Pre-registered variants that add one persistence block to HAR-X, pooled estimation with stock fixed effects (+0.4% at best, DM insignificant), and a term-structure target all fail to produce a significant gain. Tables 11 and 13 in `results/tables/`; ledger in [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md).
 
-**Market level: crisis memory changes how the VIX predicts variance (exploratory).** Forecasting the cross-sectional average variance, the persistence state adds +3.4% (h=1) and +2.0% (h=5) to market HAR-X. Long moving averages of variance add nothing; what carries the gain is the highest VIX of the past three years, which lowers the VIX's predictive slope by about 40% (interaction t = −2.7). This was found after the fact and needs a pre-registered out-of-sample test before it is claimed.
+**Market level: a known premium, not a new mechanism (exploratory).** Forecasting the cross-sectional average variance, the persistence state adds +3.4% (h=1) and +2.0% (h=5) to market HAR-X, not significantly. An after-the-fact analysis first suggested that the highest VIX of the past three years lowers the VIX's predictive slope by about 40%; in logs that interaction vanishes, and the trailing gap between implied and realised variance (the variance risk premium, which decays slowly after crises) absorbs it. Ledger run-11 and run-13, findings #17 and #19.
 
 **Volatility management adds nothing on excess returns.** Equal weight, HAR-, HAR-X- and Model-C-managed portfolios and a model-free trailing-22-day-variance rule all have full-sample Sharpe ratios of 0.75 to 0.76; no difference is significant. Managed portfolios trade about ten times their capital a year, and at 10 bp per unit traded their Sharpe falls to 0.66.
 
 ## The paper
 
-> **Volatility Persistence as a Financial State Variable: Memory, Roughness, and Forecasting Across Market Regimes**
-> Akash Deep, Nicholas Appiah, Svetlozar T. Rachev
-> Submitted to the *Journal of Risk and Financial Management*, September 2026.
+> **Does Volatility Persistence Forecast Volatility? Rolling Long Memory, Crisis Windows, and Implied Volatility**
+> Akash Deep, Nicholas Appiah, Hongwei Mei, Svetlozar T. Rachev
+> Draft for the *Journal of Risk and Financial Management*, October 2026.
 
-The submission bundle (MDPI class, tables, figures, bibliography, compiled PDF) is in [`paper_jrfm/`](paper_jrfm/). Earlier drafts from April and May 2026, under the working title *Memory, Roughness, and Information Persistence in Financial Markets*, are kept for the record in [`paper_overleaf/`](paper_overleaf/), [`paper_overleaf_v2/`](paper_overleaf_v2/) and [`paper/`](paper/). The research diary, including what changed between drafts and why, is [`PROJECT_LOG.md`](PROJECT_LOG.md).
+The current draft is in [`paper_jrfm_v3/`](paper_jrfm_v3/): MDPI class, one file per section, a draft PDF, and [`make_tables.py`](paper_jrfm_v3/make_tables.py), which builds every table and the cumulative-loss figure from the pipeline outputs so that no number in the paper is typed by hand. The September 2026 version in [`paper_jrfm/`](paper_jrfm/) predates the audit and is kept for the record. Earlier drafts from April and May 2026, under the working title *Memory, Roughness, and Information Persistence in Financial Markets*, are kept for the record in [`paper_overleaf/`](paper_overleaf/), [`paper_overleaf_v2/`](paper_overleaf_v2/) and [`paper/`](paper/). The research diary, including what changed between drafts and why, is [`PROJECT_LOG.md`](PROJECT_LOG.md).
 
 ## The forecasting ladder
 
@@ -137,7 +137,8 @@ LRD-ML/
 ├── preprocess_bloomberg.py, preprocess_supporting.py
 ├── bloomberg_pull/                          raw and processed Bloomberg data (gitignored)
 │
-├── paper_jrfm/                              current submission (MDPI class, PDF, tables, figures)
+├── paper_jrfm_v3/                           current JRFM draft (sections, generated tables, PDF)
+├── paper_jrfm/                              September 2026 version (pre-audit), kept for the record
 ├── paper_overleaf/, paper_overleaf_v2/, paper/   earlier drafts, kept for the record
 ├── docs/assets/                             README animation and still
 └── results/

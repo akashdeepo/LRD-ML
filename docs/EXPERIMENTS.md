@@ -133,6 +133,63 @@ advantages over the unmanaged portfolio shrink to near zero on excess returns.
 
 ---
 
+## 2026-10-02  run-17  Roughness null, made reproducible (module 16; for the JRFM appendix)
+- Setup (written before the run): finding #15 (H ~ 0.06 reproduced by a
+  non-rough model plus range noise) came from an ad hoc audit diagnostic.
+  Module 16: latent log variance = two independent AR(1) components; observed
+  = latent + eta, where eta = log(R^2 / (4 ln 2)) minus its mean and R is the
+  range of a standard Brownian motion over a day sampled at 390 one-minute
+  steps (the Parkinson sampling error; no free parameter). The four AR
+  parameters are fitted by least squares to the median-across-stocks
+  autocorrelations of observed log variance at lags 1, 2, 3, 5, 10, 22, 66,
+  125, 250 and its variance, net of eta's variance. 200 simulated paths of
+  6136 days; Hurst exponent by module 2's increment-scaling estimator (lags
+  1-21, q = 2) on observed and on latent paths.
+- Prediction: simulated observed H within 0.03 of the data's mean (0.060);
+  latent H at least 0.2 higher than simulated observed H.
+- Result: data H 0.0605 (10th-90th pct 0.053-0.069). Fitted latent model:
+  AR(1) components phi 0.661 (share 0.37) and 0.9953 (share 0.63); range
+  noise variance 0.355 of total 1.071; ACF fit SSE 0.0024 over nine lags.
+  Simulated H: observed 0.064 (sd 0.004), latent 0.191 (sd 0.007).
+- Verdict: prediction 1 held; prediction 2 FAILED (latent exceeds observed by
+  0.13, not 0.2). A Markovian two-factor model reproduces H ~ 0.06 exactly,
+  so roughness is not identified from daily ranges (#15 stands), but the low
+  value has two sources: range noise (0.19 -> 0.06) and a fast mean-reverting
+  factor that already pulls the increment-scaling estimator well below 0.5 at
+  lags of 1-21 days. Finding #15 reworded accordingly; appendix A of the
+  JRFM draft states both.
+- Cost: about 12 minutes.
+- Lesson: the increment-scaling Hurst estimator at daily lags is biased low by
+  any fast mean reversion, not only by noise.
+
+---
+
+## 2026-10-02  run-16  Timing alignment isolated (module 15; for the JRFM paper)
+- Setup (written before the run): finding #13 attributes HAR-X's shrinking
+  gain over HAR (5.10 -> 3.11% at h=1) to the HAR timing fix, but run-10
+  changed several things at once. Module 15 isolates it on the current
+  pipeline: HAR and HAR-X re-estimated with HAR terms built from RV through
+  t-1 and the return term r_{t-1} (VIX and MOVE stay at the close of t),
+  everything else identical (same expanding OLS, embargo, common cells).
+  Compared with the aligned A and A1 forecasts from run-10.
+- Prediction: the stale alignment raises HAR's MSE by 6 to 9% at h=1 and
+  raises HAR-X's gain over HAR by 1.5 to 2.5 points at h=1, less at h=5, 22.
+- Result: stale vs aligned, h=1/5/22: HAR MSE 0.6691 / 0.3637 / 0.2712 vs
+  0.6146 / 0.3381 / 0.2632 (aligned HAR better by 8.1 / 7.0 / 2.9%, DM t
+  6.39 / 5.00 / 3.41); HAR-X gain over HAR 5.11 / 7.76 / 2.90% vs 3.11 /
+  5.54 / 1.77%. The stale numbers reproduce the pre-audit ones (HAR 0.6687,
+  HAR-X gain 5.10 / 7.73 / 2.82%), so the timing alone explains the change;
+  the share of the apparent VIX gain due to timing is 39 / 29 / 39%.
+- Verdict: KEEP. Prediction held for h=1 (HAR MSE +8.9% when stale; gain +2.0
+  points); the h=5 effect (+2.2 points) is not smaller than h=1, as predicted,
+  while h=22 is (+1.1). Finding #13 now rests on an isolated comparison.
+  Table 15 for the JRFM paper.
+- Cost: about 4 minutes on 12 processes.
+- Lesson: isolate a correction before attributing a change to it; here the
+  attribution was right, now it is shown.
+
+---
+
 ## 2026-10-02  run-15  Giacomini-White tests and an economic margin (for the JRFM paper)
 - Setup (written before the GW numbers were seen): module 12 adds the
   Giacomini-White (2006) conditional predictive ability test of every

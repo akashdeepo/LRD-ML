@@ -1,0 +1,27 @@
+% Table 15: information timing (module 15)
+\begin{table}[htbp]
+\centering
+\caption{HAR-X's gain over HAR under aligned and one-day-stale HAR inputs}
+\label{tab:timing}
+\small
+\begin{tabular}{lcccc}
+\toprule
+& $h$ & MSE HAR & MSE HAR-X & HAR-X gain (DM-$t$) \\
+\midrule
+HAR inputs through $t-1$ & 1 & 0.6691 & 0.6350 & +5.11\% (+4.56) \\
+ & 5 & 0.3637 & 0.3354 & +7.76\% (+4.62) \\
+ & 22 & 0.2712 & 0.2633 & +2.90\% (+1.46) \\
+\midrule
+HAR inputs through $t$ & 1 & 0.6146 & 0.5955 & +3.11\% (+5.23) \\
+ & 5 & 0.3381 & 0.3193 & +5.54\% (+5.35) \\
+ & 22 & 0.2632 & 0.2586 & +1.77\% (+0.95) \\
+\midrule
+HAR: aligned vs stale & 1 & & & +8.15\% (+6.39) \\
+ & 5 & & & +7.04\% (+5.00) \\
+ & 22 & & & +2.93\% (+3.41) \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item Notes: VIX and MOVE are closes of the origin day $t$ in every row. \emph{Stale}: HAR terms from $RV$ through $t-1$ and the return term $r_{t-1}$. \emph{Aligned}: through $t$. Pooled MSE on $\log RV^{PK}$ over common (date, stock) cells of all four forecast panels; gains and panel HLN DM-$t$ statistics for HAR-X against HAR, and for aligned against stale HAR.
+\end{tablenotes}
+\end{table}

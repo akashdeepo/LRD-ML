@@ -1,0 +1,23 @@
+\begin{table}[H]
+\caption{Information timing and the apparent value of implied volatility.}
+\label{tab:timing}
+\small
+\begin{tabularx}{\textwidth}{Xcrrr}
+\toprule
+HAR inputs & $h$ & MSE HAR & MSE HAR-X & HAR-X gain (DM) \\
+\midrule
+Through $t-1$ & 1 & 0.6691 & 0.6350 & +5.11\% (+4.56) \\
+ & 5 & 0.3637 & 0.3354 & +7.76\% (+4.62) \\
+ & 22 & 0.2712 & 0.2633 & +2.90\% (+1.46) \\
+\midrule
+Through $t$ & 1 & 0.6146 & 0.5955 & +3.11\% (+5.23) \\
+ & 5 & 0.3381 & 0.3193 & +5.54\% (+5.35) \\
+ & 22 & 0.2632 & 0.2586 & +1.77\% (+0.95) \\
+\midrule
+HAR, $t$ vs $t-1$ & 1 & & & +8.15\% (+6.39) \\
+ & 5 & & & +7.04\% (+5.00) \\
+ & 22 & & & +2.93\% (+3.41) \\
+\bottomrule
+\end{tabularx}
+\noindent{\footnotesize{\textit{Notes:} VIX and MOVE are closes of the origin day $t$ in every row. Through $t-1$: HAR terms built from variance through the day before the origin and the previous day's return. Through $t$: the aligned specification used everywhere else. Common cells of all four forecast panels; DM statistics in parentheses.}}
+\end{table}

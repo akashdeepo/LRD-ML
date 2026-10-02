@@ -1,0 +1,102 @@
+\section{Forecasting Design}\label{sec:design}
+
+\subsection{Models}
+
+All models are linear regressions of the target \eqref{eq:target} on
+predictors dated $t$, estimated stock by stock. The baseline, model $A$, is
+the HAR model of \citet{corsi2009simple} in logs with a return term,
+\begin{equation}
+y_{i,t,h} = \beta_0 + \beta_d \ln RV^{(1)}_{i,t} + \beta_w \ln RV^{(5)}_{i,t}
++ \beta_m \ln RV^{(22)}_{i,t} + \gamma_1 r_{i,t} + \gamma_2 \lvert r_{i,t}\rvert
++ \varepsilon_{i,t,h},
+\label{eq:har}
+\end{equation}
+where $RV^{(k)}_{i,t}$ is the mean Parkinson variance over days $t-k+1$ to
+$t$ and $r_{i,t}$ is the day-$t$ return. HAR-X, model $A_1$, adds the
+levels of the VIX and MOVE indices at the close of day $t$. The persistence
+blocks are added one at a time to HAR and then jointly, and three further
+specifications, fixed before any result was computed, add a single block to
+HAR-X so that the comparison with HAR-X isolates it.
+Table~\ref{tab:models} lists the predictors.
+
+\begin{table}[H]
+\caption{Model specifications.}
+\label{tab:models}
+\footnotesize
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+Model & Predictors \\
+\midrule
+$A$ (HAR) & $\ln RV^{(1)}, \ln RV^{(5)}, \ln RV^{(22)}, r_t, \lvert r_t\rvert$ \\
+$A_1$ (HAR-X) & HAR + VIX, MOVE \\
+$A_2$ & HAR + own-stock $\hat d_{i,t}$, its weekly change, its standard deviation and slope over four weeks, own Hurst exponent and its weekly change \\
+$A_3$ & HAR + cross-sectional mean $\bar d_t$ and dispersion $\sigma_{d,t}$ \\
+$A_4$ & HAR + leave-one-out sector mean of $\hat d_{i,t}$ \\
+$A_5$ & HAR + $\hat d_{i,t}$, VIX, MOVE, $\hat d_{i,t}\times$VIX, $\hat d_{i,t}\times$MOVE \\
+$C$ & Union of $A_1$ to $A_5$ (18 predictors) \\
+\midrule
+\multicolumn{2}{l}{\textit{Registered HAR-X extensions}} \\
+HAR-X + cross-sectional state & HAR-X + $\bar d_t$, $\sigma_{d,t}$ \\
+HAR-X + sector state & HAR-X + leave-one-out sector mean of $\hat d_{i,t}$ \\
+HAR-X + state $\times$ HAR terms & HAR-X + $\bar d_t$ and $\bar d_t\times \ln RV^{(k)}_{i,t}$, $k=1,5,22$ \\
+\bottomrule
+\end{tabularx}
+\noindent{\footnotesize{\textit{Notes:} All predictors are dated at the close
+of the origin day $t$. Rolling estimates use the 750 trading days ending on
+day $t$. The last specification lets the persistence state change the
+weights on the HAR components, the channel through which slower decay of
+shocks would act.}}
+\end{table}
+
+\subsection{Estimation}
+
+Each model is re-estimated by ordinary least squares at every weekly origin
+on an expanding window of that stock's past rows. Because targets overlap for
+$h>1$, a past row enters the regression only if its target window has closed
+by the origin: row $j$ is used at origin $t$ only if day $j+h$ is no later
+than day $t$. Without this restriction the last rows of each training sample
+contain variance that is not yet observed, which at $h=22$ biases the
+comparison in favour of richer models. The first 431 origins (to 14 June
+2013) form the initial training sample, and all models are evaluated over
+the same 646 origins from 17 June 2013 to 14 April 2026, on the same
+(date, stock) cells.
+
+\subsection{Evaluation}
+
+The loss is the squared error of the log-variance forecast, pooled over
+stocks and dates; Appendix~\ref{app:extra} reports QLIKE on variance
+forecasts corrected point-in-time for the log transformation. Comparisons
+rest on the cross-sectional mean loss differential per date,
+$\bar\delta_t = N^{-1}\sum_i (L^{(1)}_{i,t} - L^{(2)}_{i,t})$, which absorbs
+the strong cross-sectional correlation of forecast errors. We report three
+tests on $\bar\delta_t$, each with a Newey--West variance and bandwidth
+$\max(\lceil h/5\rceil - 1, \lfloor 4(T/100)^{2/9}\rfloor)$, which is six
+weeks for $T=646$:
+
+\begin{itemize}
+\item the Diebold--Mariano test of equal mean loss
+\citep{diebold1995comparing} with the small-sample correction of
+\citet{harvey1997testing};
+\item for linear models that nest HAR-X, the \citet{clark2007approximately}
+test, which adjusts the loss differential for the noise introduced by
+estimating parameters whose population value is zero, and so tests whether
+the extra predictors have nonzero population coefficients;
+\item the conditional predictive ability test of \citet{giacomini2006tests},
+with the constant and the most recent observed differential
+$\bar\delta_{t-\lceil h/5\rceil}$ as instruments, which asks whether the
+estimated model, with its estimation error, forecasts better.
+\end{itemize}
+
+\subsection{Registration}
+
+The study was conducted in stages, and each stage was recorded in a dated
+experiment ledger before its results were computed: the specification, the
+comparison, the test and the decision rule. The rule for the registered
+HAR-X extensions is that a specification adds information beyond HAR-X at a
+horizon only if its Holm-adjusted \citep{holm1979simple} Clark--West $p$-value
+is below 0.05 and its mean squared error is lower than HAR-X's. After the
+results were known we added a requirement that the gain be at least 0.5\%;
+we report it separately because it was not registered. A complete audit of
+the pipeline preceded the final run; every correction was registered before
+the corrected run and is listed in the ledger, which is public with the code
+(Appendix~\ref{app:ledger}).

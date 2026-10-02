@@ -84,6 +84,9 @@ and fall. From the audit diagnostics (shared audit doc N1, N2).
 #15 (2026-10-02): The Hurst estimate of about 0.06 on daily log Parkinson variance
 is reproduced (0.063 +/- 0.004) by a non-rough two-factor model plus range-estimator
 noise; roughness is not identifiable from daily range data. From audit A6.
+(Reproduced 2026-10-02 by run-17, module 16: 0.064 +/- 0.004 vs data 0.0605. The
+noise-free latent model gives 0.19, so the low value comes from range noise and
+from a fast mean-reverting factor, phi 0.66, together.)
 
 #16 (2026-10-02): On excess returns every volatility-managed portfolio, the
 model-free trailing-22-day-variance rule and equal weight have full-sample Sharpe

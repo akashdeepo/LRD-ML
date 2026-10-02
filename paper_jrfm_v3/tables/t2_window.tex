@@ -1,0 +1,42 @@
+\begin{table}[H]
+\caption{What the rolling persistence state tracks.}
+\label{tab:window}
+\footnotesize
+\begin{tabularx}{\textwidth}{lXXXXXX}
+\toprule
+\multicolumn{7}{l}{\textit{Panel A. Change in $\bar d_t(W)$ when the event day enters and leaves the window (percentile among all changes)}} \\
+\midrule
+Event & $W$ & Entry & Pct & Exit date & Exit & Pct \\
+\midrule
+2008-10-10 & 500 & +0.159 & 99.8 & 2010-10-06 & +0.009 & 80.8 \\
+ & 750 & +0.093 & 99.6 & 2011-10-03 & -0.065 & 0.8 \\
+ & 1000 & +0.104 & 99.5 & 2012-09-28 & -0.036 & 1.7 \\
+2010-05-06 & 500 & -0.008 & 22.7 & 2012-04-30 & -0.000 & 51.6 \\
+ & 750 & +0.012 & 90.4 & 2013-04-30 & -0.017 & 9.6 \\
+ & 1000 & +0.002 & 65.9 & 2014-04-28 & -0.022 & 5.4 \\
+2020-03-18 & 500 & +0.181 & 99.9 & 2022-03-11 & -0.164 & 0.2 \\
+ & 750 & +0.125 & 99.9 & 2023-03-10 & -0.108 & 0.1 \\
+ & 1000 & +0.108 & 99.7 & 2024-03-08 & -0.090 & 0.1 \\
+\midrule
+\multicolumn{7}{l}{\textit{Panel B. $R^2$ of $\bar d_t(W)$ on the VIX}} \\
+\midrule
+& $W$ & \multicolumn{2}{c}{Max VIX in window} & & \multicolumn{2}{c}{Current VIX} \\
+\midrule
+& 500 & \multicolumn{2}{c}{0.81} & & \multicolumn{2}{c}{0.28} \\
+& 750 & \multicolumn{2}{c}{0.83} & & \multicolumn{2}{c}{0.27} \\
+& 1000 & \multicolumn{2}{c}{0.82} & & \multicolumn{2}{c}{0.18} \\
+\midrule
+\multicolumn{7}{l}{\textit{Panel C. The 2020 episode: data versus a short-memory null}} \\
+\midrule
+& $W$ & Before & Inside & After exit & Rise & Largest drop \\
+\midrule
+Data & 500 & 0.35 & 0.60 & 0.33 & +0.25 & \\
+Null & 500 & 0.41 & 0.54 & 0.47 & +0.13 & day 509 \\
+Data & 750 & 0.38 & 0.57 & 0.33 & +0.19 & \\
+Null & 750 & 0.40 & 0.53 & 0.46 & +0.13 & day 759 \\
+Data & 1000 & 0.37 & 0.53 & 0.34 & +0.16 & \\
+Null & 1000 & 0.39 & 0.50 & 0.44 & +0.11 & day 1009 \\
+\bottomrule
+\end{tabularx}
+\noindent{\footnotesize{\textit{Notes:} $\bar d_t(W)$ is the cross-sectional mean of the GPH estimate on log Parkinson variance over the $W$ trading days ending on day $t$, on the weekly grid. Events are the three largest days of cross-sectional mean log variance at least 250 days apart (rule fixed in advance). Entry and exit changes compare the four weekly estimates after the date with the four before; Pct is the percentile of that change among all such changes. Panel C: mean $\bar d_t$ in the 120 days before the event, from day 60 to day $W-60$, and from day $W+20$ to $W+120$. The null is an ARMA(1,1) with the median parameters of per-stock fits to 2012--2019 log variance plus the observed one-year 2020 excess log variance, 200 replications; Largest drop is the day (relative to the event) of its largest four-week fall.}}
+\end{table}

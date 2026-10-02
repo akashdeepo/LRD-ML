@@ -1,0 +1,57 @@
+\section{Robustness and Economic Value}\label{sec:robust}
+
+\subsection{Estimators, windows, targets and learners}
+
+Panel A of Table~\ref{tab:robust} varies the construction of the persistence
+predictors and the target at the weekly horizon, where model $C$ does best.
+Its gain over HAR stays between 5.2\% and 6.4\% whether $d$ is estimated by
+local Whittle instead of GPH, over 500 or 1000 days instead of 750, or for
+the more or less liquid half of the sample, and it is 2.6\% when the target
+is the mean squared return. Each gain is of the order of HAR-X's in the
+baseline, so none of these choices changes the conclusion of
+Section~\ref{sec:results}. A GARCH(1,1) forecast, corrected point-in-time for
+its level, is 19.9\% worse than HAR, which confirms that the HAR family is
+the right benchmark for range-based variance.
+
+\input{tables/t8_robust}
+
+Panel B replaces the linear regression on model $C$'s 18 predictors by five
+machine-learning estimators: the lasso, ridge regression and the elastic net,
+whose penalties are chosen by time-series cross-validation inside each
+training window, a random forest, and gradient boosting, whose tree size,
+minimum leaf size and number of trees are chosen the same way. All five are
+significantly worse than HAR-X at every horizon. The shrinkage estimators
+lose 0.8\% to 4.2\%, and the tree ensembles 5.8\% to 10.3\%. Nonlinearity and
+regularization extract nothing from the persistence predictors that the
+linear HAR-X model misses. Tuning matters for this conclusion: gradient
+boosting with fixed default settings (400 trees with 31 leaves) loses 12\% to
+21\% to HAR, an artefact of overfitting 430 to 1100 training rows that tuning
+removes.
+
+\subsection{Volatility-managed portfolios}
+
+A forecast can be statistically indistinguishable and still be economically
+useful. We test this with the volatility management of
+\citet{moreira2017volatility}, applied stock by stock: each week the
+position in stock $i$ is scaled by $c_{i,t}/\hat\sigma^2_{i,t+5\mid t}$, where
+the forecast is the weekly-horizon variance forecast of a given model and
+$c_{i,t}$ is set in real time so that the managed and unmanaged positions
+have the same past variance. Positions are funded at the three-month bill
+rate and returns are measured in excess of it. Besides the HAR, HAR-X and
+model $C$ forecasts we include a model-free rule that scales by trailing
+22-day variance.
+
+\input{tables/t9_portfolios}
+
+Table~\ref{tab:portfolios} shows no economic value from any forecast. Every
+managed portfolio has a full-sample Sharpe ratio of 0.75 or 0.76, the same as
+the equal-weighted portfolio, and none of the differences is close to
+significant. Management lowers volatility and roughly halves the maximum
+drawdown, but it scales expected excess returns down in proportion. The
+managed portfolios trade about ten times their capital each year, and at 10
+basis points per unit traded their Sharpe ratios fall to 0.64--0.66, below
+equal weighting. The one period in which model $C$ stands out, March to
+December 2020, has 43 weekly observations, and its advantage over HAR-X there
+(1.62 against 1.38) is not significant. These results agree with the
+evidence that volatility management of factor portfolios is fragile out of
+sample \citep{cederburg2020volatility, barroso2021volatility}.

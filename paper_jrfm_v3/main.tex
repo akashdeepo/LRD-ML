@@ -1,0 +1,95 @@
+\documentclass[jrfm,article,submit,moreauthors,pdftex]{Definitions/mdpi}
+
+\usepackage{tabularx}
+\setlength{\headheight}{20pt}
+
+\firstpage{1}
+\pubyear{2026}
+\copyrightyear{2026}
+\doinum{}
+\datereceived{}
+\daterevised{}
+\dateaccepted{}
+\datepublished{}
+
+\Title{Does Volatility Persistence Forecast Volatility? Rolling Long Memory, Crisis Windows, and Implied Volatility}
+
+
+% CO-AUTHORS TO CONFIRM: author order, Hongwei Mei's affiliation, corresponding author.
+\Author{Akash Deep $^{1}$, Nicholas Appiah $^{1,*}$, Hongwei Mei $^{1}$ and Svetlozar T. Rachev $^{1}$}
+\AuthorNames{Akash Deep, Nicholas Appiah, Hongwei Mei and Svetlozar T. Rachev}
+
+\address[1]{Department of Mathematics and Statistics, Texas Tech University,
+Lubbock, TX 79409, USA}
+\corres{Correspondence: \href{mailto:niappiah@ttu.edu}{niappiah@ttu.edu}}
+
+\abstract{Rolling estimates of long memory in volatility rise sharply in
+crises and are often read as a time-varying state of the market. We ask
+whether this state forecasts stock volatility beyond implied volatility, and
+what it measures. For 115 S\&P~500 stocks over 2001--2026 we forecast log
+Parkinson variance one day, one week and one month ahead with per-stock HAR
+models, with HAR plus the VIX and MOVE indices (HAR-X), and with
+specifications that add own-stock, sector and cross-sectional persistence.
+All forecasts are point-in-time, the designs were fixed before their results
+were computed, and inference combines panel Diebold--Mariano, Clark--West and
+Giacomini--White tests. Persistence never improves on HAR-X: the best gain is
+0.26\% at one week and is not significant, and the full model is
+significantly worse at one day and one month. Pooled estimation, a
+term-structure target, a market-level series and five machine-learning
+estimators agree. The reason is mechanical. The persistence state jumps when
+an extreme episode enters the estimation window and falls when it leaves,
+at dates that move one-for-one with the window length; a short-memory model
+reproduces the pattern; and the largest VIX inside the window explains 83\%
+of its variation. A one-day misalignment between HAR inputs and the VIX
+inflates the VIX's apparent forecasting gain by about a third.}
+
+\keyword{long memory; volatility forecasting; implied volatility; HAR model;
+rolling-window estimation; spurious long memory; forecast evaluation}
+
+\begin{document}
+
+\input{sections/s1_introduction}
+\input{sections/s2_data}
+\input{sections/s3_window}
+\input{sections/s4_design}
+\input{sections/s5_results}
+\input{sections/s6_robustness}
+\input{sections/s7_discussion}
+
+\vspace{6pt}
+
+\authorcontributions{CO-AUTHORS TO CONFIRM. Conceptualization, A.D., N.A.,
+H.M. and S.T.R.; methodology, A.D. and H.M.; software, A.D.; formal analysis,
+A.D.; data curation, N.A.; writing---original draft preparation, A.D.;
+writing---review and editing, A.D., N.A., H.M. and S.T.R.; supervision,
+S.T.R.}
+
+\funding{This research received no external funding.}
+
+\institutionalreview{Not applicable.}
+
+\informedconsent{Not applicable.}
+
+\dataavailability{Daily prices, ranges and index levels were obtained from
+Bloomberg and cannot be redistributed. The full code, the experiment ledger
+with every specification and its date of registration, and the derived
+results are available at \url{https://github.com/akashdeepo/LRD-ML}.}
+
+\acknowledgments{CO-AUTHORS TO CONFIRM the generative-AI statement required by
+MDPI: state which tools were used, for which tasks (for example code review,
+analysis scripts, drafting and editing), and that the authors reviewed and take
+responsibility for the content.}
+
+\conflictsofinterest{The authors declare no conflicts of interest.}
+
+\appendixtitles{yes}
+\appendixstart
+\appendix
+\input{sections/s8_appendix}
+
+\begin{adjustwidth}{-\extralength}{0cm}
+\reftitle{References}
+\bibliography{references}
+\end{adjustwidth}
+
+\end{document}
