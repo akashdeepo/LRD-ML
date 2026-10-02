@@ -1082,3 +1082,52 @@ follows input order) added; figures refreshed.
    rebuild with pdfTeX before it goes to Rachev.
 
 *Last updated: 2026-09-14*
+
+---
+
+## Session: 2026-10-02 — Full audit: 31 issues, corrected re-run, two new findings
+
+**Context.** After the IJFS withdrawal (overlap with our own arXiv preprint),
+Rachev and Dr. Hongwei Mei (now third author) asked for a 25-page rewrite.
+Before rewriting, the whole pipeline was audited from first principles by
+three independent reviewers (data/estimation, forecasting/evaluation,
+portfolios/manuscript) plus targeted diagnostics. Register, fixes, before/after
+and findings live in the shared audit doc "LRD-ML Full Audit: Errors, Fixes,
+Re-runs, Findings"; the ledger has run-10 (pre-registered corrected run) and
+run-11 (exploratory).
+
+**Critical issues.**
+1. HAR inputs (and the lagged return and rolling d window) ended at t-1 while
+   VIX/MOVE are day-t closes. Fixed: everything through the close of t.
+   HAR MSE -8.1% at h=1; HAR-X's gain over HAR 5.10/7.73/2.82% -> 3.11/5.54/1.77%.
+2. Portfolio Sharpe/CER on raw returns of averaged LOG returns. Rewritten on
+   simple excess returns with bill-funded leverage, a model-free benchmark,
+   turnover and costs: every portfolio ~0.76; no significant difference.
+3. The persistence state is a window-inclusion indicator: COVID plateau ends
+   exactly 500/750/1000 days after 18 Mar 2020; max VIX in window R2 0.79.
+
+**Major issues fixed.** Missing/zero variance mapped to a -17.5 log floor
+(now NaN); GPH/LW now on log variance throughout (0.538/0.516, 84% of stocks
+> 0.5); VIX quartiles over OOS dates in every table; HAC bandwidth max(MA order,
+NW rule) = 6 lags; Newey-West autocovariances divided by T (was T-k, found by
+a new statsmodels test); QLIKE on point-in-time smeared forecasts; ML CV is
+TimeSeriesSplit with a gap; GARCH level correction and recursion off-by-one;
+robustness on the same transform with H re-estimated; common cells and one
+evaluation start date; Clark-West only for nested OLS models; duration
+benchmark; leave-one-out sector mean; High/Low order assertion; KDP special
+dividend. 19 tests (was 10).
+
+**What changed in the results.** Model C vs HAR-X: DM -2.14/+0.41/-2.69 (was
+-0.74/+0.48/-2.44). The market-level result flipped from -1.2/-1.9% to
++3.4/+2.0% (log-floor and timing fixes). Exploratory follow-up: the gain is
+crisis memory (max VIX over three years) lowering the VIX's predictive slope
+by ~40% (t -2.7), not slow volatility levels. Needs pre-registration.
+
+**Not fixable here.** Dividend-adjusted returns and point-in-time S&P
+membership need new Bloomberg pulls; disclosed.
+
+**Pending.** ML (module 5) re-running detached with time-series CV; Tables 5-8
+and 11 ML rows refresh when it finishes. Framing decision for the 25-page
+paper (null with mechanism vs crisis memory) is with Rachev and Mei.
+
+*Last updated: 2026-10-02*

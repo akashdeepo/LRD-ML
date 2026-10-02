@@ -81,6 +81,108 @@ the information is there and per-stock estimation noise is the suspect.
 
 Nothing else will be added to this block after results are seen.
 
+**Pre-registered protocol, third block (written 2026-10-02, after the full
+audit in the shared audit doc and before any corrected run).** The audit found
+30 issues (3 critical, 14 major). This block fixes every one that the data at
+hand allows and re-runs the whole pipeline once. Nothing else changes: same
+sample, same specifications (A, A1..A5, C, D, A1cs, A1sec, A1mod, pooled,
+duration, market level), same horizons, same decision rule (Holm-adjusted
+Clark-West p < 0.05 AND positive MSE gain against the run's own HAR-X-type
+baseline), DM reported as the stricter criterion.
+
+Corrections (audit IDs):
+- I1 timing. Every predictor uses information through the close of the
+  origin day t: HAR terms are RV_t, mean RV_{t-4..t}, mean RV_{t-21..t};
+  the return term is r_t; rolling d and H windows end on day t. VIX and MOVE
+  are already day-t closes. Target unchanged (days t+1..t+h), embargo unchanged.
+- I4 log floor: zero-range and missing days are NaN in log variance.
+- I8 transform: GPH and local Whittle are estimated on log Parkinson variance
+  throughout (headline, robustness, features), as is standard; Table 3 reports
+  log-variance estimates.
+- I10 regimes: one definition, VIX quartiles over the out-of-sample forecast
+  dates, shared by every regime table; GFC rows dropped (no evaluation dates).
+- I11 HAC bandwidth: max(ceil(h/5)-1, floor(4(T/100)^(2/9))) for DM and CW
+  (6 lags at T of about 645); the short bandwidth is kept as a sensitivity column.
+- I12 QLIKE: variance forecasts are smeared point-in-time (expanding mean of
+  exp(past embargoed log errors), 26-error warm-up) for every model.
+- I13 ML CV: TimeSeriesSplit(5, gap = ceil(h/5)) for Lasso, Ridge, Elastic Net.
+- I14 GARCH: point-in-time level correction applied; recursion off-by-one fixed.
+- I15 window robustness: same transform, H re-estimated, common cells.
+- I20 sector mean is leave-one-out. I21 illiquidity interaction deleted.
+  I22 missing d stays missing in threshold features.
+- I23 every comparison on common (date, stock) cells; warm-up anchored on
+  the date of sample row 431 for every model.
+- I24 Clark-West only for OLS models that nest HAR-X (A5, A1cs, A1sec, A1mod, C).
+- I25 duration design gains its no-regressor (expanding-mean) benchmark.
+- I2, I5, I6, I26 portfolios: simple returns, excess returns over the 3-month
+  T-bill (managed positions funded at the bill rate), common universe, ddof=1
+  everywhere, a model-free benchmark scaled by trailing 22-day variance,
+  turnover and Sharpe at 0, 5 and 10 bp per unit traded, leverage statistics.
+- I7 data: KDP's 10 Jul 2018 special dividend patched; dividends otherwise
+  disclosed (price returns). I18 High/Low ordered by max/min with an assertion.
+- I3, I9: interpretive; disclosed (window-inclusion effect; roughness not
+  identifiable from daily range data).
+- I16, I17, I19, I28: text and stale numbers, carried into the 25-page draft.
+- I27: tests for feature timing, NaN preservation, warm-up dates, DM against
+  statsmodels.
+
+Predictions written before the run: HAR improves materially (audit estimate
+6 to 8% at h=1); HAR-X's gain over HAR shrinks by about a third; C versus
+HAR-X stays insignificant at every horizon; managed-portfolio Sharpe
+advantages over the unmanaged portfolio shrink to near zero on excess returns.
+
+---
+
+## 2026-10-02  run-11  EXPLORATORY: what carries the market-level gain? (not pre-registered)
+- Setup: market-level target (cross-sectional mean of stock targets), expanding
+  OLS with embargo, ad hoc specifications run after seeing run-10's market
+  result: HAR-X plus 66/250/750-day log-variance averages; plus the persistence
+  state on top; plus max VIX over the trailing 750 days and its interaction with
+  VIX; log-VIX variant. Scratch script; not in the repo pipeline.
+- Result (gain vs market HAR-X, h=1 / h=5): slow averages -0.62% / -0.75%;
+  state on top of slow averages +3.97% (DM 2.21) / +3.22% (DM 2.00); max-VIX-3y
+  plus VIX x max-VIX-3y +3.73% (DM 1.85) / +3.27% (DM 1.62); persistence level
+  alone +1.29% / +0.56%. Full-sample OLS: VIX x log max-VIX-3y coefficient
+  -0.014 (t -2.74, h=1), -0.016 (t -2.65, h=5); VIX slope 0.038 at low crisis
+  memory vs 0.022 at high (h=5).
+- Verdict: INCONCLUSIVE by construction (exploratory, chosen after the result).
+  Strong lead: crisis memory lowers the VIX's predictive slope for realised
+  market variance by about 40%. Finding #17. Must be pre-registered and tested
+  on held-out data (pre-2004 or other markets) before any claim.
+- Cost: seconds.
+- Lesson: the persistence state's only useful content is a noisy proxy for a
+  simple crisis-memory variable.
+
+## 2026-10-02  run-10  Corrected pipeline (audit fixes, third protocol block)
+- Setup: every fix in the third protocol block; full re-run from the raw-panel
+  rebuild (modules io_v2, 1, 1b, 2, 3, 4, 4b, 13, 9, 6, 10, 11, 12); ML
+  (module 5) re-running detached, rows below marked pending. 19 tests pass.
+- Result (before -> after). HAR MSE h=1/5/22: 0.6687->0.6146, 0.3634->0.3381,
+  0.2710->0.2632. HAR-X vs HAR: +5.10->+3.11%, +7.73->+5.54%, +2.82->+1.77%
+  (t 0.95 at h=22). C vs HAR: +4.55->+2.14%, +8.25->+5.79%, -0.62->-1.54%.
+  C vs HAR-X: MSE -1.00 / +0.26 / -3.37%, DM -2.14 / +0.41 / -2.69.
+  A1cs vs HAR-X +0.00% at h=5 (CW Holm p<0.001); A1sec, A1mod negative at all h.
+  Pooled P-C vs P-A1 +0.40% / +0.34% / -1.36% (DM 1.19 / 0.79). Duration:
+  C vs A1 -1.81% (DM -3.92); HAR beats the expanding mean by 3.35%. Market
+  level M-C vs M-A1: +3.42% / +2.01% / -1.93% (DM 1.77 / 1.45), was -1.22 /
+  -1.90 / -6.66. Robustness (C vs A, h=5): +5.3% to +6.4% under every variant;
+  level-corrected GARCH -19.9%. Portfolios (excess returns, 594 weeks): Sharpe
+  0.75-0.76 for every portfolio incl. equal weight and the model-free rule;
+  COVID C 1.62, HAR-X 1.38, EW 0.88 (C vs HAR-X HAC p 0.10, bootstrap 0.31);
+  turnover about 10x/yr managed vs 1.1x EW; Sharpe at 10 bp 0.66 vs 0.76.
+  Persistence on log variance: GPH 0.538, LW 0.516 (84% of stocks > 0.5);
+  crisis rise +38% (GFC) / +35% (COVID); max-VIX-in-window R2 0.79.
+- Verdict: KEEP (these are the live numbers). All four pre-registered
+  predictions held. The decision rule is met by C at h=5 (+0.26%), A1cs at h=5
+  (+0.003%) and the pooled designs at h=1, 5, none DM-significant: the rule
+  needs a minimum economic margin (open question for co-authors).
+  Findings #13-#16; #8, #10, #11, #12 updated.
+- Cost: linear ~25 min in four parallel jobs; candidates, GARCH, robustness
+  ~10 min each; ML several hours (Random Forest dominates).
+- Lesson: a one-day misalignment between HAR inputs and implied-volatility
+  inputs inflated the implied-volatility gain by a third; align every
+  predictor to the forecast origin and test it.
+
 ---
 
 ## 2026-09-14  run-09  Real-time portfolio normalisation

@@ -7,26 +7,26 @@
 \small
 \begin{tabular}{lccccccc}
 \toprule
- & \multicolumn{2}{c}{Returns} & \multicolumn{3}{c}{Parkinson RV} & Roughness & \\
+ & \multicolumn{2}{c}{Returns} & \multicolumn{3}{c}{log Parkinson RV} & Roughness & \\
 \cmidrule(lr){2-3} \cmidrule(lr){4-6}
 Sector & $\bar d_{GPH}$ & $\bar d_{LW}$ & $\bar d_{GPH}$ & $\bar d_{LW}$ & \% Sig & $\bar H$ & N \\
 \midrule
-Communication Services & 0.019 & 0.002 & 0.477 & 0.477 & 100\% & 0.076 & 5 \\
-Consumer Discretionary & -0.019 & -0.028 & 0.454 & 0.444 & 100\% & 0.056 & 9 \\
-Consumer Staples & -0.037 & -0.041 & 0.384 & 0.381 & 91\% & 0.059 & 11 \\
-Energy & -0.008 & -0.030 & 0.416 & 0.439 & 100\% & 0.067 & 5 \\
-Financials & -0.027 & -0.033 & 0.490 & 0.461 & 100\% & 0.071 & 19 \\
-Health Care & -0.034 & -0.030 & 0.431 & 0.419 & 100\% & 0.058 & 15 \\
-Industrials & -0.011 & -0.015 & 0.444 & 0.437 & 100\% & 0.060 & 17 \\
-Information Technology & -0.015 & -0.017 & 0.467 & 0.455 & 100\% & 0.061 & 18 \\
-Materials & -0.019 & -0.017 & 0.464 & 0.448 & 100\% & 0.061 & 3 \\
-Real Estate & -0.011 & -0.037 & 0.511 & 0.486 & 100\% & 0.069 & 7 \\
-Utilities & -0.063 & -0.066 & 0.400 & 0.404 & 100\% & 0.062 & 6 \\
+Communication Services & 0.020 & 0.000 & 0.520 & 0.512 & 100\% & 0.062 & 5 \\
+Consumer Discretionary & -0.021 & -0.029 & 0.553 & 0.522 & 100\% & 0.056 & 9 \\
+Consumer Staples & -0.035 & -0.042 & 0.511 & 0.487 & 100\% & 0.057 & 11 \\
+Energy & -0.007 & -0.029 & 0.547 & 0.531 & 100\% & 0.067 & 5 \\
+Financials & -0.021 & -0.030 & 0.571 & 0.546 & 100\% & 0.066 & 19 \\
+Health Care & -0.032 & -0.029 & 0.513 & 0.486 & 100\% & 0.058 & 15 \\
+Industrials & -0.007 & -0.011 & 0.549 & 0.521 & 100\% & 0.060 & 17 \\
+Information Technology & -0.016 & -0.018 & 0.522 & 0.509 & 100\% & 0.059 & 18 \\
+Materials & -0.027 & -0.027 & 0.519 & 0.497 & 100\% & 0.061 & 3 \\
+Real Estate & -0.006 & -0.035 & 0.554 & 0.545 & 100\% & 0.060 & 7 \\
+Utilities & -0.068 & -0.072 & 0.534 & 0.510 & 100\% & 0.062 & 6 \\
 \midrule
-\textbf{Overall} & -0.022 & -0.028 & 0.451 & 0.440 & 99\% & 0.063 & 115 \\
+\textbf{Overall} & -0.020 & -0.027 & 0.538 & 0.516 & 100\% & 0.060 & 115 \\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}\small
-\item Notes: $d$ is the fractional differencing parameter. GPH is the Geweke--Porter--Hudak log-periodogram estimator (bandwidth $m = T^{0.65}$); LW is the local-Whittle semiparametric estimator. Returns are daily log returns; Parkinson RV is the range-based realized variance from daily H/L. $H$ is the Hurst exponent of $\log\mathrm{RV}^{PK}$ estimated by the scaling of the $q=2$ moment of increments over lags $\{1,2,3,5,8,13,21\}$. $H<0.5$ indicates rough behaviour. \% Sig reports the share of stocks whose volatility $d_{GPH}$ is significant at 5\%.
+\item Notes: $d$ is the fractional differencing parameter. GPH is the Geweke--Porter--Hudak log-periodogram estimator (bandwidth $m = T^{0.65}$); LW is the local-Whittle semiparametric estimator. Returns are daily log returns; volatility memory is estimated on the log of the daily Parkinson range-based variance, realized variance from daily H/L. $H$ is the Hurst exponent of $\log\mathrm{RV}^{PK}$ estimated by the scaling of the $q=2$ moment of increments over lags $\{1,2,3,5,8,13,21\}$. $H<0.5$ indicates rough behaviour. \% Sig reports the share of stocks whose volatility $d_{GPH}$ is significant at 5\%.
 \end{tablenotes}
 \end{table}

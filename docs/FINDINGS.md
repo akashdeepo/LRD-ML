@@ -57,11 +57,41 @@ variance) beyond HAR-X: HAR-X + cross-sectional persistence -0.13%, full
 set -1.80% (DM t = -3.12). The "duration of uncertainty" interpretation is
 not supported as a forecastable quantity. From run-06.
 
-#11 (2026-09-14): At the market level (cross-sectional mean of the stock
+~~#11 (2026-09-14): At the market level (cross-sectional mean of the stock
 targets, one series) the persistence state adds nothing to VIX and MOVE:
 -1.2% / -1.9% / -6.7% MSE at h = 1 / 5 / 22. Its information is the VIX
-co-movement. From run-07.
+co-movement. From run-07.~~ Overturned 2026-10-02 by run-10: the result was
+driven by the -17.5 log floor for missing stocks (audit I4) and the HAR timing
+error (#13); corrected, the state adds +3.4% / +2.0% at h = 1 / 5 (DM 1.77 /
+1.45, not significant). See #17.
 
 #12 (2026-09-14): Point-in-time winsorisation and real-time portfolio
 normalisation change no headline number by more than 0.01 pp (forecasts) or
 alter any test conclusion (portfolios). From runs 08-09.
+
+#13 (2026-10-02): HAR was fed variance through day t-1 while VIX/MOVE used the
+close of day t. Correcting the timing lowers HAR's MSE by 8.1% (h=1), 7.0% (h=5),
+2.9% (h=22) and HAR-X's gain over HAR from 5.10/7.73/2.82% to 3.11/5.54/1.77%.
+About a third of the implied-volatility gain was a timing artefact. From run-10.
+
+#14 (2026-10-02): The rolling persistence state is a window-inclusion indicator of
+the largest recent spike: its COVID plateau ends exactly 500, 750, 1,000 trading
+days after 18 Mar 2020 for those window lengths; max VIX in the trailing window
+explains 79% of its variation (27% for current VIX); a short-memory AR(1)
+(phi 0.90) with one year-long crisis episode reproduces the rise (0.19 -> 0.32)
+and fall. From the audit diagnostics (shared audit doc N1, N2).
+
+#15 (2026-10-02): The Hurst estimate of about 0.06 on daily log Parkinson variance
+is reproduced (0.063 +/- 0.004) by a non-rough two-factor model plus range-estimator
+noise; roughness is not identifiable from daily range data. From audit A6.
+
+#16 (2026-10-02): On excess returns every volatility-managed portfolio, the
+model-free trailing-22-day-variance rule and equal weight have full-sample Sharpe
+0.75-0.76; no difference is significant; managed books turn over about 10x a year.
+Supersedes #8's framing. From run-10.
+
+#17 (2026-10-02, exploratory): At the market level, crisis memory (max VIX over the
+trailing three years) lowers the VIX's predictive slope for realised variance by
+about 40% (interaction t = -2.7); this, not slow volatility levels, carries the
+persistence state's market-level gain (+3.4% / +2.0% vs market HAR-X). Needs a
+pre-registered out-of-sample test. From run-11.
