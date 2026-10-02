@@ -1085,7 +1085,7 @@ follows input order) added; figures refreshed.
 
 ---
 
-## Session: 2026-10-02 — Full audit: 31 issues, corrected re-run, two new findings
+## Session: 2026-10-02 — Full audit: 33 issues, corrected re-run, two new findings
 
 **Context.** After the IJFS withdrawal (overlap with our own arXiv preprint),
 Rachev and Dr. Hongwei Mei (now third author) asked for a 25-page rewrite.
@@ -1126,8 +1126,18 @@ by ~40% (t -2.7), not slow volatility levels. Needs pre-registration.
 **Not fixable here.** Dividend-adjusted returns and point-in-time S&P
 membership need new Bloomberg pulls; disclosed.
 
-**Pending.** ML (module 5) re-running detached with time-series CV; Tables 5-8
-and 11 ML rows refresh when it finishes. Framing decision for the 25-page
-paper (null with mechanism vs crisis memory) is with Rachev and Mei.
+**ML re-run (run-10 ML rows, run-12).** All ML estimators re-run with
+time-series CV: every ML row is DM-significantly below HAR-X at every horizon
+(Lasso -0.8 / -1.3 / -3.1%). Two more issues surfaced. I32: gradient boosting
+had fixed hyperparameters (400 trees, 31 leaves) although the paper says all
+hyperparameters are cross-validated; tuned by time-series CV it moves from
+-15.9 / -11.9 / -21.2% to -2.9 / -0.2 / -8.3% vs HAR, level with the random
+forest. I33: Figure 6 and the per-stock shares came from a May file written by
+an uncommitted script (pre-leak-fix); module 6 now writes it. Text changes for
+the draft: HAR-X beats HAR on 97% of stocks at h=5 (not 99%), C on 93% (not
+94%); Random Forest no longer shows short-horizon gains. 20 tests.
+
+**Pending.** Framing decision for the 25-page paper (null with mechanism vs
+crisis memory) is with Rachev and Mei.
 
 *Last updated: 2026-10-02*

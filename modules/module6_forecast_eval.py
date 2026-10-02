@@ -384,6 +384,30 @@ def table8_sectors(loss_panels: dict, sectors: dict, fp: Path) -> None:
     return df
 
 
+# --------------------------------------------------------------- per-stock panel
+def per_stock_improvement(loss_panels: dict) -> pd.DataFrame:
+    """Per-stock out-of-sample MSE of every model against Model A on common
+    cells; feeds Figure 6 and the per-stock counts in the text. (Audit I33:
+    this file used to be written by an uncommitted script and went stale.)"""
+    rows = []
+    for model in DISPLAY_ORDER:
+        for h in HORIZONS:
+            if h not in loss_panels.get(model, {}):
+                continue
+            lm, la = common_cells(loss_panels[model][h], loss_panels["A"][h])
+            for t in lm.columns:
+                a, b = lm[t].dropna(), la[t].dropna()
+                if a.empty:
+                    continue
+                rows.append({"model": model, "h": h, "ticker": t,
+                             "MSE": float(a.mean()), "n_forecasts": int(a.size),
+                             "MSE_A": float(b.mean()),
+                             "imp_pct": 100 * (1 - a.mean() / b.mean())})
+    df = pd.DataFrame(rows)
+    df.to_csv(INTERMEDIATE_DIR / "per_stock_improvement.csv", index=False)
+    return df
+
+
 # --------------------------------------------------------------- table 6 (importance)
 def table6_feature_importance(bundle, fp: Path) -> None:
     """Train a simple Lasso on the full-sample (in-sample!) Z_t feature set,
@@ -540,6 +564,11 @@ def main() -> None:
     table6_feature_importance(bundle, TABLES_DIR / "table6_feature_importance.tex")
     print("  saved.")
 
+    dps = per_stock_improvement(loss_panels)
+    beat = dps.assign(beat=dps["imp_pct"] > 0).groupby(["model", "h"])["beat"].sum().unstack("h")
+    print("\nPer-stock: number of stocks beating Model A")
+    print(beat.reindex([m for m in DISPLAY_ORDER if m in beat.index]).to_string())
+
     print("\n" + "=" * 70)
     print("Outputs:")
     print(f"  {TABLES_DIR/'table5_model_comparison.tex'}")
@@ -547,7 +576,7 @@ def main() -> None:
     print(f"  {TABLES_DIR/'table7_subsamples.tex'}")
     print(f"  {TABLES_DIR/'table8_horizons.tex'}")
     print(f"  {INTERMEDIATE_DIR/'table5_raw.csv'}, table7_raw.csv, table8_raw.csv, "
-          "table6_lasso_coefs.csv")
+          "table6_lasso_coefs.csv, per_stock_improvement.csv")
 
 
 if __name__ == "__main__":

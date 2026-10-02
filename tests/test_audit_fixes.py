@@ -1,5 +1,5 @@
 """Regression tests for the 2026-10-02 audit fixes (issues I1, I4, I10, I11,
-I12, I14, I20, I23, I6). Run with:  python -m pytest tests -q"""
+I12, I14, I20, I23, I6, I32). Run with:  python -m pytest tests -q"""
 import numpy as np
 import pandas as pd
 import pytest
@@ -97,6 +97,17 @@ def test_regime_quartiles_use_reference_dates():             # I10
     m = regime_masks(idx, pd.DataFrame({"VIX": vix}), ref_idx=idx[50:])
     assert m["High VIX (Q4)"][:50].all()                       # all early dates above the ref Q3
     assert "GFC (2008-Q3 to 2009-Q4)" not in m
+
+
+def test_tuned_gbm_chooses_from_grid():                      # I32
+    from modules.module5_ml_models import GBM_GRID, GBM_TREES, TunedLGBM
+    rng = np.random.default_rng(1)
+    X = rng.standard_normal((300, 5))
+    y = 0.5 * X[:, 0] + rng.standard_normal(300)
+    m = TunedLGBM(h=5).fit(X, y)
+    assert {k: m.params_[k] for k in ("num_leaves", "min_data_in_leaf")} in GBM_GRID
+    assert m.params_["n_estimators"] in GBM_TREES
+    assert m.predict(X[:3]).shape == (3,)
 
 
 def test_turnover_zero_for_static_unlevered_book_without_returns():   # I6

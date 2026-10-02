@@ -11,9 +11,10 @@ with shrinkage and tree-based learners:
 
 Walk-forward fitting cadence is coarser than Module 4 (refit every K sample
 steps) because tree models are much heavier than OLS. Default K=20 ≈ refit
-every 20 weekly steps ≈ 5 months. Hyperparameters are CV'd inside each
-training window for the regularised linear models; tree models use fixed
-sensible defaults (and are less sensitive to small parameter changes).
+every 20 weekly steps ≈ 5 months. Hyperparameters are chosen by time-series
+CV inside each training window for the regularised linear models and for
+gradient boosting (audit I32); the random forest uses fixed defaults
+(200 trees, min leaf 20), to which it is insensitive.
 
 Outputs (results/intermediate/forecasts/):
     D_{lasso,ridge,en,rf,gbm}_h{1,5,22}_yhat.csv
@@ -33,6 +34,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 
 from sklearn.model_selection import TimeSeriesSplit
+from joblib import Parallel, delayed
 
 from modules.forecast_io import first_eval_row, n_train_rows, row_positions
 import lightgbm as lgb
@@ -50,13 +52,16 @@ FCST_DIR = BASE / "results" / "intermediate" / "forecasts"
 INIT_TRAIN_FRAC = 0.40
 REFIT_STRIDE = 20             # refit ML model every 20 sample steps
 RF_TREES = 200
-GBM_PARAMS = dict(
-    objective="regression",
-    n_estimators=400, learning_rate=0.05,
-    num_leaves=31, min_data_in_leaf=20, max_depth=-1,
+GBM_BASE = dict(
+    objective="regression", learning_rate=0.05, max_depth=-1,
     feature_fraction=0.9, bagging_fraction=0.9, bagging_freq=5,
-    verbose=-1,
+    verbose=-1, n_jobs=1,
 )
+# Searched by time-series CV at every refit (audit I32; the old fixed
+# 400 trees x 31 leaves overfit the 430-1,100 rows available per stock).
+GBM_GRID = [dict(num_leaves=nl, min_data_in_leaf=ml) for nl in (2, 4, 15) for ml in (20, 50)]
+GBM_TREES = (25, 50, 100, 200, 400, 800)
+STOCK_JOBS = 12               # stocks fitted in parallel for gradient boosting
 
 
 # ------------------------------------------------------------------ estimators
@@ -86,8 +91,38 @@ def _rf(h: int, seed: int = 0):
                                  min_samples_leaf=20, n_jobs=-1, random_state=seed)
 
 
+class TunedLGBM:
+    """LightGBM whose leaves, minimum leaf size and number of trees are chosen
+    by expanding time-series CV on the training rows (MSE summed over folds),
+    then refit on all of them. Tree counts are scored from one fit per grid
+    point via staged prediction."""
+
+    def __init__(self, h: int, seed: int = 0):
+        self.h, self.seed = h, seed
+
+    def fit(self, X, y):
+        best = (np.inf, None, None)
+        for p in GBM_GRID:
+            err = np.zeros(len(GBM_TREES))
+            for tr, va in TimeSeriesSplit(n_splits=3, gap=int(np.ceil(self.h / 5))).split(X):
+                m = lgb.LGBMRegressor(**GBM_BASE, **p, n_estimators=max(GBM_TREES),
+                                      random_state=self.seed).fit(X[tr], y[tr])
+                for k, n in enumerate(GBM_TREES):
+                    err[k] += np.mean((m.predict(X[va], num_iteration=n) - y[va]) ** 2)
+            k = int(err.argmin())
+            if err[k] < best[0]:
+                best = (err[k], p, GBM_TREES[k])
+        self.params_ = {**best[1], "n_estimators": best[2]}
+        self.model_ = lgb.LGBMRegressor(**GBM_BASE, **self.params_,
+                                        random_state=self.seed).fit(X, y)
+        return self
+
+    def predict(self, X):
+        return self.model_.predict(X)
+
+
 def _gbm(h: int):
-    return lgb.LGBMRegressor(**GBM_PARAMS, random_state=0)
+    return TunedLGBM(h)
 
 
 ESTIMATORS = {
@@ -98,6 +133,7 @@ ESTIMATORS = {
     "gbm": _gbm,
 }
 NEEDS_SCALING = {"lasso", "ridge", "en"}
+PARALLEL_STOCKS = {"gbm"}     # single-threaded fits; the others parallelise internally or are fast
 
 
 # ------------------------------------------------------------------ walk-forward
@@ -107,6 +143,7 @@ def walk_forward(X: pd.DataFrame, y: pd.Series, init_date,
     """Walk-forward ML forecast, refit every `refit_stride` origins, with the
     same point-in-time embargo as module 4: a refit at origin t uses only rows
     whose target window ends on or before pos_t (docs/FINDINGS.md #1)."""
+    warnings.filterwarnings("ignore")     # joblib workers do not inherit the module-level filter
     Xa = X.values
     ya = y.values
     pos = row_positions(X.index, full_index)
@@ -146,18 +183,20 @@ def run_estimator_horizon(bundle, est_name: str, h: int, init_n: int,
                               columns=bundle.panel.kept, dtype=float)
     y_panel = pd.DataFrame(index=bundle.sample_dates,
                            columns=bundle.panel.kept, dtype=float)
-    n = len(bundle.panel.kept)
-    for i, t in enumerate(bundle.panel.kept):
+    jobs = []
+    for t in bundle.panel.kept:
         sm = stock_matrix(bundle, t, "D", targets)
         X, y = aligned_xy(sm, h)
-        if len(X) < 60:
-            continue
-        yhat = walk_forward(X, y, bundle.sample_dates[init_n], est_name, h,
-                            bundle.rv.index, refit_stride)
+        if len(X) >= 60:
+            jobs.append((t, X, y))
+    n_jobs = STOCK_JOBS if est_name in PARALLEL_STOCKS else 1
+    fits = Parallel(n_jobs=n_jobs, verbose=5 if verbose else 0)(
+        delayed(walk_forward)(X, y, bundle.sample_dates[init_n], est_name, h,
+                              bundle.rv.index, refit_stride)
+        for _, X, y in jobs)
+    for (t, X, y), yhat in zip(jobs, fits):
         yhat_panel.loc[yhat.index, t] = yhat.values
         y_panel.loc[y.index, t] = y.values
-        if verbose and (i + 1) % 25 == 0:
-            print(f"    [{i + 1}/{n}] {t}")
     return yhat_panel, y_panel
 
 

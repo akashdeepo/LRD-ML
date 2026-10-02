@@ -95,3 +95,12 @@ trailing three years) lowers the VIX's predictive slope for realised variance by
 about 40% (interaction t = -2.7); this, not slow volatility levels, carries the
 persistence state's market-level gain (+3.4% / +2.0% vs market HAR-X). Needs a
 pre-registered out-of-sample test. From run-11.
+
+#18 (2026-10-02): With hyperparameters tuned by time-series CV, gradient
+boosting on Model C's predictors is -2.9 / -0.2 / -8.3% vs HAR (untuned:
+-15.9 / -11.9 / -21.2%), level with the random forest, and both tree models
+lose to HAR-X by 6-10% at every horizon (DM t -4.2 to -6.2). Shrinkage
+estimators sit between HAR and HAR-X (Lasso -0.8 / -1.3 / -3.1% vs HAR-X).
+Nonlinearity extracts nothing from this feature set; the earlier "gradient
+boosting actively worsens forecasts" was an untuned-learner artefact. From
+run-10 and run-12.

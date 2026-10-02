@@ -133,6 +133,47 @@ advantages over the unmanaged portfolio shrink to near zero on excess returns.
 
 ---
 
+## 2026-10-02  run-12  Gradient Boosting tuned by time-series CV (audit I32)
+- Setup (written before the run): the manuscript says hyperparameters are
+  chosen by time-series cross-validation; in module 5 that holds for Lasso,
+  Ridge and Elastic Net only. Gradient Boosting now chooses num_leaves in
+  {2, 4, 15}, min_data_in_leaf in {20, 50} and the number of trees in
+  {25, 50, 100, 200, 400, 800} (learning rate 0.05) at every refit by
+  TimeSeriesSplit(3, gap = ceil(h/5)) on the embargoed training rows only,
+  then refits on all of them. (Amended before the full run: the first grid,
+  leaves {4, 15} and up to 400 trees, put AAPL's training-CV optimum on its
+  edge, at stumps with 800 trees; for JPM, XOM, KO and NVDA 4 leaves was
+  interior. The change rests on training-fold CV error; a code smoke test had
+  scored the first grid out of sample on AAPL, JPM, XOM at h=5 only: MSE
+  0.393 / 0.328 / 0.313 vs untuned 0.444 / 0.353 / 0.314 vs HAR 0.365 /
+  0.343 / 0.278.) Everything else as run-10 (refit every 20
+  origins, same embargo, same features as C). Random Forest keeps its fixed
+  settings (200 trees, min leaf 20; robust defaults) and the text will say so.
+  Module 6, 10, 12 re-run after. The untuned run-10 numbers stay in this ledger.
+- Hypothesis: the run-10 Gradient Boosting losses (-15.9 / -11.9 / -21.2% vs
+  HAR) are overfitting, not evidence about nonlinearity. Prediction: tuned
+  Gradient Boosting lands between -5% and +5% of HAR at h=1 and h=5 and stays
+  below HAR-X at every horizon, as the linear ML models do.
+- Result (vs HAR, h=1/5/22; untuned run-10 in brackets): Gradient Boosting
+  -2.88 / -0.23 / -8.32% (-15.91 / -11.91 / -21.15%), HLN-t -3.16 / -0.19 /
+  -2.96. Vs HAR-X: -6.18 / -6.11 / -10.27%, DM t -6.22 / -5.38 / -4.19.
+  Stocks beating HAR at h=5: 60 of 115 (was 7). Now level with Random Forest
+  (-2.49 / -0.34 / -5.11%); no other row changed.
+  Also rebuilt (audit I33): per_stock_improvement.csv, which feeds Figure 6
+  and the per-stock shares in the text, had been written in May by an
+  uncommitted script and never refreshed; module 6 now writes it on common
+  cells. Stocks beating HAR at h=5: HAR-X 111 (May file 114), C 107 (108);
+  at h=22 C 48 (94: the May file predates the leak fix).
+- Verdict: KEEP. Both predictions held. The tree-model rows are now a fair
+  test: with tuned hyperparameters neither tree model beats HAR at any
+  horizon, and both lose to HAR-X by 6-10%. Finding #18.
+- Cost: 80 min on 12 processes (about 32 min per horizon) plus 2 min evaluation.
+- Lesson: an untuned learner is a strawman; a claim that a method "actively
+  worsens forecasts" needs the method tuned under the same protocol as its
+  competitors. And every figure input must have a committed writer.
+
+---
+
 ## 2026-10-02  run-11  EXPLORATORY: what carries the market-level gain? (not pre-registered)
 - Setup: market-level target (cross-sectional mean of stock targets), expanding
   OLS with embargo, ad hoc specifications run after seeing run-10's market
@@ -172,6 +213,13 @@ advantages over the unmanaged portfolio shrink to near zero on excess returns.
   turnover about 10x/yr managed vs 1.1x EW; Sharpe at 10 bp 0.66 vs 0.76.
   Persistence on log variance: GPH 0.538, LW 0.516 (84% of stocks > 0.5);
   crisis rise +38% (GFC) / +35% (COVID); max-VIX-in-window R2 0.79.
+  ML (module 5, completed 19:06, all 15 forecast files refreshed): vs HAR
+  h=1/5/22 Lasso +2.31 / +4.30 / -1.26%, Ridge +1.65 / +3.78 / -2.37%,
+  Elastic Net +2.32 / +4.25 / -1.46%, Random Forest -2.49 / -0.34 / -5.11%,
+  Gradient Boosting -15.91 / -11.91 / -21.15%. Every ML row is below HAR-X at
+  every horizon, DM-significantly (Lasso -0.82 / -1.32 / -3.09%, DM -2.61 /
+  -2.19 / -2.57). Gradient Boosting has fixed hyperparameters (400 trees,
+  31 leaves, no early stopping) on 430-1,100 rows per stock: audit I32, run-12.
 - Verdict: KEEP (these are the live numbers). All four pre-registered
   predictions held. The decision rule is met by C at h=5 (+0.26%), A1cs at h=5
   (+0.003%) and the pooled designs at h=1, 5, none DM-significant: the rule
