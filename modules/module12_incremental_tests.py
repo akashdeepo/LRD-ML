@@ -56,6 +56,7 @@ OTHER_SPECS = ["C", "A2", "A3", "A4", "A5",
                "D_lasso", "D_ridge", "D_en", "D_rf", "D_gbm"]
 # Clark-West is valid only for OLS specifications that nest HAR-X (audit I24)
 NESTED_OLS = {"A5", "A1cs", "A1sec", "A1mod", "C"}
+MIN_MARGIN_PCT = 0.5          # minimum economically meaningful MSE gain vs HAR-X (run-15)
 
 
 # ------------------------------------------------------------------ helpers
@@ -106,6 +107,38 @@ def clark_west(yhat_small: pd.DataFrame, yhat_big: pd.DataFrame, y: pd.DataFrame
     return {"cw_mean": m, "cw_t": t, "cw_p_one_sided": p, "T": T}
 
 
+def _wald_hac(Z: np.ndarray, h: int, bandwidth: int | None = None) -> tuple[float, int]:
+    """T * Zbar' S^-1 Zbar with a Newey-West (Bartlett) long-run covariance of
+    the demeaned moment vector Z (T x q). Returns (statistic, T)."""
+    T = len(Z)
+    bw = hac_bandwidth(T, h) if bandwidth is None else bandwidth
+    Zc = Z - Z.mean(axis=0)
+    S = Zc.T @ Zc / T
+    for k in range(1, bw + 1):
+        G = Zc[k:].T @ Zc[:-k] / T
+        S += (1.0 - k / (bw + 1)) * (G + G.T)
+    zbar = Z.mean(axis=0)
+    return float(T * zbar @ np.linalg.solve(S, zbar)), T
+
+
+def giacomini_white(loss_base: pd.DataFrame, loss_spec: pd.DataFrame, h: int,
+                    bandwidth: int | None = None) -> dict:
+    """Giacomini-White (2006) conditional predictive ability test of the
+    spec against the baseline, on the cross-sectional mean loss differential
+    d_t = mean_i(loss_base - loss_spec). Instruments (1, d_{t-k}), with
+    k = ceil(h/5) the most recent differential already realised at origin t;
+    chi-square(2) Wald statistic with the module-6 HAC bandwidth. Asks whether
+    the spec forecasts better conditionally on recent relative performance,
+    i.e. whether the estimated model, not the population model, is useful."""
+    d = (loss_base - loss_spec).mean(axis=1).dropna().values
+    k = max(int(np.ceil(h / SAMPLE_STRIDE)), 1)
+    if len(d) <= k + 5:
+        return {"gw_stat": np.nan, "gw_p": np.nan}
+    Z = np.column_stack([d[k:], d[k:] * d[:-k]])
+    stat, _ = _wald_hac(Z, h, bandwidth)
+    return {"gw_stat": stat, "gw_p": float(1 - stats.chi2.cdf(stat, Z.shape[1]))}
+
+
 def holm(pvals: list[float]) -> list[float]:
     """Holm step-down adjusted p-values (monotone, capped at 1)."""
     p = np.asarray(pvals, dtype=float)
@@ -153,6 +186,7 @@ def part_a() -> tuple[pd.DataFrame, pd.DataFrame]:
             cw = clark_west(yh_b, yh, y, h) if nested else nan_cw
             q_short = max(int(np.ceil(h / SAMPLE_STRIDE)), 1) - 1
             cw_short = clark_west(yh_b, yh, y, h, bandwidth=q_short) if nested else nan_cw
+            gw = giacomini_white(Lb, L, h)
             rows.append({
                 "spec": spec, "h": h, "T_dates": T,
                 "mse": mse, "mse_harx": mse_b, "mse_har": mse_a,
@@ -164,6 +198,7 @@ def part_a() -> tuple[pd.DataFrame, pd.DataFrame]:
                 "dm_t_vs_harx_qlike": t_dm_q, "dm_p_vs_harx_qlike": p_dm_q,
                 "cw_t_vs_harx": cw["cw_t"], "cw_p_vs_harx": cw["cw_p_one_sided"],
                 "cw_t_short_bw": cw_short["cw_t"], "cw_p_short_bw": cw_short["cw_p_one_sided"],
+                **gw,
             })
             # regimes (descriptive)
             idx = L.index
@@ -190,6 +225,10 @@ def part_a() -> tuple[pd.DataFrame, pd.DataFrame]:
     isC = df["spec"] == "C"
     df.loc[isC, "cw_p_holm"] = holm(df.loc[isC, "cw_p_vs_harx"].tolist())
     df["adds_beyond_harx"] = (df["cw_p_holm"] < 0.05) & (df["gain_vs_harx_pct"] > 0)
+    # Economic margin, added for the JRFM paper after the results were known
+    # (ledger run-15; not part of the pre-registered rule): a gain must also
+    # exceed MIN_MARGIN_PCT of HAR-X's MSE to count as economically meaningful.
+    df["adds_beyond_harx_margin"] = df["adds_beyond_harx"] & (df["gain_vs_harx_pct"] >= MIN_MARGIN_PCT)
     df.to_csv(INTERM / "harx_tests.csv", index=False)
     pd.DataFrame(rows_reg).to_csv(INTERM / "harx_tests_regimes.csv", index=False)
     _write_table11(df)
@@ -216,8 +255,8 @@ def _write_table11(df: pd.DataFrame) -> None:
         f.write("\\begin{table}[htbp]\n\\begin{adjustwidth}{-\\extralength}{0cm}\n\\centering\n")
         f.write("\\caption{Incremental Forecast Accuracy Relative to HAR-X: Point-in-Time Out-of-Sample Tests}\n")
         f.write("\\label{tab:harx_tests}\n\\footnotesize\n\\setlength{\\tabcolsep}{4pt}\n")
-        f.write("\\begin{tabular}{llccccc}\n\\toprule\n")
-        f.write("Specification & $h$ & \\%$\\Delta$MSE vs HAR-X & HLN DM-$t$ & CW-$t$ & CW $p$ (Holm) & QLIKE DM-$t$ \\\\\n\\midrule\n")
+        f.write("\\begin{tabular}{llcccccc}\n\\toprule\n")
+        f.write("Specification & $h$ & \\%$\\Delta$MSE vs HAR-X & HLN DM-$t$ & CW-$t$ & CW $p$ (Holm) & GW $p$ & QLIKE DM-$t$ \\\\\n\\midrule\n")
         for spec in order:
             sub = df[df["spec"] == spec].sort_values("h")
             if sub.empty:
@@ -229,7 +268,7 @@ def _write_table11(df: pd.DataFrame) -> None:
                            if np.isfinite(r.cw_t_vs_harx) else "--")
                 f.write(f"{lab} & {r.h} & {r.gain_vs_harx_pct:+.2f}\\% & "
                         f"${r.dm_t_vs_harx:+.2f}${_stars(r.dm_p_vs_harx)} & "
-                        f"{cw_cell} & {holm_p} & "
+                        f"{cw_cell} & {holm_p} & {r.gw_p:.3f} & "
                         f"${r.dm_t_vs_harx_qlike:+.2f}${_stars(r.dm_p_vs_harx_qlike)} \\\\\n")
             f.write("\\midrule\n")
         f.write("\\bottomrule\n\\end{tabular}\n\\begin{tablenotes}\\small\n")
@@ -242,7 +281,9 @@ def _write_table11(df: pd.DataFrame) -> None:
                 "normal). Both use the cross-sectional mean loss differential per date with a "
                 "Newey--West bandwidth $\\max(\\lceil h/5\\rceil-1, \\lfloor 4(T/100)^{2/9}\\rfloor)$ (six lags). Clark--West is reported only for OLS specifications that nest HAR-X; the shrinkage and tree estimators show --. QLIKE uses point-in-time smeared variance forecasts. CW $p$ (Holm) adjusts the three "
                 "pre-registered specifications' nine tests jointly and Model $C$'s three tests "
-                "jointly; other rows are unadjusted (--). Significance of raw statistics: "
+                "jointly; other rows are unadjusted (--). GW $p$: Giacomini--White (2006) conditional "
+                "predictive ability test against HAR-X with instruments $(1, d_{t-k})$, "
+                "$k=\\lceil h/5\\rceil$, $\\chi^2_2$, same HAC bandwidth. Significance of raw statistics: "
                 "$^{*}$ $p<0.10$, $^{**}$ $p<0.05$, $^{***}$ $p<0.01$.\n")
         f.write("\\end{tablenotes}\n\\end{adjustwidth}\n\\end{table}\n")
     print(f"Saved {TABLES / 'table11_harx_tests.tex'}")

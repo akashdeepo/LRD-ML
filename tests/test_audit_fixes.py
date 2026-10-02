@@ -110,6 +110,14 @@ def test_tuned_gbm_chooses_from_grid():                      # I32
     assert m.predict(X[:3]).shape == (3,)
 
 
+def test_gw_wald_reduces_to_squared_hac_t():                 # run-15
+    from modules.module12_incremental_tests import _hac_mean_test, _wald_hac
+    d = np.random.default_rng(4).standard_normal(400) + 0.1
+    _, _, t, _ = _hac_mean_test(d, h=5)
+    stat, _ = _wald_hac(d[:, None], h=5)
+    assert stat == pytest.approx(t ** 2, rel=1e-10)
+
+
 def test_turnover_zero_for_static_unlevered_book_without_returns():   # I6
     from modules.module11_economic import turnover
     idx = pd.date_range("2020-01-01", periods=10, freq="7D")

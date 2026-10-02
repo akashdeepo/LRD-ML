@@ -1,0 +1,40 @@
+% Table 14: window inclusion (module 14)
+\begin{table}[htbp]
+\centering
+\caption{What the rolling persistence state measures}
+\label{tab:window_inclusion}
+\small
+\begin{tabular}{llrrlrr}
+\toprule
+\multicolumn{7}{l}{\emph{Panel A: change in $\bar d_t(W)$ when the event day enters and leaves the window (percentile among all changes)}}\\
+$W$ & Event & Entry & (pct) & Exit date & Exit & (pct) \\
+\midrule
+500 & 2008-10-10 & +0.159 & (100) & 2010-10-06 & +0.009 & (81) \\
+500 & 2010-05-06 & -0.008 & (23) & 2012-04-30 & -0.000 & (52) \\
+500 & 2020-03-18 & +0.181 & (100) & 2022-03-11 & -0.164 & (0) \\
+750 & 2008-10-10 & +0.093 & (100) & 2011-10-03 & -0.065 & (1) \\
+750 & 2010-05-06 & +0.012 & (90) & 2013-04-30 & -0.017 & (10) \\
+750 & 2020-03-18 & +0.125 & (100) & 2023-03-10 & -0.108 & (0) \\
+1000 & 2008-10-10 & +0.104 & (100) & 2012-09-28 & -0.036 & (2) \\
+1000 & 2010-05-06 & +0.002 & (66) & 2014-04-28 & -0.022 & (5) \\
+1000 & 2020-03-18 & +0.108 & (100) & 2024-03-08 & -0.090 & (0) \\
+\midrule
+\multicolumn{7}{l}{\emph{Panel B: $R^2$ of $\bar d_t(W)$ on the maximum VIX in the same window and on the current VIX}}\\
+$W$ & & Max VIX & & & Current VIX & \\
+\midrule
+500.0 & & 0.81 & & & 0.28 & \\
+750.0 & & 0.83 & & & 0.27 & \\
+1000.0 & & 0.82 & & & 0.18 & \\
+\midrule
+\multicolumn{7}{l}{\emph{Panel C: 2020 episode, observed versus short-memory null (baseline, plateau, after exit)}}\\
+$W$ & & Observed & & & Null & \\
+\midrule
+500.0 & & 0.35 / 0.60 / 0.33 & & & 0.41 / 0.54 / 0.47 & \\
+750.0 & & 0.38 / 0.57 / 0.33 & & & 0.40 / 0.53 / 0.46 & \\
+1000.0 & & 0.37 / 0.53 / 0.34 & & & 0.39 / 0.50 / 0.44 & \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}\small
+\item Notes: $\bar d_t(W)$ is the cross-sectional mean of the rolling GPH estimate on log Parkinson variance, window of $W$ trading days ending on day $t$, bandwidth $W^{0.65}$, weekly grid. Events are the three largest days of cross-sectional mean log variance at least 250 days apart. Entry and exit changes compare the four grid points after with the four before. The null is an ARMA(1,1) with median calm-period (2012--2019) parameters ($\phi=0.91$, $\theta=-0.69$), with the observed one-year 2020 excess log variance added; mean over 200 replications.
+\end{tablenotes}
+\end{table}

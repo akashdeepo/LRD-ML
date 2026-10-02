@@ -7,50 +7,50 @@
 \label{tab:harx_tests}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{llccccc}
+\begin{tabular}{llcccccc}
 \toprule
-Specification & $h$ & \%$\Delta$MSE vs HAR-X & HLN DM-$t$ & CW-$t$ & CW $p$ (Holm) & QLIKE DM-$t$ \\
+Specification & $h$ & \%$\Delta$MSE vs HAR-X & HLN DM-$t$ & CW-$t$ & CW $p$ (Holm) & GW $p$ & QLIKE DM-$t$ \\
 \midrule
-HAR-X + cross-sectional $\bar d_t$, $\sigma_d^t$ & 1 & -0.03\% & $-0.10$ & $+3.76$$^{***}$ & 0.001 & $+1.67$$^{*}$ \\
- & 5 & +0.00\% & $+0.01$ & $+4.44$$^{***}$ & 0.000 & $+0.86$ \\
- & 22 & -2.01\% & $-1.77$$^{*}$ & $+1.11$ & 0.403 & $-1.29$ \\
+HAR-X + cross-sectional $\bar d_t$, $\sigma_d^t$ & 1 & -0.03\% & $-0.10$ & $+3.76$$^{***}$ & 0.001 & 0.743 & $+1.67$$^{*}$ \\
+ & 5 & +0.00\% & $+0.01$ & $+4.44$$^{***}$ & 0.000 & 0.923 & $+0.86$ \\
+ & 22 & -2.01\% & $-1.77$$^{*}$ & $+1.11$ & 0.403 & 0.133 & $-1.29$ \\
 \midrule
-HAR-X + sector-mean $\bar d_{s(i),t}$ & 1 & -0.10\% & $-0.35$ & $+2.77$$^{***}$ & 0.017 & $+1.43$ \\
- & 5 & -0.13\% & $-0.34$ & $+2.49$$^{***}$ & 0.032 & $+1.45$ \\
- & 22 & -0.86\% & $-1.30$ & $+0.94$ & 0.403 & $+0.74$ \\
+HAR-X + sector-mean $\bar d_{s(i),t}$ & 1 & -0.10\% & $-0.35$ & $+2.77$$^{***}$ & 0.017 & 0.668 & $+1.43$ \\
+ & 5 & -0.13\% & $-0.34$ & $+2.49$$^{***}$ & 0.032 & 0.543 & $+1.45$ \\
+ & 22 & -0.86\% & $-1.30$ & $+0.94$ & 0.403 & 0.418 & $+0.74$ \\
 \midrule
-HAR-X + $\bar d_t$ $\times$ HAR components & 1 & -0.37\% & $-0.93$ & $+3.09$$^{***}$ & 0.007 & $+1.16$ \\
- & 5 & -0.39\% & $-0.66$ & $+2.44$$^{***}$ & 0.032 & $+1.06$ \\
- & 22 & -1.77\% & $-2.04$$^{**}$ & $+0.61$ & 0.403 & $+0.05$ \\
+HAR-X + $\bar d_t$ $\times$ HAR components & 1 & -0.37\% & $-0.93$ & $+3.09$$^{***}$ & 0.007 & 0.401 & $+1.16$ \\
+ & 5 & -0.39\% & $-0.66$ & $+2.44$$^{***}$ & 0.032 & 0.282 & $+1.06$ \\
+ & 22 & -1.77\% & $-2.04$$^{**}$ & $+0.61$ & 0.403 & 0.108 & $+0.05$ \\
 \midrule
-Model $C$ (full union) & 1 & -1.00\% & $-2.14$$^{**}$ & $+5.96$$^{***}$ & 0.000 & $+0.54$ \\
- & 5 & +0.26\% & $+0.41$ & $+8.31$$^{***}$ & 0.000 & $+0.97$ \\
- & 22 & -3.37\% & $-2.69$$^{***}$ & $+6.63$$^{***}$ & 0.000 & $-2.08$$^{**}$ \\
+Model $C$ (full union) & 1 & -1.00\% & $-2.14$$^{**}$ & $+5.96$$^{***}$ & 0.000 & 0.064 & $+0.54$ \\
+ & 5 & +0.26\% & $+0.41$ & $+8.31$$^{***}$ & 0.000 & 0.697 & $+0.97$ \\
+ & 22 & -3.37\% & $-2.69$$^{***}$ & $+6.63$$^{***}$ & 0.000 & 0.018 & $-2.08$$^{**}$ \\
 \midrule
-Model $D$, Lasso & 1 & -0.82\% & $-2.61$$^{***}$ & -- & -- & $-0.23$ \\
- & 5 & -1.32\% & $-2.19$$^{**}$ & -- & -- & $-1.20$ \\
- & 22 & -3.09\% & $-2.57$$^{**}$ & -- & -- & $-2.04$$^{**}$ \\
+Model $D$, Lasso & 1 & -0.82\% & $-2.61$$^{***}$ & -- & -- & 0.008 & $-0.23$ \\
+ & 5 & -1.32\% & $-2.19$$^{**}$ & -- & -- & 0.069 & $-1.20$ \\
+ & 22 & -3.09\% & $-2.57$$^{**}$ & -- & -- & 0.000 & $-2.04$$^{**}$ \\
 \midrule
-Model $D$, Ridge & 1 & -1.50\% & $-3.74$$^{***}$ & -- & -- & $-1.04$ \\
- & 5 & -1.86\% & $-2.56$$^{**}$ & -- & -- & $-1.67$$^{*}$ \\
- & 22 & -4.21\% & $-3.00$$^{***}$ & -- & -- & $-2.52$$^{**}$ \\
+Model $D$, Ridge & 1 & -1.50\% & $-3.74$$^{***}$ & -- & -- & 0.000 & $-1.04$ \\
+ & 5 & -1.86\% & $-2.56$$^{**}$ & -- & -- & 0.034 & $-1.67$$^{*}$ \\
+ & 22 & -4.21\% & $-3.00$$^{***}$ & -- & -- & 0.000 & $-2.52$$^{**}$ \\
 \midrule
-Model $D$, Elastic Net & 1 & -0.81\% & $-2.46$$^{**}$ & -- & -- & $-0.11$ \\
- & 5 & -1.37\% & $-2.24$$^{**}$ & -- & -- & $-1.37$ \\
- & 22 & -3.29\% & $-2.54$$^{**}$ & -- & -- & $-2.10$$^{**}$ \\
+Model $D$, Elastic Net & 1 & -0.81\% & $-2.46$$^{**}$ & -- & -- & 0.014 & $-0.11$ \\
+ & 5 & -1.37\% & $-2.24$$^{**}$ & -- & -- & 0.050 & $-1.37$ \\
+ & 22 & -3.29\% & $-2.54$$^{**}$ & -- & -- & 0.000 & $-2.10$$^{**}$ \\
 \midrule
-Model $D$, Random Forest & 1 & -5.77\% & $-4.54$$^{***}$ & -- & -- & $-3.20$$^{***}$ \\
- & 5 & -6.23\% & $-3.89$$^{***}$ & -- & -- & $-2.69$$^{***}$ \\
- & 22 & -7.00\% & $-3.24$$^{***}$ & -- & -- & $-2.05$$^{**}$ \\
+Model $D$, Random Forest & 1 & -5.77\% & $-4.54$$^{***}$ & -- & -- & 0.000 & $-3.20$$^{***}$ \\
+ & 5 & -6.23\% & $-3.89$$^{***}$ & -- & -- & 0.000 & $-2.69$$^{***}$ \\
+ & 22 & -7.00\% & $-3.24$$^{***}$ & -- & -- & 0.004 & $-2.05$$^{**}$ \\
 \midrule
-Model $D$, Gradient Boosting & 1 & -6.18\% & $-6.22$$^{***}$ & -- & -- & $-4.05$$^{***}$ \\
- & 5 & -6.11\% & $-5.38$$^{***}$ & -- & -- & $-3.87$$^{***}$ \\
- & 22 & -10.27\% & $-4.19$$^{***}$ & -- & -- & $-2.29$$^{**}$ \\
+Model $D$, Gradient Boosting & 1 & -6.18\% & $-6.22$$^{***}$ & -- & -- & 0.000 & $-4.05$$^{***}$ \\
+ & 5 & -6.11\% & $-5.38$$^{***}$ & -- & -- & 0.000 & $-3.87$$^{***}$ \\
+ & 22 & -10.27\% & $-4.19$$^{***}$ & -- & -- & 0.000 & $-2.29$$^{**}$ \\
 \midrule
 \bottomrule
 \end{tabular}
 \begin{tablenotes}\small
-\item Notes: All forecasts are point-in-time (training rows whose target window extends past the origin are excluded). \%$\Delta$MSE is the change in pooled MSE on $\log RV^{PK}$ relative to HAR-X (Model $A_1$); positive favours the specification. HLN DM-$t$: panel-aware Harvey--Leybourne--Newbold-corrected Diebold--Mariano statistic against HAR-X (two-sided). CW-$t$: Clark--West (2007) MSPE-adjusted statistic for the nested comparison with HAR-X (one-sided, standard normal). Both use the cross-sectional mean loss differential per date with a Newey--West bandwidth $\max(\lceil h/5\rceil-1, \lfloor 4(T/100)^{2/9}\rfloor)$ (six lags). Clark--West is reported only for OLS specifications that nest HAR-X; the shrinkage and tree estimators show --. QLIKE uses point-in-time smeared variance forecasts. CW $p$ (Holm) adjusts the three pre-registered specifications' nine tests jointly and Model $C$'s three tests jointly; other rows are unadjusted (--). Significance of raw statistics: $^{*}$ $p<0.10$, $^{**}$ $p<0.05$, $^{***}$ $p<0.01$.
+\item Notes: All forecasts are point-in-time (training rows whose target window extends past the origin are excluded). \%$\Delta$MSE is the change in pooled MSE on $\log RV^{PK}$ relative to HAR-X (Model $A_1$); positive favours the specification. HLN DM-$t$: panel-aware Harvey--Leybourne--Newbold-corrected Diebold--Mariano statistic against HAR-X (two-sided). CW-$t$: Clark--West (2007) MSPE-adjusted statistic for the nested comparison with HAR-X (one-sided, standard normal). Both use the cross-sectional mean loss differential per date with a Newey--West bandwidth $\max(\lceil h/5\rceil-1, \lfloor 4(T/100)^{2/9}\rfloor)$ (six lags). Clark--West is reported only for OLS specifications that nest HAR-X; the shrinkage and tree estimators show --. QLIKE uses point-in-time smeared variance forecasts. CW $p$ (Holm) adjusts the three pre-registered specifications' nine tests jointly and Model $C$'s three tests jointly; other rows are unadjusted (--). GW $p$: Giacomini--White (2006) conditional predictive ability test against HAR-X with instruments $(1, d_{t-k})$, $k=\lceil h/5\rceil$, $\chi^2_2$, same HAC bandwidth. Significance of raw statistics: $^{*}$ $p<0.10$, $^{**}$ $p<0.05$, $^{***}$ $p<0.01$.
 \end{tablenotes}
 \end{adjustwidth}
 \end{table}

@@ -133,6 +133,72 @@ advantages over the unmanaged portfolio shrink to near zero on excess returns.
 
 ---
 
+## 2026-10-02  run-15  Giacomini-White tests and an economic margin (for the JRFM paper)
+- Setup (written before the GW numbers were seen): module 12 adds the
+  Giacomini-White (2006) conditional predictive ability test of every
+  specification against HAR-X, on the cross-sectional mean loss differential,
+  instruments (1, d_{t-k}) with k = ceil(h/5), chi-square(2), module-6 HAC
+  bandwidth. Purpose: finding #7 (Clark-West rejects, DM does not) says the
+  population model has information the estimated model cannot use; GW tests
+  the estimated model directly. Also a reporting flag, adds_beyond_harx_margin
+  = pre-registered rule AND gain >= 0.5% of HAR-X MSE. The margin is NOT
+  pre-registered: it is added after every MSE gain is known (largest positive
+  vs HAR-X: C +0.26% at h=5) and is labelled as such in the paper.
+- Prediction: no specification has GW p < 0.05 together with a positive MSE
+  gain over HAR-X; the GW rejections that occur favour HAR-X (C at h=1, 22).
+- Result: GW p vs HAR-X, h=1/5/22: A1cs 0.74 / 0.92 / 0.13; A1sec 0.67 /
+  0.54 / 0.42; A1mod 0.40 / 0.28 / 0.11; C 0.064 / 0.70 / 0.018 (C worse than
+  HAR-X at h=1 and 22). Every ML and own-stock row rejects or is near
+  rejection in HAR-X's favour. adds_beyond_harx_margin is False everywhere
+  (the rule's two passes, C +0.26% and A1cs +0.003% at h=5, are below 0.5%).
+- Verdict: KEEP. Prediction held for positive gains; half held for the
+  rejections (C at h=22 rejects, h=1 is 0.064). Clark-West says the
+  population model has information; GW says the estimated model never turns
+  it into conditionally better forecasts. Table 11 gains a GW column.
+- Cost: under a minute.
+- Lesson: CW and GW answer different questions; report both when they can
+  disagree.
+
+---
+
+## 2026-10-02  run-14  Window inclusion, made reproducible (module 14; for the JRFM paper)
+- Setup (written before the run): the window-inclusion evidence (audit N1, N2)
+  existed only as ad hoc diagnostics. Module 14 recomputes it from the panel.
+  (1) Rolling GPH d-hat of log Parkinson variance at W = 500, 750, 1000 (stride
+  5, window ends on day t, bandwidth T^0.65), cross-sectional mean d-bar_t(W).
+  (2) Events, rule fixed now: the 3 largest days of the cross-sectional mean
+  daily log variance, at least 250 trading days apart. For each event tau and
+  W: entry change (mean d-bar over the 4 grid points with window end in
+  [tau, tau+20) minus the 4 in [tau-20, tau)) and exit change (same around
+  tau+W), each ranked among all such 4-vs-4 changes. (3) R^2 of d-bar_t(W) on
+  max VIX over the same trailing W days vs on current VIX. (4) Matched
+  short-memory null: per-stock ARMA(1,1) fitted to calm log variance
+  (2012-2019), median parameters; inject the observed one-year COVID excess
+  profile (cross-sectional median of log variance minus calm mean, from the
+  first event day in 2020); 200 replications; rolling GPH at each W.
+- Predictions: (a) for the 2020 event the exit change is negative and in the
+  bottom 5% of all changes at every W; (b) R^2 on max VIX in the window exceeds
+  R^2 on current VIX at every W; (c) the short-memory null shows a plateau that
+  ends at tau+W, with a rise at least half the observed rise.
+- Result: events 10 Oct 2008, 6 May 2010 (Flash Crash), 18 Mar 2020. 2020
+  exit change at W = 500 / 750 / 1000: -0.164 / -0.108 / -0.090, percentile
+  0.18 / 0.09 / 0.10, on 11 Mar 2022 / 10 Mar 2023 / 8 Mar 2024; entry
+  +0.18 / +0.13 / +0.11 (99.7-99.9th pct). 2008 exit at W=750 and 1000 in the
+  bottom 2% (at W=500 the long 2008-09 episode and May 2010 are still inside).
+  The one-day 2010 event barely moves d-bar (entry 23rd-90th pct). R^2 on max
+  VIX in the window 0.81 / 0.83 / 0.82 vs current VIX 0.28 / 0.27 / 0.18.
+  Null (ARMA(1,1), calm medians phi 0.91, theta -0.69): baseline d-bar 0.41 /
+  0.40 / 0.39 vs observed 0.35 / 0.385 / 0.37; rise +0.13 / +0.13 / +0.11 vs
+  observed +0.25 / +0.19 / +0.16 (53-69%); largest simulated drop at day
+  W+9 for every W.
+- Verdict: KEEP. All three predictions held ((c) narrowly at W=500, 53%).
+  Finding #20. Table 14 and Figure 10 for the JRFM paper.
+- Cost: about 6 minutes.
+- Lesson: the dose-response (long episodes move d-hat, one-day spikes do not)
+  and the calm-level match came free with the design; both belong in the paper.
+
+---
+
 ## 2026-10-02  run-13  EXPLORATORY: referee checks of the crisis-memory lead (not pre-registered)
 - Setup: run by an independent referee review after run-11; re-run and confirmed
   by the main session. Scratch scripts referee_vix_form.py and

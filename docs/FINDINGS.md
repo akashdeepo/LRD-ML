@@ -113,3 +113,13 @@ gap between VIX-implied and realised variance absorbs, and that gap forecasts
 better (+5.0 to +6.3% vs log HAR-X, DM 2.7 to 3.5). A persistent variance risk
 premium after crises (Bates 2000; Andersen, Fusari & Todorov 2015), not a new
 mechanism; effectively two episodes in sample. From run-13.
+
+#20 (2026-10-02): Reproducible window-inclusion evidence (module 14). The
+persistence state jumps when 18 Mar 2020 enters the window and drops when it
+leaves, on 11 Mar 2022, 10 Mar 2023 and 8 Mar 2024 for W = 500, 750, 1000
+(drops in the bottom 0.2% of all changes); max VIX in the window explains
+81-83% of it, current VIX 18-28%. A short-memory ARMA(1,1) fitted to calm
+data, with the 2020 episode injected, reproduces the calm level of d-hat
+(0.40 vs 0.385), 53-69% of the rise and the exit at tau+W. A one-day spike
+(Flash Crash) barely moves it: duration, not peak, drives the state. From
+run-14. Supersedes the ad hoc evidence behind #14.
