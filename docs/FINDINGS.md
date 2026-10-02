@@ -94,7 +94,8 @@ Supersedes #8's framing. From run-10.
 trailing three years) lowers the VIX's predictive slope for realised variance by
 about 40% (interaction t = -2.7); this, not slow volatility levels, carries the
 persistence state's market-level gain (+3.4% / +2.0% vs market HAR-X). Needs a
-pre-registered out-of-sample test. From run-11.
+pre-registered out-of-sample test. From run-11. (Qualified 2026-10-02 by #19:
+the slope effect is specific to the levels specification.)
 
 #18 (2026-10-02): With hyperparameters tuned by time-series CV, gradient
 boosting on Model C's predictors is -2.9 / -0.2 / -8.3% vs HAR (untuned:
@@ -104,3 +105,11 @@ estimators sit between HAR and HAR-X (Lasso -0.8 / -1.3 / -3.1% vs HAR-X).
 Nonlinearity extracts nothing from this feature set; the earlier "gradient
 boosting actively worsens forecasts" was an untuned-learner artefact. From
 run-10 and run-12.
+
+#19 (2026-10-02, exploratory): The crisis-memory effect of #17 is a levels
+artefact plus a known premium. In log form the VIX x max-VIX interaction
+vanishes (t +0.33 / +0.26); max-VIX-3y is an intercept shift that the trailing
+gap between VIX-implied and realised variance absorbs, and that gap forecasts
+better (+5.0 to +6.3% vs log HAR-X, DM 2.7 to 3.5). A persistent variance risk
+premium after crises (Bates 2000; Andersen, Fusari & Todorov 2015), not a new
+mechanism; effectively two episodes in sample. From run-13.

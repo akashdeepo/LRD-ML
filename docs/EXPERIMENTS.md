@@ -133,6 +133,38 @@ advantages over the unmanaged portfolio shrink to near zero on excess returns.
 
 ---
 
+## 2026-10-02  run-13  EXPLORATORY: referee checks of the crisis-memory lead (not pre-registered)
+- Setup: run by an independent referee review after run-11; re-run and confirmed
+  by the main session. Scratch scripts referee_vix_form.py and
+  referee_vix_mech.py (session scratchpad). Same market-level target and
+  expanding OLS with embargo as run-11; adds a log-form specification (log VIX,
+  log MOVE, log max-VIX-3y), a VIX-squared control, the trailing 250-day gap
+  between VIX-implied log variance and realised average-stock log variance
+  ("bias", a variance-risk-premium plus correlation proxy), a realised-
+  correlation proxy, and the SPX close-to-close log variance target.
+- Result: run-11 reproduced exactly (+3.73% / +3.27%, DM 1.85 / 1.62;
+  interaction t -2.74 / -2.65). In log form the interaction vanishes
+  (t +0.33 / +0.26 at h=1/5); crisis memory acts as an intercept shift
+  (log max-VIX-3y coefficient about -0.15 to -0.18, t about -4). The trailing
+  implied-minus-realised gap absorbs it (h=22: max-VIX t 0.0 with the gap) and
+  forecasts better: +5.0 to +6.3% vs log HAR-X (DM 2.7 to 3.5), against
+  +0.3 to +1.9% for max-VIX alone. Survives a realised-correlation proxy and
+  holds for SPX close-to-close variance (h=5 coefficient -0.62, t -5.9; OOS
+  +4.7%, DM 2.5). Max-VIX-3y is 80.9 or 82.7 across the top quartile of dates:
+  effectively two episodes.
+- Verdict: INCONCLUSIVE by construction (exploratory). The lead is a
+  persistent variance risk premium after crises, which is known (Bates 2000;
+  Chernov 2007; Andersen, Fusari & Todorov 2015), not a new slope effect.
+  Finding #19 qualifies #17. Any claim needs held-out data (VXO 1986-2001 with
+  SPX ranges; V2X, VDAX, Nikkei VI, VHSI, VKOSPI with own-index ranges) and a
+  pre-registered log-form test controlling for the gap.
+- Cost: seconds.
+- Lesson: an interaction found in levels must be re-checked in the model's
+  natural (log) form and against the obvious known mechanism before it is
+  called a lead.
+
+---
+
 ## 2026-10-02  run-12  Gradient Boosting tuned by time-series CV (audit I32)
 - Setup (written before the run): the manuscript says hyperparameters are
   chosen by time-series cross-validation; in module 5 that holds for Lasso,
