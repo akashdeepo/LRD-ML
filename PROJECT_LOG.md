@@ -1087,8 +1087,8 @@ follows input order) added; figures refreshed.
 
 ## Session: 2026-10-02 — Full audit: 33 issues, corrected re-run, two new findings
 
-**Context.** After the IJFS withdrawal (overlap with our own arXiv preprint),
-Rachev and Dr. Hongwei Mei (now third author) asked for a 25-page rewrite.
+**Context.** Rachev and Dr. Hongwei Mei (now third author) asked for a
+25-page rewrite.
 Before rewriting, the whole pipeline was audited from first principles by
 three independent reviewers (data/estimation, forecasting/evaluation,
 portfolios/manuscript) plus targeted diagnostics. Register, fixes, before/after

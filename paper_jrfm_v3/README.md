@@ -8,5 +8,3 @@
 - `main_draft.pdf`: a local XeTeX build (Tectonic, with the class's `pdftex` option removed and the EPS logos swapped for their PDF conversions). The canonical build is pdfTeX on Overleaf.
 
 Every number in the text traces to a ledger run in `docs/EXPERIMENTS.md`: run-10 (corrected pipeline), run-12 (tuned gradient boosting), run-14 (window inclusion, Table 2 and Figure 1), run-15 (Giacomini-White), run-16 (timing, Table 6), run-17 (roughness, Appendix A).
-
-The paper contains no placeholders. Decisions for the team before submission (the generative-AI statement and acknowledgments, the author block, the arXiv note and the cover letter) are listed in [`TODO.md`](TODO.md).

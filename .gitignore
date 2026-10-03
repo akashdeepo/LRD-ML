@@ -77,3 +77,6 @@ results/intermediate/*.csv
 *.zip
 *(1).pdf
 notes.txt
+
+# Private notes for the team (not for the public repo)
+paper_jrfm_v3/TODO.md
