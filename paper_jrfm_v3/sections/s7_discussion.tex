@@ -1,92 +1,95 @@
 \section{Discussion}\label{sec:discussion}
 
-\subsection{Why persistence does not forecast}
+\subsection{Why persistence does not improve forecasts}
 
-The two halves of the paper fit together. Section~\ref{sec:window} shows that
-the rolling persistence state is, to a close approximation, a smoothed record
-of the largest volatility episodes of the past two to four years. It rises
-when such an episode enters the window and falls, on a date fixed by the
-window length, when the episode leaves. Sections~\ref{sec:results} and
-\ref{sec:robust} show that, once the VIX and MOVE are in the model, the state
-adds no forecasting value in any design we tried. The first result explains
-the second. Implied volatility is a forward-looking price that already
-reflects recent turmoil, partly through a variance risk premium that rises
-after crises and decays slowly \citep{bates2000post, bekaert2014vix,
-andersen2015risk}. A backward-looking indicator of when the last crisis
-occurred has little to add. The Clark--West rejections show that it adds
-something in population; the Giacomini--White tests show that the something
-is too small to survive estimation.
+Section~\ref{sec:window} shows that the rolling persistence state is largely
+a smoothed record of the largest volatility episodes of the preceding two to
+four years. It rises when such an episode enters the window and falls, on a
+date fixed by the window length, when the episode leaves.
+Sections~\ref{sec:results} and \ref{sec:robust} show that, once the VIX and
+MOVE are in the model, the state does not significantly improve forecasts in
+any of the registered designs. We interpret the first result as the
+explanation for the second. Implied volatility is a forward-looking price
+that already reflects recent turmoil, partly through a variance risk premium
+that rises after crises and decays slowly \citep{bates2000post,
+bekaert2014vix, andersen2015risk}. A backward-looking indicator of when the
+last crisis occurred has little to add. The Clark--West rejections show that
+it adds some information in population; the Giacomini--White tests show that
+this contribution is too small to survive estimation.
 
-Nothing here says that volatility lacks long memory, or that the persistence
-of volatility shocks never changes. The full-sample estimates of
+These results do not imply that volatility lacks long memory, or that the
+persistence of volatility shocks never changes. The full-sample estimates in
 Table~\ref{tab:memory} are large, and our short-memory null reproduces their
-calm-period level, which is consistent with a long literature showing that
-level shifts and long memory are hard to separate
-\citep{diebold2001long, perron2010long, varneskov2018combining}. The narrower
-claim is that the time variation in rolling estimates is not evidence of time
-variation in persistence. It is what a fixed process produces when a few
-large episodes move through a fixed window.
+calm-period level, consistent with a long literature showing that level
+shifts and long memory are difficult to separate \citep{diebold2001long,
+perron2010long, varneskov2018combining}. Our claim is narrower: the time
+variation in rolling estimates is not evidence of time variation in
+persistence. It is the pattern that a process with constant parameters
+produces when a few large episodes pass through a fixed window.
 
 \subsection{Implications for applied work}
 
-Three practices follow for work that uses rolling memory estimates, Hurst
-exponents or similar windowed statistics. First, report results for several
-window lengths and check whether turning points move with the window; a
-change that is structural should not. Second, regress the windowed statistic
-on the largest value of an observable stress measure inside the same window;
-a high $R^2$ indicates window composition rather than dynamics. Third,
-compare the series with a short-memory null into which the observed episodes
-are injected, and with estimators and tests built to separate long memory
-from level shifts \citep{qu2011test, hou2014modified}. These are the
-standard tools of the fields that met the same problem earlier, from
+Three practices follow for research that uses rolling memory estimates,
+Hurst exponents or similar windowed statistics. First, results should be
+reported for several window lengths, with a check of whether the turning
+points move with the window; a structural change should not. Second, the
+windowed statistic can be regressed on the largest value of an observable
+stress measure inside the same window; a high $R^2$ indicates that the
+statistic reflects window composition rather than dynamics. Third, the
+series can be compared with a short-memory null into which the observed
+episodes are injected, and with estimators and tests designed to separate
+long memory from level shifts \citep{qu2011test, hou2014modified}. These are
+standard tools in fields that encountered the same problem earlier, from
 hydrology \citep{klemes1974hurst} to early-warning indicators in ecology and
-climate \citep{dakos2008slowing, ditlevsen2010tipping,
+climate science \citep{dakos2008slowing, ditlevsen2010tipping,
 boettiger2012quantifying} and sliding-window connectivity in neuroscience
 \citep{leonardi2015spurious}.
 
-For forecasting studies, three lessons are more general than this
-application. Benchmark and challenger must use the same information set,
-down to the day: a one-day lag in the benchmark's inputs inflated the value
-of implied volatility by about a third. When a nested comparison gives a
-Clark--West rejection without a lower loss, a Giacomini--White test says
-whether the estimated model is useful. And machine-learning comparisons are
-informative only if every learner is tuned under the same protocol: with
-default settings gradient boosting lost 12--21\% to HAR, against 0.2--8\% once
-tuned.
+Three lessons for forecasting studies extend beyond this application. The
+benchmark and the challenger must use the same information set, down to the
+day: a one-day lag in the inputs of the benchmark inflated the value of
+implied volatility by about a third. When a nested comparison yields a
+Clark--West rejection without a lower loss, a Giacomini--White test indicates
+whether the estimated model is useful. Finally, machine-learning comparisons
+are informative only if every learner is tuned under the same protocol: with
+default settings gradient boosting lost 12--21\% relative to HAR, against
+0.2--8\% once tuned.
 
 \subsection{Limitations}
 
 The panel consists of current S\&P~500 members with long histories. Firms
 that left the index are missing, which removes some of the most volatile
-histories; this affects the level of volatility and of the memory estimates
-more than the window mechanism, which is a property of the estimator. The
-variance proxy is the daily range, not intraday realized variance; its
-sampling noise lowers the level of $\hat d$ and of the Hurst exponent but not
-the dates at which episodes enter and leave the window. Returns are price
-returns, which matters only for the portfolio exercise. The forecast
-evaluation period, 2013 to 2026, contains one extreme episode, in 2020, and
-several moderate ones; the window evidence also uses 2008. A market without a
-liquid implied-volatility index is where persistence could have the most to
-add, but there the largest recent realized variance is available directly and
-would be the natural benchmark. Finally, the evidence on the window mechanism
-is for memory in volatility; a general analysis across estimators, asset
-classes and markets is left for future work.
+histories; this omission affects the level of volatility and of the memory
+estimates more than the window mechanism, which is a property of the
+estimator. The variance proxy is the daily range rather than intraday
+realized variance. Its sampling noise lowers the level of $\hat d$ and of the
+Hurst exponent but does not change the dates at which episodes enter and
+leave the window. Returns are price returns, which matters only for the
+portfolio exercise. The forecast evaluation period, 2013 to 2026, contains
+one extreme episode, in 2020, and several moderate ones; the window analysis
+also uses 2008. Markets without a liquid implied-volatility index are where
+persistence could add the most, but in such markets the largest recent
+realized variance is directly available and would be the natural benchmark.
+Finally, the evidence on the window mechanism concerns memory in volatility;
+a general analysis across estimators, asset classes and markets is left for
+future work.
 
 \section{Conclusions}\label{sec:conclusions}
 
 Rolling long-memory estimates of stock volatility rise sharply in crises, and
 it is tempting to read them as a measure of how persistent the market has
-become. On 115 S\&P~500 stocks over 2001--2026 they carry no forecasting
-information beyond implied volatility, under every design we registered:
-per-stock and pooled regressions, the level and the term structure of future
-variance, a market-level series, linear models and tuned machine-learning
-estimators, calm and stressed periods, and volatility-managed portfolios.
-The reason is that the rolling persistence state records which extreme
-episodes are inside its window. It jumps when an episode enters, falls on the
-day the episode leaves, does so at dates that move one-for-one with the
-window length, is reproduced by a short-memory process, and is explained to
-83\% by the largest VIX inside the window. Researchers who use rolling memory
-estimates as a state variable should check these signatures before
-interpreting them, and forecasting studies that compare HAR with implied
-volatility should align the information sets of the two, which here removes
-a third of the apparent value of the VIX.
+become. For 115 S\&P~500 stocks over 2001--2026 they do not improve
+volatility forecasts beyond implied volatility under any design we
+registered: per-stock and pooled regressions, the level and the term
+structure of future variance, a market-level series, linear models and tuned
+machine-learning estimators, calm and stressed periods, and
+volatility-managed portfolios. The evidence points to a simple reason: the
+rolling persistence state records which extreme episodes lie inside its
+window. It jumps when an episode enters and falls when the episode leaves, at
+dates that move one-for-one with the window length; a short-memory process
+reproduces this pattern; and 83\% of its variation is explained by the
+largest VIX inside the window. Researchers who use rolling memory estimates
+as a state variable should check for these signatures before interpreting
+them. Forecasting studies that compare HAR with implied volatility should
+align the information sets of the two models, which here removes a third of
+the apparent value of the VIX.

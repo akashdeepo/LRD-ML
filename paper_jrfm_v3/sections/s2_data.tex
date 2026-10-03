@@ -3,18 +3,18 @@
 \subsection{Sample}
 
 Daily open, high, low and close prices for S\&P~500 constituents were
-obtained from Bloomberg. The panel keeps the 115 stocks with at least 70\%
-of trading days observed between 29 November 2001 and 21 April 2026, a total
-of 6136 trading days, and covers all eleven GICS sectors. Membership is that
-of the April 2026 index, so the panel excludes firms that left the index
-before then; Section~\ref{sec:discussion} discusses what this implies.
-Returns are daily log price returns. They are winsorized point-in-time at the
-expanding 0.1\% and 99.9\% quantiles after a 500-day warm-up, so that no
-observation is trimmed using later data, and one special dividend that
-appears as a price drop (Keurig Dr Pepper, 10 July 2018) is added back. The
-market variables are the closing levels of the CBOE VIX index and the ICE
-BofA MOVE index of Treasury implied volatility, and the three-month Treasury
-bill rate.
+obtained from Bloomberg. The panel retains the 115 stocks observed on at
+least 70\% of the 6136 trading days between 29 November 2001 and 21 April
+2026; it covers all eleven GICS sectors. Membership is that of the April
+2026 index, so firms that left the index earlier are excluded;
+Section~\ref{sec:discussion} discusses the implications. Returns are daily
+log price returns. For use as predictors they are winsorized point-in-time
+at the expanding 0.1\% and 99.9\% quantiles after a 500-day warm-up, so that
+no observation is trimmed with information from later dates. One special
+dividend that appears as a price drop (Keurig Dr Pepper, 10 July 2018) is
+added back. The market variables are the daily closes of the Cboe VIX index
+and of the ICE BofA MOVE index of Treasury implied volatility; the
+three-month Treasury bill rate is used in the portfolio exercise.
 
 \subsection{Variance}
 
@@ -24,20 +24,21 @@ Daily variance is measured by the range estimator of
 \sigma^2_{i,t} = \frac{\left(\ln H_{i,t} - \ln L_{i,t}\right)^2}{4\ln 2},
 \label{eq:parkinson}
 \end{equation}
-where $H_{i,t}$ and $L_{i,t}$ are the day's high and low. The estimator uses
-intraday information, is several times more efficient than the squared
-close-to-close return, and is available for the full sample, which
-five-minute realized variance is not. Days with a zero range are treated as
-missing. All models work with the log of variance, which is close to
-Gaussian and makes forecast errors comparable across stocks.
+where $H_{i,t}$ and $L_{i,t}$ are the day's high and low prices. The
+estimator uses intraday information, is several times more efficient than
+the squared close-to-close return, and is available for the whole sample,
+which five-minute realized variance is not. Days with a zero range are
+treated as missing. All models use the logarithm of variance, which is close
+to Gaussian and makes forecast errors comparable across stocks.
 
 \subsection{Timing}
 
-The forecast origin is the close of trading day $t$. Every predictor uses
-information available at that moment: the day's range and return, and the
-closing levels of the VIX and MOVE indices. The VIX is computed until 4:15
-p.m.\ Eastern time, fifteen minutes after the equity close; we treat the two
-as simultaneous. The forecast target for horizon $h$ is
+The forecast origin is the close of trading day $t$, and every predictor
+uses only information available at that time, including the day's range and
+return and the closing levels of the VIX and MOVE indices. The VIX is
+computed until 4:15 p.m.\ Eastern time, fifteen minutes after the equity
+close; we treat the two as simultaneous. Section~\ref{sec:results} shows
+that this alignment matters. The forecast target for horizon $h$ is
 \begin{equation}
 y_{i,t,h} = \ln\Bigl(\frac{1}{h}\sum_{k=1}^{h} \sigma^2_{i,t+k}\Bigr),
 \qquad h \in \{1, 5, 22\},
@@ -46,28 +47,32 @@ y_{i,t,h} = \ln\Bigl(\frac{1}{h}\sum_{k=1}^{h} \sigma^2_{i,t+k}\Bigr),
 the log of mean variance over the next day, week and month. Forecasts are
 made every fifth trading day, which gives 1078 weekly origins from 22
 November 2004, the first date at which a 750-day window is available, to 21
-April 2026. Section~\ref{sec:results} shows that this alignment matters.
+April 2026.
 
 \subsection{Full-sample memory}
 
 Table~\ref{tab:memory} reports full-sample estimates of the fractional
-parameter $d$ by the log-periodogram estimator of
+parameter $d$ obtained with the log-periodogram estimator of
 \citet{geweke1983estimation} (GPH) and the local Whittle estimator of
 \citet{robinson1995gaussian}, both with bandwidth $m=T^{0.65}$. Returns show
-no memory: the mean estimate is $-0.02$. Log variance shows a great deal: the
-mean GPH estimate is 0.54, the local Whittle estimate 0.52, and 84\% of stocks
-have a GPH estimate above 0.5, the boundary of stationarity. These are the
-familiar stylized facts \citep{andersen2003modeling}. A Hurst exponent of
-0.06 from the scaling of increments of log variance would, read literally,
-indicate very rough volatility \citep{gatheral2018volatility}; Appendix~\ref{app:rough}
-shows that a two-factor Markovian model without roughness, observed through
-the sampling noise of the range estimator, produces the same number, so
-roughness is not identified at the daily frequency \citep{cont2024rough}. We do not use roughness further.
+no evidence of long memory: the mean estimate is $-0.02$. Log variance is
+strongly persistent: the mean GPH estimate is 0.54, the mean local Whittle
+estimate is 0.52, and 84\% of stocks have a GPH estimate above 0.5, the
+boundary of stationarity. These values are in line with the established
+stylized facts \citep{andersen2003modeling}. A Hurst exponent of 0.06,
+obtained from the scaling of increments of log variance, would indicate
+volatility much rougher than Brownian motion
+\citep{gatheral2018volatility}. Appendix~\ref{app:rough} shows that a
+two-factor Markovian model without roughness, observed through the sampling
+noise of the range estimator, produces the same value, so roughness is not
+identified at the daily frequency \citep{cont2024rough}. We do not use
+roughness further.
 
 \input{tables/t1_memory}
 
-Estimates of $d$ above 0.5 for most stocks are themselves a warning. Long
-memory and a slowly decaying short-memory process with occasional large
-episodes are hard to tell apart in samples of this length
-\citep{diebold2001long, granger2004occasional}. The rolling estimates that
-follow make the distinction visible.
+Estimates of $d$ above 0.5 for most stocks call for caution, since they
+imply nonstationary log variance. Long memory and a slowly decaying
+short-memory process with occasional large episodes are difficult to
+distinguish in samples of this length \citep{diebold2001long,
+granger2004occasional}. The rolling estimates in the next section make the
+difference visible.

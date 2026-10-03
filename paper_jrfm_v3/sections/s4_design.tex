@@ -12,11 +12,11 @@ y_{i,t,h} = \beta_0 + \beta_d \ln RV^{(1)}_{i,t} + \beta_w \ln RV^{(5)}_{i,t}
 \label{eq:har}
 \end{equation}
 where $RV^{(k)}_{i,t}$ is the mean Parkinson variance over days $t-k+1$ to
-$t$ and $r_{i,t}$ is the day-$t$ return. HAR-X, model $A_1$, adds the
+$t$, and $r_{i,t}$ is the return on day $t$. HAR-X, model $A_1$, adds the
 levels of the VIX and MOVE indices at the close of day $t$. The persistence
-blocks are added one at a time to HAR and then jointly, and three further
-specifications, fixed before any result was computed, add a single block to
-HAR-X so that the comparison with HAR-X isolates it.
+blocks are added to HAR one at a time and then jointly. Three further
+specifications, fixed before their results were computed, add a single block
+to HAR-X, so that the comparison with HAR-X isolates that block.
 Table~\ref{tab:models} lists the predictors.
 
 \begin{table}[H]
@@ -51,22 +51,24 @@ shocks would act.}}
 \subsection{Estimation}
 
 Each model is re-estimated by ordinary least squares at every weekly origin
-on an expanding window of that stock's past rows. Because targets overlap for
-$h>1$, a past row enters the regression only if its target window has closed
-by the origin: row $j$ is used at origin $t$ only if day $j+h$ is no later
-than day $t$. Without this restriction the last rows of each training sample
-contain variance that is not yet observed, which at $h=22$ biases the
-comparison in favour of richer models. The first 431 origins (to 14 June
-2013) form the initial training sample, and all models are evaluated over
-the same 646 origins from 17 June 2013 to 14 April 2026, on the same
-(date, stock) cells.
+on an expanding window of that stock's past observations. Because targets
+overlap for $h>1$, a past observation enters the regression only if its
+target window has closed by the origin: the observation for an earlier
+origin $s$ is used at origin $t$ only if its target window, days $s+1$ to
+$s+h$, ends no later than day $t$. Without this restriction the last
+observations of each training sample contain variance that has not yet been
+realized; at $h=22$ this inflated the apparent gain of the richer models in
+an earlier version of this study. The first 431 origins (up to 14 June 2013)
+form the initial training sample, and all models are evaluated over the same
+646 origins, from 17 June 2013 to 14 April 2026, on the same (date, stock)
+cells.
 
 \subsection{Evaluation}
 
-The loss is the squared error of the log-variance forecast, pooled over
-stocks and dates; Appendix~\ref{app:extra} reports QLIKE on variance
-forecasts corrected point-in-time for the log transformation. Comparisons
-rest on the cross-sectional mean loss differential per date,
+The loss function is the squared error of the log-variance forecast, pooled
+over stocks and dates; Appendix~\ref{app:extra} reports the QLIKE loss for
+variance forecasts corrected point-in-time for the log transformation.
+Comparisons are based on the cross-sectional mean loss differential per date,
 $\bar\delta_t = N^{-1}\sum_i (L^{(1)}_{i,t} - L^{(2)}_{i,t})$, which absorbs
 the strong cross-sectional correlation of forecast errors. We report three
 tests on $\bar\delta_t$, each with a Newey--West variance and bandwidth
@@ -89,14 +91,14 @@ estimated model, with its estimation error, forecasts better.
 
 \subsection{Registration}
 
-The study was conducted in stages, and each stage was recorded in a dated
-experiment ledger before its results were computed: the specification, the
-comparison, the test and the decision rule. The rule for the registered
-HAR-X extensions is that a specification adds information beyond HAR-X at a
-horizon only if its Holm-adjusted \citep{holm1979simple} Clark--West $p$-value
-is below 0.05 and its mean squared error is lower than HAR-X's. After the
-results were known we added a requirement that the gain be at least 0.5\%;
-we report it separately because it was not registered. A complete audit of
-the pipeline preceded the final run; every correction was registered before
-the corrected run and is listed in the ledger, which is public with the code
-(Appendix~\ref{app:ledger}).
+The study was conducted in stages. Before the results of each stage were
+computed, its specifications, comparisons, tests and decision rules were
+recorded in a dated experiment ledger. Under the rule for the registered
+HAR-X extensions, a specification adds information beyond HAR-X at a given
+horizon only if its Holm-adjusted \citep{holm1979simple} Clark--West
+$p$-value is below 0.05 and its mean squared error is lower than that of
+HAR-X. After the results were known, we added the requirement that the gain
+be at least 0.5\%; we report it separately because it was not registered. A
+complete audit of the pipeline preceded the final run. Every correction was
+registered before the corrected run and is listed in the ledger, which is
+published with the code (Appendix~\ref{app:ledger}).

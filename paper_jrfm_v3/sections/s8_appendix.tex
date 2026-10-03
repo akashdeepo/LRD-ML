@@ -2,7 +2,8 @@
 
 The increment-scaling estimate of the Hurst exponent of daily log Parkinson
 variance averages 0.060 across stocks (10th--90th percentile 0.053--0.069).
-Read literally, this indicates very rough volatility. We ask whether a
+Read literally, this indicates volatility much rougher than Brownian motion,
+for which the exponent is 0.5. We ask whether a
 process without fractional roughness, observed through the Parkinson
 estimator, produces the same value. Latent log variance is the sum of two
 independent AR(1) components, a Markovian model. The observed series adds the
@@ -29,7 +30,7 @@ point-in-time smearing correction: the mean of the exponentiated past
 out-of-sample errors whose targets had been observed by the origin, with at
 least 26 such errors. Against HAR-X, no specification has a significantly
 lower QLIKE loss at the 5\% level; the largest Diebold--Mariano statistic in
-favour of persistence is 1.67 (cross-sectional extension, one day), and model
+favor of persistence is 1.67 (cross-sectional extension, one day), and model
 $C$ is significantly worse at one month ($-2.08$).
 
 \textit{Machine learning.} The lasso, ridge and elastic-net penalties are
@@ -48,20 +49,21 @@ and 8.3\%.
 
 On the market-level series the persistence state improves on market HAR-X by
 3.4\% and 2.0\% at one day and one week (Table~\ref{tab:designs}). An
-exploratory analysis, specified after that result and therefore not a test,
-asks what carries the gain. In a levels specification, the product of the VIX
-and the largest VIX of the previous three years has a negative coefficient
-($t=-2.7$ at both horizons): the slope of future realized variance on the VIX
-is about 40\% lower when a crisis is recent. In logs the interaction
-disappears ($t=0.33$ and $0.26$) and the three-year maximum enters only as a
-level shift, which the trailing 250-day gap between VIX-implied and realized
-variance absorbs; that gap alone improves on log market HAR-X by 5.0\% to
-6.3\% (Diebold--Mariano 2.7 to 3.5). The market-level gain is therefore best
-read as the slowly decaying variance risk premium after crises
-\citep{bates2000post, andersen2015risk}, which the persistence state proxies
-because both depend on how recently the last crisis occurred. A test of this
-reading requires data not used here, such as earlier index history or other
-markets.
+exploratory analysis, specified after that result and therefore not a formal
+test, asks what accounts for the gain. In a specification in levels, the
+interaction of the VIX with the logarithm of its maximum over the previous
+three years has a negative coefficient ($t=-2.7$ at both horizons): the
+slope of future realized variance on the VIX is about 40\% lower when a
+crisis is recent. In logs the interaction disappears ($t=0.33$ and $0.26$),
+and the three-year maximum enters only as a level shift, which is absorbed
+by the trailing 250-day gap between VIX-implied and realized variance. That
+gap alone improves on the log market HAR-X model by 5.0\% to 6.3\%
+(Diebold--Mariano statistics of 2.7 to 3.5). The market-level gain is
+therefore best interpreted as the slowly decaying variance risk premium after
+crises \citep{bates2000post, andersen2015risk}, for which the persistence
+state may act as a proxy because both depend on how recently the last crisis
+occurred. A test of this interpretation requires data not used here, such as
+earlier index history or other markets.
 
 \section[\appendixname~\thesection]{Registration record and audit}\label{app:ledger}
 
@@ -72,9 +74,9 @@ were not edited. The ledger, the code and a list of every correction are in
 the repository named in the Data Availability Statement. The main stages
 were:
 \begin{itemize}
-\item a point-in-time embargo for overlapping targets, which removed an
-apparent monthly-horizon gain of the persistence model that came from
-training rows whose targets were not yet observed;
+\item an embargo on training observations whose targets were not yet
+realized at the origin, which removed an apparent gain of the persistence
+model at the monthly horizon;
 \item three HAR-X extensions with a fixed decision rule and Holm adjustment;
 \item pooled, term-structure and market-level designs, point-in-time
 winsorization and real-time portfolio normalization;

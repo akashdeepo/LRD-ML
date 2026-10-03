@@ -2,24 +2,23 @@
 
 Volatility is persistent. Shocks to the variance of stock returns decay
 slowly, the autocorrelations of squared and absolute returns stay positive
-for months, and the log-periodogram of realized variance rises steeply
-toward the origin \citep{ding1993long, andersen2003modeling}. A large
-literature models this with fractional integration of order $d$, and an
-equally large applied literature estimates $d$, or the related Hurst
-exponent, over rolling windows and reads the resulting series as a
-time-varying property of the market: persistence that strengthens in
-crises, efficiency that improves or deteriorates, or adaptive behaviour in
-the sense of \citet{lo2004adaptive}. Examples range from early work on
-the Hurst exponent over time \citep{cajueiro2004hurst} to recent studies of
-volatility persistence after COVID-19 \citep{veravaldes2022persistence} and
-of the pandemic's effect on market efficiency \citep{takaishi2025}.
+for months, and the periodogram of realized variance rises steeply toward
+zero frequency \citep{ding1993long, andersen2003modeling}. A large
+literature models this with fractional integration of order $d$, and a
+sizeable applied literature estimates $d$, or the related Hurst exponent,
+over rolling windows and reads the resulting series as a time-varying
+property of the market: persistence that strengthens in crises, efficiency
+that improves or deteriorates, or adaptive behavior in the sense of
+\citet{lo2004adaptive}. Examples range from early work on the Hurst exponent
+over time \citep{cajueiro2004hurst} to recent studies of volatility
+persistence after COVID-19 \citep{veravaldes2022persistence} and of the
+pandemic's effect on market efficiency \citep{takaishi2025}.
 
 If rolling persistence is a genuine state of the market, it should carry
-information about future volatility. This paper tests that implication and,
-when it fails, asks why. We pose two questions. First, does a persistence
-state built from rolling long-memory estimates forecast stock volatility
-beyond what implied volatility already contains? Second, what does the
-rolling persistence state measure?
+information about future volatility. We test this implication and ask two
+questions. First, does a persistence state built from rolling long-memory
+estimates forecast stock volatility beyond what implied volatility already
+contains? Second, what does the rolling persistence state measure?
 
 We answer both on a panel of 115 S\&P~500 stocks from November 2001 to April
 2026. Volatility is the daily Parkinson range variance, and the forecast
@@ -29,86 +28,90 @@ benchmarks are the heterogeneous autoregressive (HAR) model of
 the VIX and MOVE indices (HAR-X). The persistence state enters through
 own-stock rolling estimates of $d$, sector and cross-sectional averages of
 those estimates, and their interactions with implied volatility. Every
-forecast is point-in-time: predictors use information available at the close
-of the forecast origin, and a training row enters a regression only if its
-target window has closed by the origin. Each specification and its decision
-rule were recorded in a dated experiment ledger before its results were
-computed. Inference combines the panel Diebold--Mariano test with the
+forecast is point-in-time: predictors use only information available at the
+close of the forecast origin, and a training row enters a regression only if
+its target window has closed by the origin. Each specification and its
+decision rule were recorded in a dated experiment ledger before its results
+were computed. Inference combines the panel Diebold--Mariano test with the
 \citet{harvey1997testing} correction, the \citet{clark2007approximately} test
 for nested models and the conditional predictive ability test of
 \citet{giacomini2006tests}.
 
-The answer to the first question is no. Implied volatility improves on HAR
-by 3.1\%, 5.5\% and 1.8\% in mean squared error at the three horizons.
-Persistence adds nothing on top. The best gain over HAR-X is 0.26\% at one
-week, with a Diebold--Mariano statistic of 0.41, and the full model is
-significantly worse than HAR-X at one day and one month. Pooled estimation
-with stock fixed effects, a target that measures the slope of the variance
-term structure, a single market-level series, and five machine-learning
-estimators all give the same answer. The Clark--West test rejects the null
-that the persistence terms have zero population coefficients, but the
-Giacomini--White test never finds that the estimated models forecast better:
-the information exists in population and cannot be extracted in practice.
+The answer to the first question is negative. Implied volatility lowers the
+mean squared error of HAR by 3.1\%, 5.5\% and 1.8\% at the three horizons,
+the last not significantly. Persistence does not improve significantly on
+HAR-X. Its largest gain is 0.26\% at one week, with a Diebold--Mariano
+statistic of 0.41, and the full model is significantly worse than HAR-X at
+one day and one month. Pooled estimation with stock fixed effects, a target
+that measures the slope of the variance term structure, a single
+market-level series and five machine-learning estimators lead to the same
+conclusion. At the daily and weekly horizons the Clark--West test rejects
+the null that the persistence terms have zero population coefficients, but
+the Giacomini--White test never finds that the estimated models forecast
+better: the information exists in population but is too small to be
+exploited once the models are estimated.
 
 The answer to the second question explains the first. The cross-sectional
-mean of rolling $d$ estimates behaves as an indicator of whether a large,
-long volatility episode lies inside the estimation window. It jumps when
-such an episode enters the window and falls when the episode leaves, and the
-exit date moves one-for-one with the window length: for windows of 500, 750
-and 1{,}000 trading days the 2020 plateau ends on 11 March 2022, 10 March
-2023 and 8 March 2024, each time with a fall in the bottom 0.2\% of all
-weekly changes. A short-memory ARMA model fitted to calm-period data, with the
-observed 2020 episode added, reproduces the calm level of the estimate, the
-plateau and the exit. The largest VIX inside the window explains 81--83\% of
-the variation in the state, against 18--28\% for the current VIX. A state
-that is a lagged summary of past extreme episodes has little to add to an
-implied-volatility index that already prices them.
+mean of rolling $d$ estimates behaves as an indicator of whether a large and
+long volatility episode lies inside the estimation window. It jumps when such
+an episode enters the window and falls when the episode leaves, and the exit
+date moves one-for-one with the window length. For windows of 500, 750 and
+1000 trading days the 2020 plateau ends on 11 March 2022, 10 March 2023 and
+8 March 2024, each time with a fall in the bottom 0.2\% of all four-week
+changes in the series. A short-memory ARMA model fitted to calm-period data,
+with the observed 2020 episode added, reproduces the calm level of the
+estimate, the plateau, the exit date and between half and two-thirds of the
+rise. The largest VIX inside the window explains 81--83\% of the variation in
+the state, against 18--28\% for the current VIX. A lagged summary of past
+extreme episodes has little to add to an implied-volatility index that
+already reflects them.
 
-A third result is practical. If HAR inputs end one day before the forecast
-origin while the VIX is the origin-day close, HAR is handicapped and the
-VIX's gain is overstated by about a third. With aligned inputs HAR's error
-falls by 8.1\% at the daily horizon and the VIX's gain over HAR falls from
-5.1\% to 3.1\%.
+A third result is practical. If the HAR inputs end one day before the
+forecast origin while the VIX is the origin-day close, HAR is at an
+informational disadvantage and the gain from the VIX is overstated by about
+a third. With aligned inputs the error of HAR falls by 8.1\% at the daily
+horizon, and the gain of HAR-X over HAR falls from 5.1\% to 3.1\%.
 
 These results connect to three literatures. The first shows that structural
 breaks, level shifts and regime switching produce spurious evidence of long
 memory \citep{diebold2001long, granger2004occasional,
-mikosch2004nonstationarities, smith2005level, perron2010long}, with tests and
-estimators designed to tell the two apart \citep{qu2011test,
-hou2014modified} and evidence that little genuine long memory survives once
-level shifts are modelled \citep{varneskov2018combining}. That literature
-concerns full-sample estimates. We document its time-series consequence for
-rolling estimates, which are what applied work interprets, and give a simple
+mikosch2004nonstationarities, smith2005level, perron2010long}. It has
+developed tests and estimators that separate the two \citep{qu2011test,
+hou2014modified} and finds that little genuine long memory survives once
+level shifts are modeled \citep{varneskov2018combining}. That literature
+concerns full-sample estimates. We document its consequence for rolling
+estimates, which are what applied work interprets, and propose a simple
 check: vary the window and see whether the turning points move with it. The
-problem is old in other sciences. Mean shifts were shown to mimic the Hurst
-phenomenon in river flows \citep{klemes1974hurst}, the separation of extreme
-events from persistence goes back to the ``Noah'' and ``Joseph'' effects of
-\citet{mandelbrot1968noah}, patchy composition mimics long-range correlation
-in DNA \citep{karlin1993patchiness}, and rolling-window indicators of
-critical slowing down and of dynamic brain connectivity have faced the same
-critique \citep{dakos2008slowing, ditlevsen2010tipping,
-boettiger2012quantifying, leonardi2015spurious}.
+problem has a long history in other sciences. Mean shifts were shown to
+mimic the Hurst phenomenon in river flows \citep{klemes1974hurst}, and the
+distinction between extreme events and persistence goes back to the
+``Noah'' and ``Joseph'' effects of \citet{mandelbrot1968noah}. Patchy
+composition mimics long-range correlation in DNA
+\citep{karlin1993patchiness}, and rolling-window indicators of critical
+slowing down and of dynamic brain connectivity have faced the same critique
+\citep{dakos2008slowing, ditlevsen2010tipping, boettiger2012quantifying,
+leonardi2015spurious}.
 
 The second literature compares implied and time-series forecasts of
 volatility \citep{christensen1998relation, fleming1998quality,
 blair2001forecasting, busch2011role} and documents a variance risk premium
-that varies with conditions \citep{bates2000post, chernov2007role,
-bekaert2014vix, andersen2015risk}. Our timing result adds a concrete pitfall
-to that comparison. The third literature asks whether volatility is rough
-\citep{gatheral2018volatility, fukasawa2022consistent, cont2024rough} and
-whether volatility forecasts create value in managed portfolios
+that varies with market conditions \citep{bates2000post, chernov2007role,
+bekaert2014vix, andersen2015risk}. Our timing result identifies a concrete
+pitfall in that comparison. The third literature asks whether volatility is
+rough \citep{gatheral2018volatility, fukasawa2022consistent, cont2024rough}
+and whether volatility forecasts create value in managed portfolios
 \citep{moreira2017volatility, cederburg2020volatility,
-barroso2021volatility}. We report both briefly: a roughness estimate of 0.06
-on daily range data is reproduced by a non-rough model with measurement
-noise, and managed portfolios built on any of our forecasts have the same
-Sharpe ratio as the equal-weighted portfolio once returns are measured in
-excess of the bill rate.
+barroso2021volatility}. We address both briefly. A roughness estimate of
+0.06 on daily range data is reproduced by a model without roughness once the
+sampling noise of the range is added, and managed portfolios built on any of
+our forecasts have the same Sharpe ratio as the equal-weighted portfolio when
+returns are measured in excess of the Treasury bill rate.
 
 The paper proceeds as follows. Section~\ref{sec:data} describes the data
 and the full-sample memory estimates. Section~\ref{sec:window} shows what
 the rolling persistence state measures. Section~\ref{sec:design} sets out
-the forecasting design and Section~\ref{sec:results} the results.
-Section~\ref{sec:robust} reports robustness checks and the portfolio
+the forecasting design, and Section~\ref{sec:results} reports the results.
+Section~\ref{sec:robust} presents robustness checks and the portfolio
 exercise, and Section~\ref{sec:discussion} discusses implications and
-limitations. The appendices collect supplementary results and the
+limitations. The appendices contain supplementary results and the
 registration record.

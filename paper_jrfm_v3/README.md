@@ -12,7 +12,7 @@ Every number in the text traces to a ledger run in `docs/EXPERIMENTS.md`: run-10
 ## For the co-authors to confirm before submission
 
 1. Author order, Hongwei Mei's affiliation, and the corresponding author (`main.tex`).
-2. Author contributions (`main.tex`).
+2. Author contributions: confirmed by Akash Deep on 2026-10-03.
 3. The generative-AI statement that MDPI requires (`main.tex`, acknowledgments).
 4. Whether to state in Appendix D that an earlier version (arXiv:2605.24285) reported larger gains, and that the corrections listed there explain the difference. Recommended, given the earlier similarity check.
 5. The cover letter should disclose the arXiv preprint.

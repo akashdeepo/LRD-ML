@@ -1,5 +1,5 @@
 \begin{table}[H]
-\caption{Does persistence add to HAR-X?}
+\caption{Incremental accuracy of the persistence specifications relative to HAR-X.}
 \label{tab:harx}
 \footnotesize
 \begin{tabularx}{\textwidth}{Xcrrrrr}
@@ -23,5 +23,5 @@ Full model $C$ & 1 & -1.00\% & -2.14$^{**}$ & +5.96$^{***}$ & 0.000 & 0.064 \\
  & 22 & -3.37\% & -2.69$^{***}$ & +6.63$^{***}$ & 0.000 & 0.018 \\
 \bottomrule
 \end{tabularx}
-\noindent{\footnotesize{\textit{Notes:} $\Delta$MSE: percentage reduction in pooled MSE relative to HAR-X (positive favours the specification). DM: panel HLN Diebold--Mariano statistic (two-sided). CW: Clark--West statistic for the nested comparison (one-sided). Holm adjusts the nine tests of the three pre-registered specifications ($^{\dagger}$) jointly and model $C$'s three tests jointly. GW: Giacomini--White conditional predictive ability test with instruments $(1, d_{t-k})$, $k=\lceil h/5\rceil$. All statistics use the cross-sectional mean loss differential per date and a Newey--West bandwidth of $\max(\lceil h/5\rceil-1,\lfloor 4(T/100)^{2/9}\rfloor)=6$.}}
+\noindent{\footnotesize{\textit{Notes:} $\Delta$MSE: percentage reduction in pooled MSE relative to HAR-X (positive favors the specification). DM: panel HLN Diebold--Mariano statistic (two-sided). CW: Clark--West statistic for the nested comparison (one-sided). Holm adjusts the nine tests of the three registered specifications ($^{\dagger}$) jointly and the three tests of model $C$ jointly. GW: Giacomini--White conditional predictive ability test with instruments $(1, \bar\delta_{t-k})$, $k=\lceil h/5\rceil$. All statistics use the cross-sectional mean loss differential per date and a Newey--West bandwidth of $\max(\lceil h/5\rceil-1,\lfloor 4(T/100)^{2/9}\rfloor)=6$.}}
 \end{table}

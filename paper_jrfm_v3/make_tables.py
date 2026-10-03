@@ -140,7 +140,7 @@ def table_harx() -> None:
              "A1sec": "HAR-X + sector state$^{\\dagger}$",
              "A1mod": "HAR-X + state $\\times$ HAR terms$^{\\dagger}$",
              "C": "Full model $C$"}
-    b = begin("Does persistence add to HAR-X?", "tab:harx", "Xcrrrrr", "\\footnotesize")
+    b = begin("Incremental accuracy of the persistence specifications relative to HAR-X.", "tab:harx", "Xcrrrrr", "\\footnotesize")
     b += ("Specification & $h$ & $\\Delta$MSE & DM & CW & CW $p$ (Holm) & GW $p$ \\\\\n\\midrule\n")
     for s, lab in names.items():
         for i, r in enumerate(df[df["spec"] == s].sort_values("h").itertuples()):
@@ -149,11 +149,11 @@ def table_harx() -> None:
                   f"{r.cw_p_holm:.3f} & {r.gw_p:.3f} \\\\\n")
         b += "\\midrule\n" if s != "C" else ""
     write("t5_harx", b + end(
-        "$\\Delta$MSE: percentage reduction in pooled MSE relative to HAR-X (positive favours the "
+        "$\\Delta$MSE: percentage reduction in pooled MSE relative to HAR-X (positive favors the "
         "specification). DM: panel HLN Diebold--Mariano statistic (two-sided). CW: Clark--West "
         "statistic for the nested comparison (one-sided). Holm adjusts the nine tests of the three "
-        "pre-registered specifications ($^{\\dagger}$) jointly and model $C$'s three tests jointly. GW: "
-        "Giacomini--White conditional predictive ability test with instruments $(1, d_{t-k})$, "
+        "registered specifications ($^{\\dagger}$) jointly and the three tests of model $C$ jointly. GW: "
+        "Giacomini--White conditional predictive ability test with instruments $(1, \\bar\\delta_{t-k})$, "
         "$k=\\lceil h/5\\rceil$. All statistics use the cross-sectional mean loss differential per date and a "
         "Newey--West bandwidth of $\\max(\\lceil h/5\\rceil-1,\\lfloor 4(T/100)^{2/9}\\rfloor)=6$."))
 
@@ -188,7 +188,7 @@ def table_designs() -> None:
             ("Duration target", d, "C vs A1 (duration target)", "Full model vs HAR-X"),
             ("Duration target", d, "A1cs vs A1 (duration target)", "HAR-X + cross-sectional state vs HAR-X"),
             ("Market level", m, "M-C vs M-A1", "Full market model vs market HAR-X")]
-    b = begin("Three designs that give persistence a better chance.", "tab:designs", "lXcrrr", "\\footnotesize")
+    b = begin("Pooled, term-structure and market-level designs.", "tab:designs", "lXcrrr", "\\footnotesize")
     b += "Design & Comparison & $h$ & $\\Delta$MSE & DM & CW $p$ (Holm) \\\\\n\\midrule\n"
     prev = None
     for design, df, comp, lab in rows:

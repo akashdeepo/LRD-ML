@@ -26,22 +26,23 @@ Lubbock, TX 79409, USA}
 \abstract{Rolling estimates of long memory in volatility rise sharply in
 crises and are often read as a time-varying state of the market. We ask
 whether this state forecasts stock volatility beyond implied volatility, and
-what it measures. For 115 S\&P~500 stocks over 2001--2026 we forecast log
+what it measures. For 115 S\&P~500 stocks over 2001--2026, we forecast log
 Parkinson variance one day, one week and one month ahead with per-stock HAR
-models, with HAR plus the VIX and MOVE indices (HAR-X), and with
+models, HAR models augmented with the VIX and MOVE indices (HAR-X), and
 specifications that add own-stock, sector and cross-sectional persistence.
-All forecasts are point-in-time, the designs were fixed before their results
-were computed, and inference combines panel Diebold--Mariano, Clark--West and
-Giacomini--White tests. Persistence never improves on HAR-X: the best gain is
-0.26\% at one week and is not significant, and the full model is
-significantly worse at one day and one month. Pooled estimation, a
-term-structure target, a market-level series and five machine-learning
-estimators agree. The reason is mechanical. The persistence state jumps when
-an extreme episode enters the estimation window and falls when it leaves,
-at dates that move one-for-one with the window length; a short-memory model
-reproduces the pattern; and the largest VIX inside the window explains 83\%
-of its variation. A one-day misalignment between HAR inputs and the VIX
-inflates the VIX's apparent forecasting gain by about a third.}
+All forecasts are point-in-time, each design was fixed before its results
+were computed, and inference combines panel Diebold--Mariano, Clark--West
+and Giacomini--White tests. Persistence never improves significantly on
+HAR-X: the largest gain, 0.26\% at one week, is not significant, and the
+full model is significantly worse at one day and one month. Pooled
+estimation, a term-structure target, a market-level series and five
+machine-learning estimators lead to the same conclusion. The persistence
+state itself is largely mechanical: it jumps when an extreme episode enters
+the estimation window and falls when the episode leaves, at dates that move
+one-for-one with the window length, and the largest VIX inside the window
+explains 83\% of its variation. A one-day misalignment between HAR inputs
+and the VIX inflates the apparent forecasting gain from the VIX by about a
+third.}
 
 \keyword{long memory; volatility forecasting; implied volatility; HAR model;
 rolling-window estimation; spurious long memory; forecast evaluation}
@@ -58,9 +59,9 @@ rolling-window estimation; spurious long memory; forecast evaluation}
 
 \vspace{6pt}
 
-\authorcontributions{CO-AUTHORS TO CONFIRM. Conceptualization, A.D., N.A.,
-H.M. and S.T.R.; methodology, A.D. and H.M.; software, A.D.; formal analysis,
-A.D.; data curation, N.A.; writing---original draft preparation, A.D.;
+\authorcontributions{Conceptualization, A.D., N.A., H.M. and S.T.R.;
+methodology, A.D. and N.A.; software, A.D.; formal analysis, A.D. and N.A.;
+data curation, N.A.; writing---original draft preparation, A.D. and N.A.;
 writing---review and editing, A.D., N.A., H.M. and S.T.R.; supervision,
 S.T.R.}
 
