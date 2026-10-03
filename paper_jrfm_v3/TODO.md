@@ -5,7 +5,7 @@ The draft (`main_draft.pdf`) is complete as it stands; nothing in the paper is a
 ## Must be settled before submitting to JRFM
 
 1. **Generative-AI statement.** MDPI requires authors to disclose generative-AI use: which tools, for which tasks, and that the authors reviewed the output and take responsibility for it. MDPI places it in the Acknowledgments. Add it to `main.tex` as `\acknowledgments{...}` after `\dataavailability{...}`, together with any other acknowledgments (for example Texas Tech University).
-2. **Author block.** Confirm the author order (currently Deep, Appiah, Mei, Rachev), Hongwei Mei's affiliation (currently the TTU Department of Mathematics and Statistics, like the others), and the corresponding author (currently Nicholas Appiah, niappiah@ttu.edu).
+2. **Author block.** Confirm the author order (currently Deep, Appiah, Mei, Rachev) and the corresponding author (currently Nicholas Appiah, niappiah@ttu.edu).
 
 ## Recommended
 
@@ -16,3 +16,4 @@ The draft (`main_draft.pdf`) is complete as it stands; nothing in the paper is a
 ## Already settled
 
 - Author contributions: confirmed by Akash Deep on 2026-10-03 and in the paper.
+- Hongwei Mei's affiliation: Department of Mathematics and Statistics, Texas Tech University (Assistant Professor), confirmed from the TTU directory on 2026-10-03; matches the paper.
