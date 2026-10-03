@@ -4,7 +4,7 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Paper](https://img.shields.io/badge/paper-JRFM%20draft%20(Oct%202026)-6f42c1.svg)](paper_jrfm_v3/main_draft.pdf)
+![Paper](https://img.shields.io/badge/paper-in%20preparation-6f42c1.svg)
 [![Cite](https://img.shields.io/badge/cite-CITATION.cff-2a78d6.svg)](CITATION.cff)
 
 <p align="center">
@@ -57,7 +57,7 @@ Model $C$ is never significantly better than HAR-X and is significantly worse at
 > Akash Deep, Nicholas Appiah, Hongwei Mei, Svetlozar T. Rachev
 > Draft for the *Journal of Risk and Financial Management*, October 2026.
 
-The current draft is in [`paper_jrfm_v3/`](paper_jrfm_v3/): MDPI class, one file per section, a draft PDF, and [`make_tables.py`](paper_jrfm_v3/make_tables.py), which builds every table and the cumulative-loss figure from the pipeline outputs so that no number in the paper is typed by hand. The September 2026 version in [`paper_jrfm/`](paper_jrfm/) predates the audit and is kept for the record. Earlier drafts from April and May 2026, under the working title *Memory, Roughness, and Information Persistence in Financial Markets*, are kept for the record in [`paper_overleaf/`](paper_overleaf/), [`paper_overleaf_v2/`](paper_overleaf_v2/) and [`paper/`](paper/). The research diary, including what changed between drafts and why, is [`PROJECT_LOG.md`](PROJECT_LOG.md).
+The manuscript is in preparation and is not included in this repository; it will be linked here once published. The code that produces every table and figure is here, and the research diary is [`PROJECT_LOG.md`](PROJECT_LOG.md).
 
 ## The forecasting ladder
 
@@ -115,7 +115,7 @@ Tables land in `results/tables/`, figures in `results/figures/`, intermediate pa
 LRD-ML/
 ├── README.md, CITATION.cff, LICENSE
 ├── PROJECT_LOG.md              research diary, session by session
-├── WORK_PLAN.md, REVISION_PLAN.tex, PHASE4_RESULTS.md, SESSION_REPORT.md
+├── WORK_PLAN.md, PHASE4_RESULTS.md, SESSION_REPORT.md
 ├── requirements.txt
 │
 ├── modules/
@@ -132,30 +132,32 @@ LRD-ML/
 │   ├── module9_robustness.py                Table 9
 │   ├── module10_plots.py                    Figures 4-8
 │   ├── module11_economic.py                 vol-managed portfolios (Table 10, Figure 9)
+│   ├── module12_incremental_tests.py        tests against HAR-X: DM, Clark-West, Giacomini-White (Table 11)
+│   ├── module13_candidates.py               pooled, term-structure and market-level designs (Table 13)
+│   ├── module14_window_inclusion.py         what the rolling state measures (Table 14, Figure 10)
+│   ├── module15_timing.py                   HAR inputs aligned vs one day stale (Table 15)
+│   ├── module16_roughness.py                roughness under a non-rough null
 │   └── _hero_animation.py, _regen_*.py      README visual and quick regeneration helpers
 │
 ├── preprocess_bloomberg.py, preprocess_supporting.py
 ├── bloomberg_pull/                          raw and processed Bloomberg data (gitignored)
 │
-├── paper_jrfm_v3/                           current JRFM draft (sections, generated tables, PDF)
-├── paper_jrfm/                              September 2026 version (pre-audit), kept for the record
-├── paper_overleaf/, paper_overleaf_v2/, paper/   earlier drafts, kept for the record
-├── docs/assets/                             README animation and still
+├── docs/                                    experiment ledger, findings, README assets
 └── results/
-    ├── tables/                              Tables 1-10 + FIGARCH
-    ├── figures/                             Figures 1-9
+    ├── tables/                              Tables 1-15 + FIGARCH
+    ├── figures/                             Figures 1-10
     └── intermediate/                        forecasts/, features/, rolling estimates (gitignored CSVs)
 ```
 
 ## Methodology notes
 
-**Persistence estimators.** Geweke–Porter-Hudak log-periodogram regression and Robinson local Whittle, bandwidth $m = \lfloor T^{0.65} \rfloor$, on a 750-day rolling window with a five-day stride, applied to the Parkinson variance series. Hurst exponents on $\log\mathrm{RV}^{PK}$ from the scaling of the $q=2$ moment of increments over lags $\{1,2,3,5,8,13,21\}$.
+**Persistence estimators.** Geweke–Porter-Hudak log-periodogram regression and Robinson local Whittle, bandwidth $m = \lfloor T^{0.65} \rfloor$, on a 750-day rolling window ending on the origin day, with a five-day stride, applied to log Parkinson variance. Hurst exponents on $\log\mathrm{RV}^{PK}$ from the scaling of the $q=2$ moment of increments over lags $\{1,2,3,5,8,13,21\}$.
 
-**Inference.** Diebold–Mariano with the Harvey–Leybourne–Newbold finite-sample correction, computed on the cross-sectional mean loss differential per date with a Newey–West HAC variance (bandwidth $\lceil h/5 \rceil - 1$ for multi-step overlap) and a Student-$t(T-1)$ reference. The naive pooled-cell DM statistic is about six times larger (+23.97 vs +3.87 for Model $C$ at $h=5$) because it ignores within-date cross-sectional dependence.
+**Inference.** Diebold–Mariano with the Harvey–Leybourne–Newbold finite-sample correction, Clark–West for linear models that nest HAR-X, and Giacomini–White conditional predictive ability tests, all computed on the cross-sectional mean loss differential per date with a Newey–West variance (bandwidth $\max(\lceil h/5\rceil - 1, \lfloor 4(T/100)^{2/9}\rfloor)$, six lags here). Holm adjustment across the registered comparisons. Every comparison uses common (date, stock) cells and one evaluation start date.
 
-**Economic evaluation.** Moreira–Muir (2017) volatility-managed portfolios with weights $c_{m,i}/\hat\sigma^2_{m,i,t}$, per-stock variance normalisation, and weekly rebalancing aligned to the forecast stride. Reported without transaction costs.
+**Economic evaluation.** Moreira–Muir (2017) volatility management applied stock by stock, with the scaling constant set in real time, positions funded at the three-month Treasury bill rate, returns in excess of it, turnover including drift, and Sharpe ratios at 0, 5 and 10 bp per unit traded.
 
-**Robustness.** The $h=5$ headline survives swapping GPH for local Whittle, 500- and 1000-day windows, a squared-returns target, and liquidity halves (+4% to +9%, HLN-DM $t > 3$). A returns-based GARCH(1,1) is far worse under MSE (−93.5%) and modestly worse under Patton's proxy-robust QLIKE (HLN-DM $t = -2.80$).
+**Robustness.** Model $C$'s gain over HAR at $h=5$ stays between +5.2% and +6.4% with local Whittle instead of GPH, 500- or 1000-day windows, and either liquidity half, and is +2.6% for a squared-returns target. A level-corrected GARCH(1,1) is 19.9% worse than HAR.
 
 **Correction (13 Sept 2026).** Earlier versions of this code divided the GPH slope by two, which is wrong for the regressor $\log[4\sin^2(\lambda_j/2)]$, so every GPH estimate reported before this date was half its true value (0.226 instead of 0.451 for the panel mean). The fix is in `module2_lrd_estimation.py`. Forecasting results are unaffected because every affected feature scales by exactly two and the estimators are scale-invariant; this was verified by re-running the linear ladder (largest change in any forecast: $10^{-10}$). Details in `PROJECT_LOG.md`.
 

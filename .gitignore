@@ -80,3 +80,11 @@ notes.txt
 
 # Private notes for the team (not for the public repo)
 paper_jrfm_v3/TODO.md
+
+# Manuscripts stay local until publication (shared with co-authors as PDF)
+paper/
+paper_jrfm/
+paper_jrfm_v3/
+paper_overleaf/
+paper_overleaf_v2/
+REVISION_PLAN.tex
