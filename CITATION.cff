@@ -1,9 +1,9 @@
 cff-version: 1.2.0
 message: "If you use this code or the results, please cite the paper below (preferred) and the repository."
-title: "LRD-ML: Volatility persistence as a financial state variable"
+title: "LRD-ML: Does volatility persistence forecast volatility?"
 type: software
-version: "2026.09"
-date-released: "2026-09-13"
+version: "2026.10"
+date-released: "2026-10-03"
 repository-code: "https://github.com/akashdeepo/LRD-ML"
 license: MIT
 authors:
@@ -13,39 +13,47 @@ authors:
   - family-names: Appiah
     given-names: Nicholas
     affiliation: "Department of Mathematics and Statistics, Texas Tech University"
+  - family-names: Mei
+    given-names: Hongwei
+    affiliation: "Department of Mathematics and Statistics, Texas Tech University"
   - family-names: Rachev
     given-names: Svetlozar T.
     affiliation: "Department of Mathematics and Statistics, Texas Tech University"
 keywords:
   - long memory
-  - rough volatility
+  - spurious long memory
+  - rolling-window estimation
   - volatility forecasting
-  - realized volatility
+  - implied volatility
   - HAR model
   - Geweke-Porter-Hudak
   - local Whittle
-  - Hurst exponent
-  - volatility-managed portfolios
+  - forecast evaluation
   - financial econometrics
   - S&P 500
 abstract: >-
-  Code, data pipeline, and manuscript for a study of whether volatility
-  persistence (rolling long-memory and roughness estimates on range-based
-  variance) carries forecasting information as a shared market state beyond
-  HAR and HAR-X benchmarks, on a panel of 115 S&P 500 stocks from November
-  2001 to April 2026. Includes GPH and local-Whittle estimation, a layered
-  forecasting ladder with panel-aware HLN-corrected Diebold-Mariano tests,
-  and Moreira-Muir volatility-managed portfolio evaluation.
+  Code, data pipeline, experiment ledger and manuscript for a study of whether
+  a persistence state built from rolling long-memory estimates of range-based
+  variance forecasts stock volatility beyond implied volatility, on 115
+  S&P 500 stocks from November 2001 to April 2026. The state adds nothing to
+  HAR-X (HAR plus VIX and MOVE) under any registered design; it is a
+  window-inclusion indicator of the largest recent volatility episode, whose
+  turning points move one-for-one with the estimation window. Includes
+  point-in-time forecasting, panel Diebold-Mariano, Clark-West and
+  Giacomini-White tests, an information-timing comparison, and
+  volatility-managed portfolio evaluation.
 preferred-citation:
   type: article
-  title: "Volatility Persistence as a Financial State Variable: Memory, Roughness, and Forecasting Across Market Regimes"
+  title: "Does Volatility Persistence Forecast Volatility? Rolling Long Memory, Crisis Windows, and Implied Volatility"
   authors:
     - family-names: Deep
       given-names: Akash
     - family-names: Appiah
       given-names: Nicholas
+    - family-names: Mei
+      given-names: Hongwei
     - family-names: Rachev
       given-names: Svetlozar T.
   year: 2026
   journal: "Journal of Risk and Financial Management"
-  notes: "Submitted September 2026. Texas Tech University working paper."
+  notes: "Draft, October 2026. Texas Tech University working paper."
