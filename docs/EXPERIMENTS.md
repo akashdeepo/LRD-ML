@@ -131,6 +131,160 @@ Predictions written before the run: HAR improves materially (audit estimate
 HAR-X stays insignificant at every horizon; managed-portfolio Sharpe
 advantages over the unmanaged portfolio shrink to near zero on excess returns.
 
+**Fourth block (written 2026-10-05, before any run; responds to the co-author
+review of 2026-10-03, which all authors agreed to on 2026-10-04).** Nothing
+here changes a registered specification. Each item adds a check, a matched
+comparison or a sensitivity analysis, and its prediction is written here first.
+
+- run-18 calendar. By horizon: last predictor date, last fully observed target
+  date, candidate origins, exclusions, common cells; training counts under the
+  embargo. No prediction (descriptive); known corrections: initial training
+  ends 10 June 2013, h=22 uses 642 origins ending 16 March 2026, 1078 = 431 +
+  646 + 1 (21 April 2026 has no target).
+- run-19 Giacomini-White with bounded estimation memory. HAR-X, A1cs, A1sec,
+  A1mod and C re-estimated with a fixed rolling window of 431 weekly rows
+  (= initial training length, so the evaluation period is unchanged); GW on
+  those forecasts with instruments (1, d_{t-k}); 260-row window as sensitivity;
+  the conditional-moment regression coefficients reported with signs; a check
+  that the instrument's target window has closed at the origin. Prediction: no
+  GW rejection in favour of a persistence specification; rolling-window gains
+  vs HAR-X within 1 percentage point of the expanding-window gains.
+- run-20 Clark-West decomposition and size. For each Table 5 row the adjusted
+  differential split into raw MSE differential and adjustment term, both HAC
+  t-statistics. Monte Carlo size: 500 panels (115 series, 646 dates) with a
+  common factor in errors (cross-sectional error correlation matched to the
+  data) and per-stock nested OLS, 11 extra regressors with zero coefficients,
+  same HAC bandwidth; nominal 5%. Prediction: the adjustment term exceeds the
+  raw differential in every rejecting row; empirical size between 5 and 15%.
+- run-21 bootstrap intervals. Circular block bootstrap over dates (block 12
+  weeks, 5000 draws) for every relative MSE reduction in Tables 4, 5 and 7;
+  95% percentile intervals. Prediction: every C-vs-HAR-X interval includes
+  zero; the h=5 upper bound is below 1.5%.
+- run-22 matched robustness. Table 8 Panel A variants with HAR-X refit on the
+  same target, sample and cells; report C minus HAR-X with a bootstrap
+  interval. Prediction: C vs HAR-X within [-1.5%, +1.5%] in every variant.
+- run-23 memory-estimation checks. (a) Rolling GPH cross-sectional mean at
+  bandwidth exponents 0.5, 0.6, 0.7 (W=750): correlation with the 0.65 series
+  and the 2020 exit signature. (b) Validation test: GPH and local Whittle on
+  ARFIMA(0,d,0), d in {0, 0.2, 0.4}, T=750, 200 replications; mean within 0.05
+  of d. (c) Missing days: rolling GPH with linear interpolation of log variance
+  over missing days vs dropping them; correlation of the two state series.
+  Prediction: correlations above 0.95 in (a) and (c); (b) passes.
+- run-24 window analysis additions. ARFIMA(0,d,0) null with d = median calm-
+  period (2012-2019) local Whittle estimate, same innovation variance, same
+  2020 episode injected, 200 paths; 5-95% bands for both nulls; all three
+  events; R^2 of the state on trailing-W max VIX vs mean VIX, 90th percentile
+  VIX, and episode length (days with VIX > 30 in the window). Prediction: the
+  long-memory null also shows entry at tau and exit at tau+W; max VIX keeps the
+  highest R^2 but the 90th percentile is within 0.05 of it.
+- run-25 portfolios. Execution one day after the signal (weights from close t
+  applied from close t+1); costs charged to equal weight too; leverage cap 2
+  as sensitivity; T-bill conversion documented; leverage and exposure
+  distributions reported. Total returns when the Bloomberg pull arrives.
+  Prediction: full-sample Sharpe ratios change by less than 0.05; no
+  significant difference appears.
+- run-26 timing variants. HAR-X with VIX and MOVE lagged one day (strict 4 pm
+  cutoff) vs aligned HAR; attribution to the joint VIX+MOVE block.
+  Prediction: HAR-X's gain over HAR with lagged indices falls below the
+  aligned gain by between 0.5 and 2 points at h=1.
+- run-27 roughness sensitivity. Range-noise simulation at 390, 1560, 6240
+  steps per day; theoretical variance of log(R^2) for the continuous range.
+  Prediction: simulated H on the observed series moves by less than 0.01.
+- run-28 sample record and balanced subsample. Selection trail from the raw
+  pull (125 pulled, 115 kept, 107 with complete history); C vs HAR-X and HAR-X
+  vs HAR on the 107-stock balanced panel. Prediction: gains within 0.5 points
+  of the full-panel values.
+- run-29 no-Hurst variant of C (16 predictors) at h=1, 5, 22 vs HAR-X.
+  Prediction: within 0.3 points of C.
+- run-30 (held for an overnight run) ML feature ablations: each learner on
+  HAR-X's 7 predictors vs the 18, identical tuning, splits, refits and cells;
+  scaling inside each CV fold; random forest tuned (LightGBM rf mode: leaves,
+  min leaf, feature fraction by time-series CV). Prediction: for every learner
+  the 18-predictor version is no better than the 7-predictor version at any
+  horizon.
+
+---
+
+## 2026-10-05  run-22, run-28, run-29  Matched robustness, balanced panel, no-Hurst variant (module 19)
+- Result run-22 (C vs HAR-X at h=5, gain, DM t, 95% block-bootstrap interval):
+  headline +0.26% (0.41) [-0.95, +1.39]; less liquid half +0.43% (0.62)
+  [-0.90, +1.70]; more liquid half +0.08% (0.13) [-1.10, +1.22]; local Whittle
+  +0.46% (0.63) [-1.01, +1.82]; window 500 -0.23% (-0.30) [-1.78, +1.32];
+  window 1000 +0.69% (0.75) [-1.17, +2.33]; squared-return target, HAR-X
+  refit on that target, -0.78% (-1.91) [-1.54, -0.04].
+- Result run-28 (balanced 107-stock panel vs all 115): HAR-X vs HAR
+  3.19 / 5.64 / 1.78% (was 3.11 / 5.54 / 1.77); C vs HAR-X -0.92 / +0.32 /
+  -3.15% (was -1.00 / +0.26 / -3.37).
+- Result run-29 (C without the two Hurst features, 16 predictors, vs HAR-X):
+  -0.68 / +0.21 / -2.81% (DM -1.50 / 0.36 / -2.56) against C's -1.00 / +0.26
+  / -3.37%.
+- Verdict: KEEP. All predictions held (run-29 at h=22 differs by 0.55 points,
+  above the 0.3 predicted, in the direction of a smaller loss). Table 8 Panel
+  A is replaced by the matched comparison: no variant gives model C a
+  significant gain over HAR-X; the squared-return target gives a significant
+  loss at the 10% level.
+- Cost: 50 minutes.
+- Lesson: the matched comparison is the one the claim needs; "gain of the
+  same order as HAR-X's" was not evidence about persistence.
+
+---
+
+## 2026-10-05  run-19  Giacomini-White with bounded estimation memory (module 18)
+- Result (rolling window 431 weekly rows; gain vs rolling HAR-X, DM t, GW p,
+  sign of the conditional-moment intercept): A1cs -0.38 / -0.50 / -4.61%
+  (t -1.01 / -0.70 / -2.43; GW p 0.48 / 0.33 / 0.048); A1sec -0.08 / -0.15 /
+  -2.85% (GW p 0.65 / 0.94 / 0.024); A1mod -1.08 / -1.46 / -7.38% (GW p
+  0.085 / 0.12 / 0.010); C -2.88 / -1.46 / -13.57% (DM -4.80 / -1.58 / -4.97;
+  GW p <0.001 / 0.16 / <0.001). Every GW rejection has a negative intercept
+  (the persistence model loses on average) and no significant slope on the
+  lagged differential except A1mod at h=22 (t 1.84). Instrument lag 5 / 5 / 25
+  trading days, so the instrument's target window is closed at every origin.
+  Window 260: all specifications worse than rolling HAR-X, C by -7.1 / -5.7 /
+  -42.6% (18 predictors on 260 rows), A1mod -59.6% at h=22.
+- Verdict: KEEP, prediction half-held. No GW rejection favours persistence
+  (held). The gains are NOT within 1 point of the expanding-window gains for C
+  (expanding -1.00 / +0.26 / -3.37%): with bounded memory the richer models
+  lose more, so the expanding-window numbers are the persistence
+  specifications' best case. Reported as such; the expanding-window GW
+  p-values in Table 5 are kept with the caveat that their justification is
+  the rolling-window version.
+- Cost: 22 minutes.
+- Lesson: the persistence specifications' small expanding-window losses rest
+  on long estimation samples; shorten the window and estimation noise
+  dominates.
+
+---
+
+## 2026-10-05  run-18, run-20, run-21  Calendar, Clark-West decomposition and size, bootstrap intervals (module 17)
+- Result run-18 (results/intermediate/calendar_report.csv): 6136 trading days
+  to 21 Apr 2026; 1078 weekly origins (22 Nov 2004 to 21 Apr 2026); initial
+  training 431 origins ending 10 Jun 2013; evaluation from 17 Jun 2013 on 646
+  origins to 14 Apr 2026 at h=1, 5 and 642 origins to 16 Mar 2026 at h=22;
+  excluded for no observed target: 1 / 1 / 5 origins; common HAR/HAR-X cells
+  74,290 / 74,290 / 73,830. Embargo at h=22 drops the last 4 training rows
+  (JPM: 427 training rows at the first evaluation origin, 1068 at the last).
+- Result run-20: in every Clark-West row the adjustment term exceeds the raw
+  MSE differential (adjustment share 0.96 to 4.45); the raw differential is
+  negative in 12 of 15 rows (HAC t from -2.71 to +0.41) while the adjustment
+  term has t of 7.8 to 18.0. Monte Carlo size of the panel CW test under the
+  null (common error factor, cross-sectional error correlation 0.216 as in the
+  data, 11 extra zero-coefficient regressors, per-stock expanding OLS): 5.2%
+  at nominal 5% (one-sided) at both bandwidth settings.
+- Result run-21 (block 12, 5000 draws): C vs HAR-X 95% intervals h=1/5/22
+  [-1.84, -0.17], [-0.93, +1.39], [-5.89, -0.97]; A1cs [-0.65, +0.52],
+  [-0.90, +0.86], [-4.01, +0.10]; A1sec and A1mod include zero at h=1, 5 and
+  are at or below zero at h=22; HAR-X vs HAR [2.19, 4.09], [3.87, 7.18],
+  [-2.21, 5.23]; every ML row vs HAR-X has an interval entirely below zero.
+- Verdict: KEEP. run-20 prediction held (adjustment dominates; size 5.2% is
+  inside 5-15%). run-21 predictions held (C vs HAR-X includes zero only at
+  h=5, upper bound 1.39 < 1.5). The CW rejections are therefore not a size
+  problem: the test is correctly sized and rejects because the adjustment term
+  (the squared forecast difference) is large, i.e. the extra coefficients are
+  nonzero in population, while the realised loss does not improve.
+- Cost: 4 minutes.
+- Lesson: report CW together with its decomposition; on its own it reads as
+  evidence of forecast improvement that the raw differential contradicts.
+
 ---
 
 ## 2026-10-02  run-17  Roughness null, made reproducible (module 16; for the JRFM appendix)

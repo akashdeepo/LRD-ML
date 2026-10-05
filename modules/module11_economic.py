@@ -71,18 +71,18 @@ ORDER = [UNMANAGED, "HAR-managed", "HAR-X-managed", NAIVE, "C-managed", C_FULL]
 
 
 # ------------------------------------------------------------------ inputs
-def five_day_simple_returns(bundle, sample_dates: pd.DatetimeIndex) -> pd.DataFrame:
-    """Simple return of each stock over trading days t+1..t+5, from raw
-    (unwinsorised) log returns. A window with no observed return is NaN
-    (the old code summed it to zero)."""
+def five_day_simple_returns(bundle, sample_dates: pd.DatetimeIndex, lag: int = 0) -> pd.DataFrame:
+    """Simple return of each stock over trading days t+1+lag..t+5+lag, from raw
+    (unwinsorised) log returns. lag=1 executes one day after the signal
+    (run-25). A window with no observed return is NaN."""
     lr = bundle.returns_raw
     pos = lr.index.get_indexer(sample_dates)
     arr = lr.values
     out = np.full((len(sample_dates), lr.shape[1]), np.nan)
     for k, p in enumerate(pos):
-        if p < 0 or p + H >= len(lr.index):
+        if p < 0 or p + lag + H >= len(lr.index):
             continue
-        block = arr[p + 1: p + 1 + H, :]
+        block = arr[p + 1 + lag: p + 1 + lag + H, :]
         ok = ~np.isnan(block).all(axis=0)
         out[k, ok] = np.expm1(np.nansum(block[:, ok], axis=0))
     return pd.DataFrame(out, index=sample_dates, columns=lr.columns)
@@ -108,11 +108,13 @@ def realtime_constant(x: pd.DataFrame, raw: pd.DataFrame) -> pd.DataFrame:
 
 
 # ------------------------------------------------------------------ build
-def build_portfolios(bundle) -> tuple[pd.DataFrame, dict]:
+def build_portfolios(bundle, exec_lag: int = 0, cap: float | None = None) -> tuple[pd.DataFrame, dict]:
     """Weekly EXCESS returns of every portfolio on common cells, plus
-    diagnostics (weights, turnover, total returns)."""
+    diagnostics (weights, turnover, total returns). exec_lag: trading days
+    between the signal (close of t) and execution; cap: upper bound on the
+    per-stock position multiplier (run-25 sensitivity)."""
     sd = bundle.sample_dates
-    R = five_day_simple_returns(bundle, sd)
+    R = five_day_simple_returns(bundle, sd, lag=exec_lag)
     rf = weekly_riskfree(bundle, sd)
     X = R.sub(rf, axis=0)
 
@@ -134,10 +136,14 @@ def build_portfolios(bundle) -> tuple[pd.DataFrame, dict]:
         raw = X / v
         c = realtime_constant(X, raw)
         weights[key] = (c / v).where(cell)
+        if cap is not None:
+            weights[key] = weights[key].clip(upper=cap)
     yhC = s2["C"]
     raw = X / yhC
     c_full = X.std() / raw.std()
     weights["C_full"] = (1.0 / yhC).mul(c_full, axis=1).where(cell)
+    if cap is not None:
+        weights["C_full"] = weights["C_full"].clip(upper=cap)
 
     # evaluation weeks: every managed weight defined for at least one stock
     live = pd.Series(True, index=sd)
