@@ -1089,9 +1089,10 @@ follows input order) added; figures refreshed.
 
 **Context.** Rachev and Dr. Hongwei Mei (now third author) asked for a
 25-page rewrite.
-Before rewriting, the whole pipeline was audited from first principles by
-three independent reviewers (data/estimation, forecasting/evaluation,
-portfolios/manuscript) plus targeted diagnostics. Register, fixes, before/after
+Before rewriting, the whole pipeline was audited from first principles in
+three AI-assisted review passes (data/estimation, forecasting/evaluation,
+portfolios/manuscript) plus targeted diagnostics, all checked and rerun by
+the author; no independent human validation is claimed. Register, fixes, before/after
 and findings live in the shared audit doc "LRD-ML Full Audit: Errors, Fixes,
 Re-runs, Findings"; the ledger has run-10 (pre-registered corrected run) and
 run-11 (exploratory).
@@ -1140,4 +1141,23 @@ the draft: HAR-X beats HAR on 97% of stocks at h=5 (not 99%), C on 93% (not
 **Pending.** Framing decision for the 25-page paper (null with mechanism vs
 crisis memory) is with Rachev and Mei.
 
-*Last updated: 2026-10-02*
+
+
+## Session: 2026-10-05 — Review-response analyses (ledger runs 18-29)
+
+Co-author review of 3 Oct answered with eleven new checks, each registered
+with a prediction before it ran (fourth ledger block). Held: calendar
+report; Clark-West decomposition (adjustment term dominates; size 5.2%);
+bootstrap intervals; matched robustness (C vs HAR-X within ±1.5% in every
+variant); balanced 107-stock panel; no-Hurst variant; bandwidth and
+missing-day sensitivity; estimator validation; strict information cutoff;
+roughness discretization. Did not hold, and changed the paper: with a fixed
+431-week estimation window every persistence specification loses to HAR-X
+and every Giacomini-White rejection goes against it (finding #23); with
+next-day execution the managed portfolios' Sharpe ratios fall from 0.76 to
+0.58 while equal weight falls to 0.72 (finding #22). A long-memory null
+reproduces the window-inclusion signature as well as the short-memory null
+(finding #21). ML feature ablation (module 23, run-30) coded and held for an
+overnight run. New modules 17-23; 21 tests pass.
+
+*Last updated: 2026-10-05*
