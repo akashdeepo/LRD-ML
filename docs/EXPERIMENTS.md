@@ -205,6 +205,84 @@ comparison or a sensitivity analysis, and its prediction is written here first.
 
 ---
 
+## 2026-10-05  run-23, run-24  Memory-estimation checks and window-analysis additions (module 20)
+- Result run-24a (long-memory null: ARFIMA(0, 0.356, 0), d = median calm-period
+  local Whittle estimate, innovation sd 0.732 matching the calm variance; same
+  2020 episode; 200 paths): baseline / plateau / after-exit 0.365 / 0.474 /
+  0.403 at W=750 (rise +0.108; ARMA null +0.130; observed +0.186); largest
+  fall at day W+9 for every W, as for the ARMA null; 5-95% plateau band at
+  W=750 [0.34, 0.59] (ARMA [0.41, 0.64]); observed plateau 0.571 lies inside
+  both. Both nulls end above their pre-event level (ARFIMA +0.04, ARMA +0.07),
+  whereas the data end below (0.327 vs 0.385): neither null reproduces the
+  post-exit level.
+- Result run-24b (R^2 of the W=750 state on window summaries of the VIX):
+  max 0.83, 90th percentile 0.66, days above 30 0.64, mean 0.57, current 0.27.
+- Result run-23a (bandwidth m = T^p at W=750, correlation with p=0.65; 2020
+  entry / exit change): p=0.5 (m=27) 0.946, -0.04 / -0.07; p=0.6 (m=53) 0.993,
+  +0.12 / -0.12; p=0.7 (m=102) 0.992, +0.13 / -0.10. Mean level falls from
+  0.51 to 0.40 as m rises.
+- Result run-23b (ARFIMA(0,d,0), T=750, 200 reps): GPH mean -0.003 / 0.205 /
+  0.401 (sd 0.07-0.08), local Whittle -0.006 / 0.201 / 0.398 (sd 0.06-0.07)
+  for d = 0 / 0.2 / 0.4.
+- Result run-23c: inside-history missing days are 153 of 705,640 (144 zero
+  ranges); all other gaps precede a stock's listing. Interpolating them leaves
+  the state unchanged to three decimals (correlation 1.000).
+- Verdict: KEEP. Predictions held except two: the 90th-percentile VIX is not
+  within 0.05 of the maximum's R^2 (0.66 vs 0.83; the maximum is the best
+  summary by a wide margin), and the p=0.5 bandwidth correlates 0.946, just
+  below 0.95, with a much weaker 2020 signature (m=27 ordinates is too few).
+  The main finding is unchanged: a process WITH long memory plus the episode
+  produces the same entry-plateau-exit pattern, so the pattern is evidence
+  about episodes, not about whether the baseline has long memory. The paper
+  will say exactly that (review point 9). Finding #21.
+- Cost: 25 minutes.
+- Lesson: state the window length in trading days and the minimum number of
+  valid observations (250); the missing-day question had a one-line answer.
+
+## 2026-10-05  run-25  Portfolio implementation variants (module 21)
+- Result (full-sample Sharpe, baseline / next-day execution / cap 2 / both):
+  equal weight 0.76 / 0.72 / 0.76 / 0.72; HAR 0.75 / 0.59 / 0.74 / 0.59;
+  HAR-X 0.76 / 0.58 / 0.76 / 0.58; trailing-22d 0.76 / 0.64 / 0.76 / 0.64;
+  C 0.76 / 0.58 / 0.75 / 0.57. With next-day execution every managed
+  portfolio is below equal weight by 0.02 (C vs EW: HAC p 0.26, bootstrap
+  0.28) and C vs HAR-X is -0.001 (p 0.78). Maximum drawdowns are unchanged
+  by execution timing (managed -0.15 to -0.17 vs EW -0.30). The cap of 2
+  binds for the top 1% of positions and changes Sharpe ratios by at most
+  0.006. Equal weight turns over 1.1x a year, so 10 bp costs 0.007 of Sharpe.
+- Verdict: KEEP; prediction FAILED for execution timing. Moving execution to
+  the day after the signal removes the managed portfolios' Sharpe advantage
+  entirely (0.76 -> 0.58 while equal weight moves 0.76 -> 0.72): the
+  variance signal's value is concentrated in the first day after the close.
+  The paper's portfolio conclusion becomes: no detected Sharpe improvement
+  under same-close execution, and a Sharpe disadvantage (not significant)
+  under feasible next-day execution; drawdown reduction is robust to both.
+  Finding #22.
+- Cost: 3 minutes.
+- Lesson: an execution lag of one day is not a detail for a volatility-timing
+  strategy; report it as the headline implementation.
+
+## 2026-10-05  run-26  Strict information cutoff (module 22)
+- Result (HAR-X with VIX and MOVE lagged one trading day, vs aligned HAR):
+  +2.18 / +4.15 / +1.25% (DM 4.71 / 4.67 / 0.67) against +3.11 / +5.54 /
+  +1.77% with same-day indices; the same-day indices add 0.95 / 1.46 / 0.53%
+  over the lagged ones (DM 3.45 / 4.06 / 1.84).
+- Verdict: KEEP, prediction held (0.93 points at h=1, inside 0.5-2). Under
+  the most conservative cutoff implied volatility still improves on HAR
+  significantly at h=1 and 5; the paper reports both cutoffs and states the
+  denominator: the stale-HAR gain (5.11%) exceeds the aligned gain (3.11%) by
+  64%, i.e. 39% of the stale gain is timing.
+- Cost: 3 minutes.
+
+## 2026-10-05  run-27  Roughness discretization (module 22)
+- Result: range-noise variance 0.356 / 0.342 / 0.334 and simulated H on the
+  observed series 0.064 / 0.065 / 0.068 (sd 0.004) at 390 / 1560 / 6240
+  steps per day, latent model fixed at the run-17 fit.
+- Verdict: KEEP, prediction held (change < 0.01). The appendix reports the
+  390-step value with the finer-grid range.
+- Cost: 5 minutes.
+
+---
+
 ## 2026-10-05  run-22, run-28, run-29  Matched robustness, balanced panel, no-Hurst variant (module 19)
 - Result run-22 (C vs HAR-X at h=5, gain, DM t, 95% block-bootstrap interval):
   headline +0.26% (0.41) [-0.95, +1.39]; less liquid half +0.43% (0.62)

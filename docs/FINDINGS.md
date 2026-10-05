@@ -126,3 +126,26 @@ data, with the 2020 episode injected, reproduces the calm level of d-hat
 (0.40 vs 0.385), 53-69% of the rise and the exit at tau+W. A one-day spike
 (Flash Crash) barely moves it: duration, not peak, drives the state. From
 run-14. Supersedes the ad hoc evidence behind #14.
+
+#21 (2026-10-05): A process WITH long memory (ARFIMA, d = 0.36 from calm
+years) plus the 2020 episode produces the same entry-plateau-exit pattern as
+the short-memory null (rise +0.11 vs +0.13 vs observed +0.19 at W = 750;
+largest fall at day W + 9 for both). The rolling state's crisis signature is
+therefore evidence about episodes passing through the window, not about
+whether the baseline process has long memory; neither null reproduces the
+post-exit level (data end below the pre-event level, nulls above). Max VIX in
+the window remains the best single summary (R^2 0.83 vs 0.66 for the 90th
+percentile). From run-24.
+
+#22 (2026-10-05): The managed portfolios' Sharpe parity with equal weight
+depends on same-close execution. Executing one trading day after the signal
+lowers every managed Sharpe from 0.76 to 0.58 while equal weight moves from
+0.76 to 0.72; managed portfolios are then 0.02 below equal weight (p about
+0.26). Drawdown reduction (-0.16 vs -0.30) survives either timing. From
+run-25.
+
+#23 (2026-10-05): With a fixed 431-week estimation window the persistence
+specifications lose more to HAR-X than with expanding windows (C: -2.9 /
+-1.5 / -13.6% vs -1.0 / +0.3 / -3.4%), and every Giacomini-White rejection
+goes against them. The expanding-window results are the persistence
+specifications' best case. From run-19.
