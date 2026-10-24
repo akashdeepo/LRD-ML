@@ -2,7 +2,7 @@
 # LRD-ML Project .gitignore
 # =============================================================================
 
-# Claude Code artifacts
+# Local editor and assistant artifacts
 .claude/
 nul
 
