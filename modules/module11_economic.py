@@ -6,8 +6,10 @@ the weekly forecast stride (h = 5). Rewritten 2026-10-02 after the audit
 (issues I2, I5, I6, I26 in the audit doc; docs/EXPERIMENTS.md third block).
 
 Construction, for stock i and weekly origin t:
-    R_{i,t}      = simple return over trading days t+1..t+5 (price returns:
-                   closes are split- but not dividend-adjusted)
+    R_{i,t}      = simple return over trading days t+1..t+5 (total returns,
+                   gross dividends reinvested, from Bloomberg's
+                   TOT_RETURN_INDEX_GROSS_DVDS since 2026-10-22; the price-
+                   return version is a module-21 variant)
     rf_t         = 3-month T-bill (USGG3M) compounded over 5 trading days
     x_{i,t}      = R_{i,t} - rf_t                      (excess return)
     s2_{m,i,t}   = exp(yhat_{m,i,t}), model m's forecast of mean daily
@@ -71,11 +73,13 @@ ORDER = [UNMANAGED, "HAR-managed", "HAR-X-managed", NAIVE, "C-managed", C_FULL]
 
 
 # ------------------------------------------------------------------ inputs
-def five_day_simple_returns(bundle, sample_dates: pd.DatetimeIndex, lag: int = 0) -> pd.DataFrame:
+def five_day_simple_returns(bundle, sample_dates: pd.DatetimeIndex, lag: int = 0,
+                            total: bool = True) -> pd.DataFrame:
     """Simple return of each stock over trading days t+1+lag..t+5+lag, from raw
-    (unwinsorised) log returns. lag=1 executes one day after the signal
-    (run-25). A window with no observed return is NaN."""
-    lr = bundle.returns_raw
+    (unwinsorised) log total returns, or log price returns when total=False.
+    lag=1 executes one day after the signal (run-25). A window with no
+    observed return is NaN."""
+    lr = bundle.panel.returns_total if total else bundle.returns_raw
     pos = lr.index.get_indexer(sample_dates)
     arr = lr.values
     out = np.full((len(sample_dates), lr.shape[1]), np.nan)
@@ -108,13 +112,15 @@ def realtime_constant(x: pd.DataFrame, raw: pd.DataFrame) -> pd.DataFrame:
 
 
 # ------------------------------------------------------------------ build
-def build_portfolios(bundle, exec_lag: int = 0, cap: float | None = None) -> tuple[pd.DataFrame, dict]:
+def build_portfolios(bundle, exec_lag: int = 0, cap: float | None = None,
+                     total_returns: bool = True) -> tuple[pd.DataFrame, dict]:
     """Weekly EXCESS returns of every portfolio on common cells, plus
     diagnostics (weights, turnover, total returns). exec_lag: trading days
     between the signal (close of t) and execution; cap: upper bound on the
-    per-stock position multiplier (run-25 sensitivity)."""
+    per-stock position multiplier (run-25 sensitivity); total_returns=False
+    uses price returns (the basis of runs 10 to 25)."""
     sd = bundle.sample_dates
-    R = five_day_simple_returns(bundle, sd, lag=exec_lag)
+    R = five_day_simple_returns(bundle, sd, lag=exec_lag, total=total_returns)
     rf = weekly_riskfree(bundle, sd)
     X = R.sub(rf, axis=0)
 
@@ -238,7 +244,7 @@ def main() -> None:
 
     # ---- Table 10
     with open(TABLES_DIR / "table10_volmanaged.tex", "w", encoding="utf-8") as f:
-        f.write("% Table 10: volatility-managed portfolios on excess returns (audit rewrite 2026-10-02)\n\n")
+        f.write("% Table 10: volatility-managed portfolios on excess returns (audit rewrite 2026-10-02; total returns 2026-10-22)\n\n")
         f.write("\\begin{table}[htbp]\n\\centering\n")
         f.write("\\caption{Volatility-Managed Portfolios: Excess-Return Performance}\n")
         f.write("\\label{tab:volmanaged}\n\\small\n\\begin{tabular}{llccccc}\n\\toprule\n")
@@ -256,8 +262,8 @@ def main() -> None:
                 "(52-week warm-up); the unlevered remainder earns the bill rate. The trailing-22d-RV benchmark "
                 "uses the mean Parkinson variance over the last 22 trading days as its variance forecast and no "
                 "model. All portfolios use the same (date, stock) cells. Maximum drawdown is on total-return "
-                "wealth; CER is for a mean--variance investor with $\\gamma=5$. Prices are split- but not "
-                "dividend-adjusted. VIX quartiles over the out-of-sample forecast dates.\n")
+                "wealth; CER is for a mean--variance investor with $\\gamma=5$. Returns include gross "
+                "dividends (Bloomberg total return index). VIX quartiles over the out-of-sample forecast dates.\n")
         f.write("\\end{tablenotes}\n\\end{table}\n")
 
     with open(TABLES_DIR / "table10b_costs.tex", "w", encoding="utf-8") as f:

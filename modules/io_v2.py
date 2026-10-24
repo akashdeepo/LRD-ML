@@ -7,12 +7,13 @@ are computed once, consistently.
 
 Inputs (under bloomberg_pull/processed/):
   prices_close.csv, prices_open.csv, prices_high.csv, prices_low.csv,
-  volume.csv, mktcap.csv, rv_parkinson.csv, metadata.csv,
-  market_level.csv, sector_etf_close.csv (and other ETF fields).
+  volume.csv, mktcap.csv, tot_return_index.csv, rv_parkinson.csv,
+  metadata.csv, market_level.csv, sector_etf_close.csv (and other ETF fields).
 
 Outputs (cached under bloomberg_pull/processed/clean_panel/):
-  returns.csv, log_rv.csv, prices_close.csv, prices_high.csv, prices_low.csv,
-  rv_parkinson.csv, market.csv, metadata.csv, kept_tickers.txt
+  returns.csv, returns_raw.csv, returns_total.csv, log_rv.csv,
+  prices_close.csv, prices_high.csv, prices_low.csv, rv_parkinson.csv,
+  market.csv, metadata.csv, kept_tickers.txt
 """
 
 from __future__ import annotations
@@ -37,7 +38,8 @@ class Panel:
     high: pd.DataFrame        # daily high
     low: pd.DataFrame         # daily low
     returns: pd.DataFrame     # log returns, winsorised point-in-time (features)
-    returns_raw: pd.DataFrame # raw log returns (portfolio exercise)
+    returns_raw: pd.DataFrame # raw log price returns (portfolio variant)
+    returns_total: pd.DataFrame  # raw log total returns, gross dividends reinvested (portfolio exercise)
     rv_parkinson: pd.DataFrame  # range-based RV (variance scale)
     log_rv: pd.DataFrame      # log of (rv_parkinson + tiny floor)
     market: pd.DataFrame      # market_level columns + VIX
@@ -97,6 +99,7 @@ def build_clean_panel(force: bool = False) -> Panel:
     high = pd.read_csv(RAW / "prices_high.csv", index_col=0, parse_dates=True)
     low = pd.read_csv(RAW / "prices_low.csv", index_col=0, parse_dates=True)
     rv_pk = pd.read_csv(RAW / "rv_parkinson.csv", index_col=0, parse_dates=True)
+    tri = pd.read_csv(RAW / "tot_return_index.csv", index_col=0, parse_dates=True)
     mkt = pd.read_csv(RAW / "market_level.csv", index_col=0, parse_dates=True)
     meta = pd.read_csv(RAW / "metadata.csv")
 
@@ -125,6 +128,15 @@ def build_clean_panel(force: bool = False) -> Panel:
     returns_raw = _patch_special_dividends(np.log(prices / prices.shift(1)), prices)
     returns = _winsorize_pit(returns_raw, WINSOR_LOWER, WINSOR_UPPER)
 
+    # Total returns from Bloomberg's gross total return index (dividends
+    # reinvested, so no special-dividend patch), same formula and calendar as
+    # the price returns; the portfolio exercise uses these from 2026-10-22
+    missing_tr = sorted(set(kept) - set(tri.columns))
+    assert not missing_tr, f"total return index missing for {missing_tr}"
+    assert tri.index.equals(prices.index), "total return index calendar differs from the price calendar"
+    tri = tri[kept]
+    returns_total = np.log(tri / tri.shift(1))
+
     # Log variance: zero-range and missing days are NaN (audit I4; the old
     # code mapped both to a log floor of about -17.5)
     log_rv = log_variance(rv_pk)
@@ -141,13 +153,14 @@ def build_clean_panel(force: bool = False) -> Panel:
     low.to_csv(CLEAN / "prices_low.csv")
     returns.to_csv(CLEAN / "returns.csv")
     returns_raw.to_csv(CLEAN / "returns_raw.csv")
+    returns_total.to_csv(CLEAN / "returns_total.csv")
     rv_pk.to_csv(CLEAN / "rv_parkinson.csv")
     log_rv.to_csv(CLEAN / "log_rv.csv")
     market.to_csv(CLEAN / "market.csv")
     meta.to_csv(CLEAN / "metadata.csv", index=False)
     (CLEAN / "kept_tickers.txt").write_text("\n".join(kept))
 
-    return Panel(prices, high, low, returns, returns_raw, rv_pk, log_rv, market, meta, kept)
+    return Panel(prices, high, low, returns, returns_raw, returns_total, rv_pk, log_rv, market, meta, kept)
 
 
 def load_clean_panel() -> Panel:
@@ -159,12 +172,16 @@ def load_clean_panel() -> Panel:
         returns_raw = pd.read_csv(CLEAN / "returns_raw.csv", index_col=0, parse_dates=True)
     else:
         raise FileNotFoundError("returns_raw.csv missing: rebuild with build_clean_panel(force=True)")
+    if (CLEAN / "returns_total.csv").exists():
+        returns_total = pd.read_csv(CLEAN / "returns_total.csv", index_col=0, parse_dates=True)
+    else:
+        raise FileNotFoundError("returns_total.csv missing: rebuild with build_clean_panel(force=True)")
     rv_pk = pd.read_csv(CLEAN / "rv_parkinson.csv", index_col=0, parse_dates=True)
     log_rv = pd.read_csv(CLEAN / "log_rv.csv", index_col=0, parse_dates=True)
     market = pd.read_csv(CLEAN / "market.csv", index_col=0, parse_dates=True)
     meta = pd.read_csv(CLEAN / "metadata.csv")
     kept = (CLEAN / "kept_tickers.txt").read_text().splitlines()
-    return Panel(prices, high, low, returns, returns_raw, rv_pk, log_rv, market, meta, kept)
+    return Panel(prices, high, low, returns, returns_raw, returns_total, rv_pk, log_rv, market, meta, kept)
 
 
 def sector_map(meta: pd.DataFrame) -> dict:

@@ -24,6 +24,7 @@ Outputs (results/intermediate/forecasts/):
 
 from __future__ import annotations
 
+import os
 import warnings
 from pathlib import Path
 
@@ -61,7 +62,10 @@ GBM_BASE = dict(
 # 400 trees x 31 leaves overfit the 430-1,100 rows available per stock).
 GBM_GRID = [dict(num_leaves=nl, min_data_in_leaf=ml) for nl in (2, 4, 15) for ml in (20, 50)]
 GBM_TREES = (25, 50, 100, 200, 400, 800)
-STOCK_JOBS = 12               # stocks fitted in parallel for gradient boosting
+# stocks fitted in parallel for gradient boosting; LRDML_JOBS overrides on
+# machines with fewer cores (Kaggle: 4). Parallelism across stocks does not
+# change any fit, every stock is seeded on its own.
+STOCK_JOBS = int(os.environ.get("LRDML_JOBS", 12))
 
 
 # ------------------------------------------------------------------ estimators
@@ -136,6 +140,15 @@ NEEDS_SCALING = {"lasso", "ridge", "en"}
 PARALLEL_STOCKS = {"gbm"}     # single-threaded fits; the others parallelise internally or are fast
 
 
+def estimator_factory(estimator_name: str):
+    """Look up an estimator by name. Module 23 registers its learners here at
+    import time; a joblib worker process imports this module afresh and lacks
+    them, so an unknown name triggers that import before the lookup."""
+    if estimator_name not in ESTIMATORS:
+        from modules import module23_ml_ablation  # noqa: F401  (registers on import)
+    return ESTIMATORS[estimator_name]
+
+
 # ------------------------------------------------------------------ walk-forward
 def walk_forward(X: pd.DataFrame, y: pd.Series, init_date,
                  estimator_name: str, h: int, full_index: pd.DatetimeIndex,
@@ -163,7 +176,7 @@ def walk_forward(X: pd.DataFrame, y: pd.Series, init_date,
                 X_train_s = scaler.transform(X_train)
             else:
                 X_train_s = X_train
-            model = ESTIMATORS[estimator_name](h)
+            model = estimator_factory(estimator_name)(h)
             model.fit(X_train_s, y_train)
             last_fit_t = t
 

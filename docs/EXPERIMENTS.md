@@ -203,6 +203,175 @@ comparison or a sensitivity analysis, and its prediction is written here first.
   the 18-predictor version is no better than the 7-predictor version at any
   horizon.
 
+**Fifth block (written 2026-10-22, before any run; the Bloomberg files
+requested on 2026-10-04 arrived on 2026-10-07: OHLCV.xlsx with a genuine
+AAPL sheet, TOT_RET_GROSS_DVD.xlsx, IPO_Date.xlsx).** Historical S&P 500
+membership, the MOVE publication time and the selection rule did not arrive
+and stay disclosed. Two variables, two runs.
+
+- run-31 data refresh. AAPL from Bloomberg instead of yfinance (the April
+  sheet held Advance Auto Parts); the empty TXN sheet keeps its April
+  yfinance series, frozen in bloomberg_pull/yfinance_fallback/. Checks before
+  the run: Bloomberg and yfinance AAPL closes agree to 0.01% on every day,
+  daily log returns correlate 0.99999, Parkinson variances 0.998; the other
+  124 sheets are byte-identical to April. Whole pipeline rerun (modules 1 to
+  4b, 6, 9 to 22; module 5 and module 23 later, on more cores). Prediction:
+  115 tickers kept; every relative MSE reduction in Tables 4, 5, 7, 9 and 10
+  moves by less than 0.1 percentage point; no DM, CW or GW p-value crosses
+  0.05 or 0.10; price-return Sharpe ratios (run-25 basis) move by less than
+  0.01.
+- run-32 total-return portfolios (modules 11, 21). R_{i,t} from Bloomberg's
+  gross total return index (BNY relabelled BK; 16 MNST and 1 GILD days
+  missing in 2002-03, before the evaluation period) in place of price
+  returns; price returns kept as a module-21 variant. Prediction: annual
+  excess returns rise by 1 to 2.5 points for every portfolio (median implied
+  dividend yield in the panel 2.06%); Sharpe ratios rise by 0.05 to 0.15;
+  the ordering of the portfolios, the sign of C minus HAR-X and of C minus
+  equal weight, and the next-day execution penalty of finding #22 (about
+  0.15 to 0.18 of Sharpe for the managed portfolios, 0.04 for equal weight)
+  are unchanged; no Sharpe difference becomes significant at 5%.
+- run-33 (overnight, 2026-10-22/23; run_overnight.bat) ML learners on the
+  refreshed panel: module 5 unchanged in code (same estimators, grids,
+  time-series CV, seeds, refit cadence), then module 23 (run-30 ablation,
+  unchanged), then modules 6, 12, 17, 10 and the paper tables. Prediction:
+  every ML row's relative MSE reduction in Tables 5 and 9 moves by less than
+  0.1 pp against run-12 and no ML DM p-value crosses 0.05 or 0.10; the
+  run-30 prediction stands as written.
+
+---
+
+## 2026-10-24  run-30  Within-learner feature ablation (module 23; registered 2026-10-05)
+- Setup: fourth block, run-30 item, unchanged; run on the refreshed panel
+  (run-31) on Kaggle, three notebooks lrdml-m23-h{01,05,22}, 4 vCPUs each,
+  same pinned versions as run-33. Each learner trained on HAR-X's 7
+  predictors and on model C's 18 with identical tuning (scaling and grid
+  search inside TimeSeriesSplit(5, gap ceil(h/5))), refits every 20 weeks,
+  seeds and evaluation cells; the random forest tuned (LightGBM rf mode) in
+  both versions. Evaluation against linear HAR-X on the same cells (646 /
+  646 / 642 dates).
+- Result (18 vs 7 predictors, relative MSE reduction; DM t):
+  lasso -0.44 / -0.44 / -2.84% (t -2.40 / -1.28 / -2.79);
+  ridge -1.20 / -1.37 / -3.88% (-3.85 / -2.36 / -2.90);
+  elastic net -0.39 / -0.35 / -2.19% (-2.11 / -0.97 / -2.05);
+  random forest -0.18 / -0.02 / -2.61% (-0.67 / -0.04 / -1.69);
+  gradient boosting -0.88 / -0.27 / -2.74% (-2.75 / -0.51 / -2.06).
+  All 15 cells negative; 10 significant at 5%, none in favour. Against
+  linear HAR-X the 7-predictor shrinkage learners lose 0.4 to 1.3% and the
+  18-predictor versions 1.6 to 4.6%; the tree learners lose 5.2 to 7.4%
+  with 7 predictors and 6.1 to 10.3% with 18.
+- Verdict: KEEP; prediction HELD in every cell. Table A4 filled; the
+  module-5 comparison (learner on 18 predictors vs linear HAR-X) can no
+  longer be read as an estimator effect: the same learner on HAR-X's own
+  predictors does better. Finding #25.
+- Cost: Kaggle 170 / 315 / 170 min (h = 1 / 5 / 22) on 4 vCPUs; local
+  evaluation under a minute.
+- Lesson: the confound Rachev pointed at (estimator vs predictor set) was
+  real and the ablation resolves it in the direction of the null; the
+  persistence features cost every learner most at one month, where they
+  are also noisiest.
+
+---
+
+## 2026-10-22  run-33  ML learners on the refreshed panel (module 5; then run-30)
+- Setup: fifth block above; code unchanged since run-12 apart from the panel.
+  Run on Kaggle (2026-10-23): private dataset akashdeepo/lrdml-ml-rerun
+  (clean panel, feature panels, HAR-X forecasts, modules/), six notebooks
+  lrdml-m5-h{01,05,22} and lrdml-m23-h{01,05,22}, 4 vCPUs each, Python
+  3.13 and the local library versions pinned (numpy 2.2.6, pandas 2.2.3,
+  scikit-learn 1.7.0, LightGBM 4.6.0). Two code changes for this, neither
+  touching a fit: STOCK_JOBS overridable by LRDML_JOBS (parallelism across
+  stocks only), and module 5 resolves module 23's learner names inside
+  joblib worker processes (the ablation had never been run; its first
+  attempt failed with KeyError 'lasso_p' because workers import module 5
+  afresh without module 23's registration). Kaggle allows five concurrent
+  CPU sessions, so lrdml-m23-h22 starts when one finishes.
+- Result (five learners, three horizons, 74,290 / 74,290 / 73,830 cells as
+  in run-12). Relative MSE reductions vs HAR in Table 5 move by at most
+  0.08 pp (elastic net, h=22: -1.462 -> -1.542%); vs HAR-X in Table 9
+  Panel B by at most 0.08 pp; no DM p-value in a reported table crosses
+  0.05 or 0.10 (largest move: gradient boosting h=5, 0.852 -> 0.880).
+  Bootstrap bounds move by up to 0.16 pp (gradient boosting vs HAR, h=22,
+  lower bound). Unreported regime cells move more: gradient boosting in the
+  43-week COVID window at h=1 by 0.43 pp, and lasso h=22 COVID crosses 0.10
+  (0.0997 -> 0.1009). Forecast-level changes against run-12, non-AAPL
+  stocks: median absolute change 2e-4 (shrinkage), 1e-3 to 2e-3 (random
+  forest), 5e-3 to 7e-3 (gradient boosting); 99th percentile 0.005 to 0.02
+  except gradient boosting (0.19 to 0.28); pooled MSE changes by at most
+  0.08% relative. Two sources, not separable without a local rerun: the
+  cross-sectional and sector features carry AAPL's new series into every
+  stock's predictors (model C, deterministic OLS, moves by a median 3.5e-4
+  through this channel alone), and Linux/4-thread versus Windows/12-thread
+  floating point in the tree learners.
+- Verdict: KEEP; prediction HELD for every reported table (0.08 pp against
+  the 0.1 pp ceiling), not for the unreported regime file. Tables 5 and 9
+  and the bootstrap table regenerated; prose unchanged. The paper is now on
+  one panel for every row except the ablation's h=22 (run-30, in progress).
+- Cost: Kaggle, 4 vCPUs per notebook: 213 min (h=1), 195 min (h=5),
+  220 min (h=22), run in parallel; local evaluation (modules 6, 12, 17, 10)
+  8 min.
+- Lesson: tree learners are the least stable rows of the paper under a
+  one-stock data change (99th-percentile forecast change 0.2 to 0.3 in log
+  variance for gradient boosting against 0.003 for OLS); their reported
+  gains still move by less than 0.1 pp because the changes are
+  idiosyncratic and average out over 74,000 cells.
+
+---
+
+## 2026-10-22  run-31, run-32  Data refresh (Bloomberg AAPL) and total-return portfolios
+- Setup: fifth block above. Code: preprocess_bloomberg.py (header-matched
+  columns, frozen TXN fallback, total return index panel), io_v2.py
+  (returns_total), module11_economic.py (total_returns switch, default on),
+  module21_portfolio_checks.py (price-return variants). Seeds unchanged.
+  Diff against the replaced results: modules/_diff_refresh.py, output in
+  results/intermediate/refresh_diff.txt.
+- Result run-31 (AAPL source). Clean panel: 115 tickers kept, only the AAPL
+  columns differ from April (TXN differs at 1e-16, a CSV round-trip). AAPL's
+  full-sample GPH d-hat 0.497 -> 0.501, local Whittle 0.4770 -> 0.4771,
+  every other stock unchanged to machine precision. Largest change in any
+  relative MSE reduction: 0.009 pp in Tables 4, 5 and 7 (C vs HAR-X at h=22,
+  -3.368 -> -3.376%), 0.022 pp in the regime table, 0.033 pp in the
+  rolling-window GW table (A1mod, 260-row window, h=22); bootstrap bounds
+  move by at most 0.014 pp; Clark-West statistics by at most 0.04. No DM, CW
+  or GW p-value in any reported table crosses 0.05 or 0.10. One cell in the
+  unreported regime file crosses: A1mod vs HAR-X, h=1, low-VIX quartile, DM
+  p 0.0512 -> 0.0499. Price-return Sharpe ratios (run-25 basis) move by at
+  most 0.0003. ML rows (module 5) still use the April AAPL and are rerun as
+  run-33.
+- Result run-32 (total returns; same-close / next-day, full sample). Annual
+  excess return: equal weight 11.8 -> 14.0% / 11.9 -> 14.1%; HAR 8.1 -> 10.2
+  / 7.0 -> 8.9; HAR-X 8.2 -> 10.2 / 6.9 -> 8.8; trailing-22d 7.7 -> 9.6 /
+  7.2 -> 9.1; C 8.3 -> 10.3 / 6.9 -> 8.9 (+1.9 to +2.5 pp; volatility
+  unchanged to 0.1 pp). Sharpe: equal weight 0.76 -> 0.91 / 0.72 -> 0.85;
+  HAR 0.75 -> 0.94 / 0.59 -> 0.75; HAR-X 0.76 -> 0.95 / 0.58 -> 0.75;
+  trailing-22d 0.76 -> 0.94 / 0.64 -> 0.81; C 0.76 -> 0.95 / 0.58 -> 0.74.
+  Under same-close execution the managed portfolios are now 0.03 to 0.04
+  above equal weight (C vs EW: HAC p 0.80, bootstrap 0.81); under next-day
+  execution 0.04 to 0.11 below it (C vs EW: p 0.41, 0.43). C vs HAR-X:
+  -0.003 same-close (p 0.89), -0.006 next-day (p 0.78). Next-day penalty:
+  equal weight 0.06, managed 0.13 to 0.20 (price returns: 0.05, 0.07 to
+  0.18). Maximum drawdowns: managed -14.7 to -16.5%, equal weight -30.5%
+  (price returns -15.6 to -17.3% and -30.6%). At 10 bp next-day Sharpe
+  ratios are 0.66 (HAR, HAR-X, C) and 0.75 (trailing-22d) against 0.84 for
+  equal weight. The cap of 2 changes no Sharpe ratio by more than 0.007;
+  594 / 593 evaluation weeks as before.
+- Verdict: KEEP both. Run-31 prediction HELD in every reported table (one
+  unreported regime cell crossed 0.05 by 0.001). Run-32 prediction FAILED on
+  the size of the Sharpe change for the managed portfolios (+0.17 to +0.19
+  against a predicted ceiling of 0.15; equal weight +0.14, inside the range)
+  and held on everything else: mean returns up 1.9 to 2.5 pp, ordering and
+  signs unchanged, no difference significant. The miss has a simple cause:
+  the dividend yield adds about the same 2 pp to every portfolio's mean, but
+  the managed portfolios run at two thirds of equal weight's volatility, so
+  the same addition buys them more Sharpe. Finding #24; finding #22's "0.02"
+  corrected to the annualized gap of 0.14.
+- Cost: 27 min (modules 1 to 18) + 25 min (19 to 22) + 2 min (10, 11, 21),
+  all on 12 cores; the matched-robustness, window-check and discretization
+  modules take 8 min each, the rest under 3. Pending: module 5 (run-33) and
+  module 23 (run-30), about 6 h each.
+- Lesson: a level shift that is common across portfolios still changes
+  Sharpe ratios unequally when their volatilities differ; predict Sharpe
+  changes from mean/vol, not from the mean alone.
+
 ---
 
 ## 2026-10-05  run-23, run-24  Memory-estimation checks and window-analysis additions (module 20)

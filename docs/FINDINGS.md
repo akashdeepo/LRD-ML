@@ -142,10 +142,32 @@ depends on same-close execution. Executing one trading day after the signal
 lowers every managed Sharpe from 0.76 to 0.58 while equal weight moves from
 0.76 to 0.72; managed portfolios are then 0.02 below equal weight (p about
 0.26). Drawdown reduction (-0.16 vs -0.30) survives either timing. From
-run-25.
+run-25. [Correction 2026-10-22, run-32: "0.02" is the weekly Sharpe
+difference printed by the test; the annualized gap is 0.14 (0.58 vs 0.72).
+The 5 October draft carried the 0.02 and is corrected.]
 
 #23 (2026-10-05): With a fixed 431-week estimation window the persistence
 specifications lose more to HAR-X than with expanding windows (C: -2.9 /
 -1.5 / -13.6% vs -1.0 / +0.3 / -3.4%), and every Giacomini-White rejection
 goes against them. The expanding-window results are the persistence
 specifications' best case. From run-19.
+
+#24 (2026-10-22): Total returns (dividends reinvested) raise every
+portfolio's annual excess return by 1.9 to 2.5 pp at unchanged volatility,
+and therefore raise Sharpe ratios unequally: equal weight +0.14 (0.76 to
+0.91 same-close, 0.72 to 0.85 next-day), the managed portfolios +0.17 to
++0.19 (to 0.94-0.95 and 0.74-0.81), because they run at about two thirds of
+equal weight's volatility. The comparisons do not change: managed
+portfolios 0.03-0.04 above equal weight under same-close execution (p 0.80)
+and 0.04-0.11 below under next-day execution (p 0.41); C vs HAR-X within
+0.006 (p 0.78-0.89); drawdown halved under either timing. Replacing Apple's
+secondary-source series with Bloomberg's moved no reported forecasting
+number by more than 0.03 pp. From runs 31 and 32.
+
+#25 (2026-10-24): Within every learner, model C's 18 predictors forecast
+worse than HAR-X's 7 under identical tuning, splits, refits and cells: all
+15 (learner, horizon) cells negative, 10 significant at 5%, losses of 0.2
+to 1.4% at h = 1 and 5 and 2.2 to 3.9% at h = 22. The gap between the ML
+rows and linear HAR-X in Table 9 is therefore mostly the predictor set,
+not the estimator: on HAR-X's own predictors the shrinkage learners are
+within 0.4 to 1.3% of linear HAR-X. From run-30.

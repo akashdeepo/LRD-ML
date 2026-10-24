@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 import openpyxl
 
-BASE = Path(r"c:/Users/Akash/OneDrive/Desktop/LRD_Nicholas/bloomberg_pull")
+BASE = Path(__file__).resolve().parent / "bloomberg_pull"
 PROC = BASE / "processed"
 
 

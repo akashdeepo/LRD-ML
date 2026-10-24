@@ -108,7 +108,7 @@ def _done() -> set[str]:
     return set(PROGRESS.read_text().split()) if PROGRESS.exists() else set()
 
 
-def run_all() -> None:
+def run_all(horizons: tuple[int, ...] = HORIZONS) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     bundle = load_bundle()
     init_n = int(len(bundle.sample_dates) * m5.INIT_TRAIN_FRAC)
@@ -116,7 +116,7 @@ def run_all() -> None:
     for learner in LEARNERS:
         for fs, feats in FEATURE_SETS.items():
             MODEL_FEATURES["D"] = feats
-            for h in HORIZONS:
+            for h in horizons:
                 key = f"{learner}_{fs}_h{h:02d}"
                 if key in done:
                     continue
@@ -157,8 +157,13 @@ def evaluate() -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    import sys
+    import argparse
+    p = argparse.ArgumentParser()
+    p.add_argument("--eval-only", action="store_true", help="Only evaluate saved forecasts")
+    p.add_argument("--horizons", nargs="+", type=int, default=None,
+                   help="Subset of horizons to fit (one per Kaggle session, for instance)")
+    a = p.parse_args()
     pd.set_option("display.width", 220)
-    if "--eval-only" not in sys.argv:
-        run_all()
+    if not a.eval_only:
+        run_all(tuple(a.horizons) if a.horizons else HORIZONS)
     print(evaluate().round(3).to_string(index=False))

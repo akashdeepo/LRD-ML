@@ -78,13 +78,13 @@ Evaluation is strictly walk-forward: the first 40% of weekly sample dates (throu
 
 ## Reproducing the analysis
 
-The Bloomberg-sourced inputs under `bloomberg_pull/` are gitignored. With those in place:
+The Bloomberg-sourced inputs under `bloomberg_pull/` are gitignored (`OHLCV.xlsx`, `TOT_RET_GROSS_DVD.xlsx`, `sector_ETF.xlsx`, `market_level_daily.csv`, `stock_metadata.csv`). With those in place:
 
 ```bash
 pip install -r requirements.txt
 
 # Data layer
-python preprocess_bloomberg.py
+python preprocess_bloomberg.py                 # OHLCV panels and the total return index panel
 python preprocess_supporting.py
 python -m modules.io_v2                        # builds bloomberg_pull/processed/clean_panel/
 

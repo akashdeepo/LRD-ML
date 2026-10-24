@@ -9,6 +9,8 @@ co-author review:
     market and the day's range is known only at the close;
   * a cap of 2 on the per-stock position multiplier;
   * both together;
+  * price returns instead of total returns (the basis of run-25, kept for
+    comparison since the switch to total returns on 2026-10-22);
 
 for each: Sharpe ratios at 0 and 10 bp, mean, volatility, maximum drawdown,
 turnover, leverage distribution, and the Ledoit-Wolf and bootstrap tests of
@@ -37,7 +39,9 @@ INTERM = BASE / "results" / "intermediate"
 VARIANTS = {"baseline (same-close execution, no cap)": dict(exec_lag=0, cap=None),
             "next-day execution": dict(exec_lag=1, cap=None),
             "cap 2": dict(exec_lag=0, cap=2.0),
-            "next-day execution, cap 2": dict(exec_lag=1, cap=2.0)}
+            "next-day execution, cap 2": dict(exec_lag=1, cap=2.0),
+            "price returns, same-close execution": dict(exec_lag=0, cap=None, total_returns=False),
+            "price returns, next-day execution": dict(exec_lag=1, cap=None, total_returns=False)}
 PAIRS = [("C-managed", "HAR-X-managed"), ("C-managed", m11.UNMANAGED), ("HAR-X-managed", m11.UNMANAGED)]
 
 

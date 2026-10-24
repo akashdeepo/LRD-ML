@@ -88,3 +88,8 @@ paper_jrfm_v3/
 paper_overleaf/
 paper_overleaf_v2/
 REVISION_PLAN.tex
+
+# Pre-refresh backups and run logs (local only)
+results/_pre_refresh_*/
+results/intermediate/*_log.txt
+results/intermediate/_*.log

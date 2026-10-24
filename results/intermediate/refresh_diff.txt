@@ -1,0 +1,137 @@
+Refresh diff: results\_pre_refresh_2026-10-22\intermediate -> results\intermediate
+== run-31: relative MSE reductions and p-values, old vs new
+  harx_tests.csv               gain_vs_har_pct    max |change| 0.0801 pp  at {'spec': 'D_en', 'h': np.int64(22)} (-1.462 -> -1.542)
+  harx_tests.csv               gain_vs_harx_pct   max |change| 0.0818 pp  at {'spec': 'D_en', 'h': np.int64(22)} (-3.292 -> -3.374)
+  harx_tests_regimes.csv       gain_vs_har_pct    max |change| 0.4347 pp  at {'spec': 'D_gbm', 'h': np.int64(1), 'regime': 'COVID (2020)'} (-11.650 -> -12.085)
+  !! harx_tests_regimes.csv dm_p_vs_harx crosses 0.05: {'spec': 'A1mod', 'h': 1, 'regime': 'Low VIX (Q1)'} 0.0512 -> 0.0499
+  !! harx_tests_regimes.csv dm_p_vs_harx crosses 0.1: {'spec': 'D_lasso', 'h': 22, 'regime': 'COVID (2020)'} 0.0997 -> 0.1009
+  !! harx_tests_regimes.csv: a reduction moved by 0.435 pp (prediction: < 0.1)
+  table5_raw.csv               imp_vs_A_pct       max |change| 0.0801 pp  at {'model': 'D_en', 'h': np.int64(22)} (-1.462 -> -1.542)
+  table7_raw.csv               imp_vs_A_pct       max |change| 0.4347 pp  at {'regime': 'COVID (2020)', 'model': 'D_gbm', 'h': np.int64(1)} (-11.650 -> -12.085)
+  !! table7_raw.csv: a reduction moved by 0.435 pp (prediction: < 0.1)
+  table9_raw.csv               imp_pct            max |change| 0.0151 pp  at {'variant': 'regime_covid'} (12.069 -> 12.054)
+  matched_robustness.csv       gain_pct           max |change| 0.0071 pp  at {'variant': 'window_500'} (-0.225 -> -0.218)
+  balanced_panel.csv           gain_pct           max |change| 0.0104 pp  at {'comparison': 'C vs HAR-X', 'panel': 'balanced 107', 'h': np.int64(22)} (-3.151 -> -3.161)
+  no_hurst_variant.csv         gain_pct           max |change| 0.0093 pp  at {'spec': 'C without Hurst features (16)', 'h': np.int64(22)} (-2.813 -> -2.822)
+  rolling_gw.csv               gain_vs_harx_pct   max |change| 0.0334 pp  at {'window': np.int64(260), 'spec': 'A1mod', 'h': np.int64(22)} (-59.591 -> -59.625)
+  candidates_run05_pooled.csv  gain_pct           max |change| 0.0029 pp  at {'comparison': 'P-A1cs vs P-A1', 'h': np.int64(22)} (-0.996 -> -0.993)
+  candidates_run06_duration.csv gain_pct           max |change| 0.0031 pp  at {'comparison': 'C vs A1 (duration target)', 'h': np.int64(22)} (-1.810 -> -1.813)
+  candidates_run07_market.csv  gain_pct           max |change| 0.0040 pp  at {'comparison': 'M-A1 vs M-A', 'h': np.int64(1)} (5.380 -> 5.376)
+  timing_alignment.csv         harx_gain_pct      max |change| 0.0012 pp  at {'h': np.int64(5), 'alignment': 'har_aligned_vs_stale'} (7.042 -> 7.043)
+  bootstrap_intervals.csv      gain_pct           max |change| 0.0818 pp  at {'baseline': 'A1', 'spec': 'D_en', 'h': np.int64(22)} (-3.292 -> -3.374)
+  bootstrap_intervals.csv      ci_lo              max |change| 0.1615 pp  at {'baseline': 'A', 'spec': 'D_gbm', 'h': np.int64(22)} (-14.423 -> -14.585)
+  bootstrap_intervals.csv      ci_hi              max |change| 0.0773 pp  at {'baseline': 'A1', 'spec': 'D_en', 'h': np.int64(22)} (-0.942 -> -1.019)
+  !! bootstrap_intervals.csv: a reduction moved by 0.162 pp (prediction: < 0.1)
+== run-31: full-sample memory estimates (AAPL and the cross-section)
+  lrd_rv_gph.csv         AAPL 0.4971 -> 0.5006; other stocks max |change| 8.88e-16; mean 0.5377 -> 0.5378
+  lrd_rv_lw.csv          AAPL 0.4770 -> 0.4771; other stocks max |change| 4.43e-13; mean 0.5159 -> 0.5159
+  lrd_returns_gph.csv    AAPL 0.0950 -> 0.0950; other stocks max |change| 1.94e-16; mean -0.0202 -> -0.0202
+  lrd_returns_lw.csv     AAPL 0.0337 -> 0.0337; other stocks max |change| 8.01e-13; mean -0.0273 -> -0.0273
+  hurst_rv_log.csv       AAPL 0.0668 -> 0.0663; other stocks max |change| 2.01e-16; mean 0.0605 -> 0.0605
+== run-31: price-return Sharpe ratios, April panel (run-25) vs refreshed panel
+  baseline ( Equal-weight (unmanaged)     0.763 -> 0.763 (-0.0000)
+  baseline ( HAR-managed                  0.750 -> 0.750 (+0.0000)
+  baseline ( HAR-X-managed                0.759 -> 0.759 (+0.0000)
+  baseline ( Trailing-22d-RV-managed      0.756 -> 0.756 (+0.0000)
+  baseline ( C-managed                    0.758 -> 0.757 (-0.0003)
+  baseline ( C-managed (full-sample c)    0.710 -> 0.709 (-0.0003)
+  next-day e Equal-weight (unmanaged)     0.716 -> 0.716 (-0.0000)
+  next-day e HAR-managed                  0.590 -> 0.590 (+0.0000)
+  next-day e HAR-X-managed                0.580 -> 0.580 (+0.0000)
+  next-day e Trailing-22d-RV-managed      0.644 -> 0.644 (-0.0000)
+  next-day e C-managed                    0.575 -> 0.575 (-0.0002)
+  next-day e C-managed (full-sample c)    0.512 -> 0.512 (-0.0002)
+== run-32: total returns (new default) vs price returns, same panel
+             portfolio                             mean_ann            sharpe            max_dd
+  baseline ( Equal-weight (unmanaged)      11.79 ->  14.01   0.763 ->  0.906   -30.6 ->  -30.5
+  baseline ( HAR-managed                    8.13 ->  10.15   0.750 ->  0.936   -17.3 ->  -16.4  !! Sharpe change outside 0.05-0.15
+  baseline ( HAR-X-managed                  8.17 ->  10.23   0.759 ->  0.949   -15.6 ->  -14.7  !! Sharpe change outside 0.05-0.15
+  baseline ( Trailing-22d-RV-managed        7.72 ->   9.63   0.756 ->  0.942   -15.7 ->  -14.9  !! Sharpe change outside 0.05-0.15
+  baseline ( C-managed                      8.27 ->  10.34   0.757 ->  0.946   -15.8 ->  -15.0  !! Sharpe change outside 0.05-0.15
+  baseline ( C-managed (full-sample c)      9.13 ->  11.61   0.709 ->  0.901   -16.9 ->  -16.0  !! Sharpe change outside 0.05-0.15
+  next-day e Equal-weight (unmanaged)      11.91 ->  14.13   0.716 ->  0.850   -29.9 ->  -29.7
+  next-day e HAR-managed                    6.99 ->   8.93   0.590 ->  0.754   -16.6 ->  -16.5  !! Sharpe change outside 0.05-0.15
+  next-day e HAR-X-managed                  6.86 ->   8.84   0.580 ->  0.746   -16.3 ->  -16.2  !! Sharpe change outside 0.05-0.15
+  next-day e Trailing-22d-RV-managed        7.22 ->   9.08   0.644 ->  0.809   -15.1 ->  -15.0  !! Sharpe change outside 0.05-0.15
+  next-day e C-managed                      6.89 ->   8.89   0.575 ->  0.741   -15.9 ->  -15.9  !! Sharpe change outside 0.05-0.15
+  next-day e C-managed (full-sample c)      7.35 ->   9.75   0.512 ->  0.677   -21.2 ->  -20.7  !! Sharpe change outside 0.05-0.15
+  baseline (same-close execution, no cap): ordering by Sharpe ['HAR-X-managed', 'C-managed', 'Trailing-22d-RV-managed', 'HAR-managed', 'Equal-weight (unmanaged)', 'C-managed (full-sample c)']
+    C - HAR-X -0.0030; C - EW +0.0393
+  next-day execution: ordering by Sharpe ['Equal-weight (unmanaged)', 'Trailing-22d-RV-managed', 'HAR-managed', 'HAR-X-managed', 'C-managed', 'C-managed (full-sample c)']
+    C - HAR-X -0.0056; C - EW -0.1087
+  next-day penalty Equal-weight (unmanaged)     +0.057
+  next-day penalty HAR-managed                  +0.182
+  next-day penalty HAR-X-managed                +0.202
+  next-day penalty Trailing-22d-RV-managed      +0.133
+  next-day penalty C-managed                    +0.205
+  next-day penalty C-managed (full-sample c)    +0.224
+  Sharpe-difference tests (new):
+    baseline (same-close execution, no C-managed vs HAR-X-managed                   d=-0.000 hac_p=0.885 boot_p=0.874
+    baseline (same-close execution, no C-managed vs Equal-weight (unmanaged)        d=+0.006 hac_p=0.804 boot_p=0.811
+    baseline (same-close execution, no HAR-X-managed vs Equal-weight (unmanaged)    d=+0.006 hac_p=0.778 boot_p=0.792
+    next-day execution                 C-managed vs HAR-X-managed                   d=-0.001 hac_p=0.778 boot_p=0.769
+    next-day execution                 C-managed vs Equal-weight (unmanaged)        d=-0.015 hac_p=0.406 boot_p=0.425
+    next-day execution                 HAR-X-managed vs Equal-weight (unmanaged)    d=-0.015 hac_p=0.402 boot_p=0.423
+    cap 2                              C-managed vs HAR-X-managed                   d=-0.000 hac_p=0.907 boot_p=0.903
+    cap 2                              C-managed vs Equal-weight (unmanaged)        d=+0.005 hac_p=0.825 boot_p=0.835
+    cap 2                              HAR-X-managed vs Equal-weight (unmanaged)    d=+0.005 hac_p=0.804 boot_p=0.816
+    next-day execution, cap 2          C-managed vs HAR-X-managed                   d=-0.001 hac_p=0.780 boot_p=0.772
+    next-day execution, cap 2          C-managed vs Equal-weight (unmanaged)        d=-0.016 hac_p=0.385 boot_p=0.404
+    next-day execution, cap 2          HAR-X-managed vs Equal-weight (unmanaged)    d=-0.015 hac_p=0.380 boot_p=0.405
+    price returns, same-close executio C-managed vs HAR-X-managed                   d=-0.000 hac_p=0.923 boot_p=0.918
+    price returns, same-close executio C-managed vs Equal-weight (unmanaged)        d=-0.001 hac_p=0.969 boot_p=0.976
+    price returns, same-close executio HAR-X-managed vs Equal-weight (unmanaged)    d=-0.001 hac_p=0.978 boot_p=0.985
+    price returns, next-day execution  C-managed vs HAR-X-managed                   d=-0.001 hac_p=0.775 boot_p=0.765
+    price returns, next-day execution  C-managed vs Equal-weight (unmanaged)        d=-0.020 hac_p=0.259 boot_p=0.279
+    price returns, next-day execution  HAR-X-managed vs Equal-weight (unmanaged)    d=-0.019 hac_p=0.250 boot_p=0.274
+== all other result files
+  bandwidth_sensitivity.csv          max |change| 1.929e-05 in corr_with_0.65; columns changed: 4/6
+  calendar_report.csv                max |change| 0.000e+00 in h; columns changed: 0/12
+  cross_sectional_features.csv       max |change| 0.000e+00 in mean_d; columns changed: 0/7
+  cw_decomposition.csv               max |change| 4.001e-02 in adjustment_t; columns changed: 7/9
+  cw_size_mc.csv                     max |change| 9.732e-06 in rho_cs; columns changed: 3/6
+  estimator_validation.csv           max |change| 0.000e+00 in true_d; columns changed: 0/5
+  har_rv_performance.csv             max |change| 0.000e+00 in mse; columns changed: 0/4
+  hurst_rv_log.csv                   max |change| 5.228e-04 in H; columns changed: 1/1
+  lrd_cs_dispersion.csv              max |change| 0.000e+00 in mean_d; columns changed: 0/5
+  lrd_returns_gph.csv                max |change| 2.212e-05 in d_hat; columns changed: 2/4
+  lrd_returns_lw.csv                 max |change| 2.062e-05 in p_value; columns changed: 2/4
+  lrd_rolling_AAPL.csv               max |change| 0.000e+00 in d_hat; columns changed: 0/2
+  lrd_rolling_JNJ.csv                max |change| 0.000e+00 in d_hat; columns changed: 0/2
+  lrd_rolling_JPM.csv                max |change| 0.000e+00 in d_hat; columns changed: 0/2
+  lrd_rolling_PG.csv                 max |change| 0.000e+00 in d_hat; columns changed: 0/2
+  lrd_rolling_XOM.csv                max |change| 0.000e+00 in d_hat; columns changed: 0/2
+  lrd_rv_gph.csv                     max |change| 3.493e-03 in d_hat; columns changed: 1/4
+  lrd_rv_lw.csv                      max |change| 1.392e-04 in d_hat; columns changed: 1/4
+  lrd_vol_gph.csv                    max |change| 0.000e+00 in d_hat; columns changed: 0/6
+  lrd_vol_lw.csv                     max |change| 0.000e+00 in d_hat; columns changed: 0/6
+  market_features.csv                max |change| 0.000e+00 in VIX; columns changed: 0/25
+  missing_days_sensitivity.csv       max |change| 1.619e-05 in mean_level; columns changed: 4/7
+  per_stock_improvement.csv          max |change| 4.833e+00 in imp_pct; columns changed: 3/5
+  per_stock_mse.csv                  max |change| 0.000e+00 in h; columns changed: 0/3
+  portfolio_weekly.csv               max |change| 2.535e-03 in C-managed (full-sample c); columns changed: 6/7
+  rolling_d_gph.csv                  max |change| 7.701e-02 in AAPL; columns changed: 2/115
+  rolling_d_hat.csv                  max |change| 0.000e+00 in AAPL; columns changed: 0/125
+  rolling_d_lw.csv                   max |change| 1.410e-02 in AAPL; columns changed: 2/115
+  rolling_hurst.csv                  max |change| 2.539e-03 in AAPL; columns changed: 2/115
+  rolling_se_d.csv                   max |change| 0.000e+00 in AAPL; columns changed: 0/125
+  roughness_discretization.csv       max |change| 4.854e-05 in H_sim_observed_mean; columns changed: 2/5
+  roughness_null.csv                 max |change| 2.946e-04 in phi_a; columns changed: 9/13
+  sample_features_AAPL.csv           max |change| 0.000e+00 in target_vol; columns changed: 0/50
+  sharpe_tests.csv                   max |change| 2.947e-01 in sharpe_2_ann; columns changed: 6/9
+  stock_stats.csv                    max |change| 2.205e+00 in JB Stat; columns changed: 7/9
+  table10_raw.csv                    max |change| 2.947e-01 in sharpe; columns changed: 5/6
+  table10b_costs.csv                 max |change| 1.915e-01 in sharpe_10bp; columns changed: 10/10
+  table6_lasso_coefs.csv             max |change| 5.354e-04 in h=1; columns changed: 3/3
+  table8_raw.csv                     max |change| 7.763e-01 in imp_vs_A_pct; columns changed: 2/4
+  timing_strict.csv                  max |change| 2.166e-03 in dm_t_lagged_vs_har; columns changed: 8/10
+  window_inclusion_events.csv        max |change| 1.775e-01 in exit_pct; columns changed: 4/5
+  window_inclusion_paths.csv         max |change| 1.904e-04 in d_bar; columns changed: 1/3
+  window_inclusion_r2.csv            max |change| 9.052e-05 in r2_current_vix; columns changed: 2/4
+  window_inclusion_sim.csv           max |change| 1.064e-05 in obs_rise; columns changed: 7/10
+  window_null_bands.csv              max |change| 3.995e-04 in p95; columns changed: 6/10
+  window_null_params.csv             max |change| 0.000e+00 in d_calm_lw_median; columns changed: 0/6
+  window_r2_alternatives.csv         max |change| 9.052e-05 in r2; columns changed: 1/2
+  xgboost_base_performance.csv       max |change| 0.000e+00 in mse; columns changed: 0/4
+
+run-31 predictions hold: False   (lines marked !! are the exceptions)
