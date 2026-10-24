@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: "If you use this code or the results, please cite the paper below (preferred) and the repository."
 title: "LRD-ML: Does volatility persistence forecast volatility?"
 type: software
-version: "2026.10"
-date-released: "2026-10-03"
+version: "2026.10.24"
+date-released: "2026-10-24"
 repository-code: "https://github.com/akashdeepo/LRD-ML"
 license: MIT
 authors:
@@ -12,9 +12,6 @@ authors:
     affiliation: "Department of Mathematics and Statistics, Texas Tech University"
   - family-names: Appiah
     given-names: Nicholas
-    affiliation: "Department of Mathematics and Statistics, Texas Tech University"
-  - family-names: Mei
-    given-names: Hongwei
     affiliation: "Department of Mathematics and Statistics, Texas Tech University"
   - family-names: Rachev
     given-names: Svetlozar T.
@@ -50,8 +47,6 @@ preferred-citation:
       given-names: Akash
     - family-names: Appiah
       given-names: Nicholas
-    - family-names: Mei
-      given-names: Hongwei
     - family-names: Rachev
       given-names: Svetlozar T.
   year: 2026

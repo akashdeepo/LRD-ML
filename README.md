@@ -1,6 +1,6 @@
 # Does Volatility Persistence Forecast Volatility?
 
-**Rolling long memory, crisis windows, and implied volatility.** Code, data pipeline, and manuscript for Deep, Appiah, Mei & Rachev (2026), Texas Tech University.
+**Rolling long memory, crisis windows, and implied volatility.** Code, data pipeline, and manuscript for Deep, Appiah & Rachev (2026), Texas Tech University.
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -54,8 +54,8 @@ Model $C$ is never significantly better than HAR-X and is significantly worse at
 ## The paper
 
 > **Does Volatility Persistence Forecast Volatility? Rolling Long Memory, Crisis Windows, and Implied Volatility**
-> Akash Deep, Nicholas Appiah, Hongwei Mei, Svetlozar T. Rachev
-> Draft for the *Journal of Risk and Financial Management*, October 2026.
+> Akash Deep, Nicholas Appiah, Svetlozar T. Rachev
+> Draft for the *Journal of Risk and Financial Management*, October 2026. We thank Hongwei Mei for his advice on the manuscript.
 
 The manuscript is in preparation and is not included in this repository; it will be linked here once published. The code that produces every table and figure is here, and the research diary is [`PROJECT_LOG.md`](PROJECT_LOG.md).
 

@@ -1087,7 +1087,8 @@ follows input order) added; figures refreshed.
 
 ## Session: 2026-10-02 — Full audit: 33 issues, corrected re-run, two new findings
 
-**Context.** Rachev and Dr. Hongwei Mei (now third author) asked for a
+**Context.** Rachev and Dr. Hongwei Mei (proposed as third author at the
+time; he later declined authorship and is acknowledged instead) asked for a
 25-page rewrite.
 Before rewriting, the whole pipeline was audited from first principles in
 three AI-assisted review passes (data/estimation, forecasting/evaluation,
