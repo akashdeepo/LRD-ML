@@ -1160,4 +1160,29 @@ reproduces the window-inclusion signature as well as the short-memory null
 (finding #21). ML feature ablation (module 23, run-30) coded and held for an
 overnight run. New modules 17-23; 21 tests pass.
 
-*Last updated: 2026-10-05*
+
+## Session: 2026-10-22 to 24 — Data refresh and ML reruns (ledger runs 30-33)
+
+Nicholas's Bloomberg files of 7 Oct (genuine AAPL sheet, gross total return
+index for the 115 stocks, IPO dates) incorporated; historical membership,
+the MOVE publication time and the selection rule did not arrive and stay
+disclosed. Fifth ledger block, predictions written before each run.
+Run-31, Apple from Bloomberg in place of the secondary source: only the
+AAPL columns of the panel change; no reported relative MSE reduction moves
+by more than 0.08 pp and no p-value crosses a threshold (prediction held).
+Run-32, portfolios on total returns: every Sharpe ratio rises by 0.13-0.19
+(dividends add about 2 pp to every mean at unchanged volatility), the
+comparisons do not change; prediction failed on the size of the managed
+portfolios' rise (finding #24). The 5 October draft's "0.02 below equal
+weight" was the weekly Sharpe difference; the annualized gap was 0.14
+(finding #22 corrected). Run-33, the ML learners on the refreshed panel, and
+run-30, the within-learner ablation, ran on Kaggle (4 vCPUs per notebook,
+local library versions pinned; dataset and notebooks deleted afterwards):
+ML rows move by at most 0.08 pp; in all fifteen learner-horizon cells the
+18 predictors forecast worse than HAR-X's 7 under identical tuning
+(finding #25, Table A4). The ablation's first attempt exposed a bug (module
+23's learners unresolvable in joblib workers), fixed in module 5. Draft
+rebuilt (25 pages); changelog_2026-10-22.md; package circulated to the
+co-authors on 24 Oct. 21 tests pass.
+
+*Last updated: 2026-10-24*

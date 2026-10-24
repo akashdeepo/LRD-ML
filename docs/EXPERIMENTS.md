@@ -207,7 +207,9 @@ comparison or a sensitivity analysis, and its prediction is written here first.
 requested on 2026-10-04 arrived on 2026-10-07: OHLCV.xlsx with a genuine
 AAPL sheet, TOT_RET_GROSS_DVD.xlsx, IPO_Date.xlsx).** Historical S&P 500
 membership, the MOVE publication time and the selection rule did not arrive
-and stay disclosed. Two variables, two runs.
+and stay disclosed. Two variables, two runs; the ML reruns (run-33) and the
+ablation (run-30) followed on the same panel. Code and results of the block:
+commit 5a039cf.
 
 - run-31 data refresh. AAPL from Bloomberg instead of yfinance (the April
   sheet held Advance Auto Parts); the empty TXN sheet keeps its April
