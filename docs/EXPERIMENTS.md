@@ -261,10 +261,21 @@ commit 5a039cf.
   linear HAR-X the 7-predictor shrinkage learners lose 0.4 to 1.3% and the
   18-predictor versions 1.6 to 4.6%; the tree learners lose 5.2 to 7.4%
   with 7 predictors and 6.1 to 10.3% with 18.
-- Verdict: KEEP; prediction HELD in every cell. Table A4 filled; the
+- Verdict: KEEP; prediction HELD in every cell. Table A3 filled; the
   module-5 comparison (learner on 18 predictors vs linear HAR-X) can no
   longer be read as an estimator effect: the same learner on HAR-X's own
   predictors does better. Finding #25.
+- Correction (2026-10-24, later the same day, from Rachev's reading): the
+  result line above miscounts. Nine cells are significant at 5%; the
+  random forest at h = 22 (p = 0.091) is significant at 10% only. The
+  smallest loss is 0.02% (random forest, h = 5), not 0.2%. And the
+  estimator reading applies to the shrinkage learners; the tree learners
+  lose 5.2 to 7.4% to linear HAR-X on the seven predictors as well, so for
+  them the estimator matters too. The 18-predictor columns differ from
+  Table 9 Panel B because the ablation tunes differently (grid search with
+  the scaler inside each fold; LightGBM rf mode tuned) from module 5
+  (CV penalty paths, scaler per window, untuned sklearn forest); gradient
+  boosting, identical in both, agrees to 0.1%.
 - Cost: Kaggle 170 / 315 / 170 min (h = 1 / 5 / 22) on 4 vCPUs; local
   evaluation under a minute.
 - Lesson: the confound Rachev pointed at (estimator vs predictor set) was

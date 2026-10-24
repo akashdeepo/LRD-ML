@@ -170,4 +170,10 @@ worse than HAR-X's 7 under identical tuning, splits, refits and cells: all
 to 1.4% at h = 1 and 5 and 2.2 to 3.9% at h = 22. The gap between the ML
 rows and linear HAR-X in Table 9 is therefore mostly the predictor set,
 not the estimator: on HAR-X's own predictors the shrinkage learners are
-within 0.4 to 1.3% of linear HAR-X. From run-30.
+within 0.4 to 1.3% of linear HAR-X. From run-30. [Correction 2026-10-24,
+same day, after Rachev's reading of the table: the losses at h = 1 and 5
+run from 0.02% (random forest, h = 5) to 1.4%; nine cells are significant
+at 5% and the tenth (random forest, h = 22, p = 0.09) at 10%. The
+"predictor set, not the estimator" reading holds for the shrinkage
+learners only: the tree learners lose 5.2 to 7.4% to linear HAR-X even on
+its own seven predictors.]
