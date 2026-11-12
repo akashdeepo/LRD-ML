@@ -351,6 +351,42 @@ rows, the regimes, every robustness variant.
 
 ---
 
+## 2026-11-12  run-40  Window-composition placebo and parameter uncertainty (module 27)
+- Setup: sixth block and the run-40 amendment (d5996ac). Exit statistic: mean
+  of the standardised series over the 20 trading days after event + 750
+  minus the 20 before; 1000 placebo draws of the same number of dates;
+  one-sided p (a fall). Nulls: 200 paths each, parameters of each path drawn
+  from the per-stock calm-period ARMA(1,1) and local Whittle estimates.
+- Implementation note: the first run of the amended rule counted every
+  close above 40 in March 2020 as an event (22 events), not only the first
+  close of the episode as the rule states; fixed before the result was read
+  as a test. The amendment text said the amended rule selects 2015 and 2020;
+  computed, it selects 8 Aug 2011, 24 Aug 2015 and 28 Feb 2020 (my statement
+  was reasoned, not computed).
+- Result: registered rule (one event, 24 Aug 2015): state exit change +0.05
+  (p 0.78), rolling mean -0.07 (0.11), 90th percentile -0.08 (0.12),
+  variance -0.12 (0.08), median return +0.20 (0.89). Amended rule (three
+  events): state -0.27 (p 0.014), rolling mean -0.10 (0.002), 90th
+  percentile -0.13 (0.010), variance -0.22 (0.013), median return +0.19
+  (0.97). Parameter uncertainty: simulated rises short-memory mean 0.12
+  [5-95%: -0.02, 0.28], long-memory 0.10 [-0.06, 0.27]; observed 0.19, inside
+  both; the largest drop of a single path falls within 20 days of its exit
+  for 28% and 24% of paths.
+- Verdict: KEEP. Registered rule: prediction FAILED (one event, not 2008 and
+  2020; no exit drop for the brief 2015 spike, consistent with finding #20:
+  duration, not peak, drives the state). Amended rule: HELD (p < 0.05 for the
+  state; drop present in the mean, quantile and variance of log variance,
+  absent in the median return). Parameter uncertainty: HELD. A single
+  simulated stock's rolling d-hat is noisier than the 115-stock average, so
+  the sharp exit is a property of the cross-sectional state, not of every
+  path. Finding #29.
+- Cost: 1.3 min.
+- Lesson: write an event rule and check the dates it selects before
+  registering predictions about them; a spike crosses the lower threshold on
+  its way up.
+
+---
+
 ## 2026-11-12  run-39  Alternative variance proxies and intraday validation (module 26)
 - Setup: sixth block and its addendum (582bf9d). Garman-Klass (gk),
   Rogers-Satchell (rs) and close-to-close squared returns (cc) replace

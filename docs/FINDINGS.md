@@ -211,3 +211,14 @@ combination gain is robust at one week (+0.61 to +1.66%, t 3.3 to 5.1
 across the four proxies) and proxy-sensitive at one day and one month
 (significant at 5% only under Parkinson, and under close-to-close at one
 month). From run-39. Qualifies #27: the robust statement is the weekly one.
+
+#29 (2026-11-12): With event dates chosen by a rule on the VIX alone (first
+close above 40 after 250 calm days ending 20 days earlier: Aug 2011, Aug
+2015, Feb 2020), the cross-sectional rolling d-hat falls at event + 750
+trading days by more than at 98.6% of placebo dates (p 0.014); so do the
+rolling mean, 90th percentile and variance of log variance (p <= 0.013),
+while the rolling median of returns does not (p 0.97). The exit effect is
+generic to rolling statistics driven by the episode's size. A brief spike
+(Aug 2015 alone) produces no exit drop in the state. With parameters drawn
+from per-stock estimates, both simulated nulls contain the observed 2020
+rise in their 5-95% band. From run-40.
