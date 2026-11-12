@@ -240,6 +240,91 @@ commit 5a039cf.
   0.1 pp against run-12 and no ML DM p-value crosses 0.05 or 0.10; the
   run-30 prediction stands as written.
 
+**Sixth block (written 2026-11-12, before any run; responds to the JRFM
+round-1 reports on jrfm-4691852, paper_jrfm_v3/reviews_jrfm-4691852_round1.md).**
+No registered specification changes. What is new is a declared testing
+hierarchy, written here for the first time and therefore itself post hoc
+relative to every earlier result; the paper says so. Primary family: model C
+vs HAR-X at h = 1, 5, 22, squared error on log variance, two-sided panel DM
+(HLN), Holm across the three; QLIKE reported for the same family as a
+co-primary loss with its own Holm adjustment. Secondary family: the three
+registered extensions (A1cs, A1sec, A1mod) x three horizons, DM and CW, Holm
+across the nine (as in run-03). Everything else is exploratory and is
+labelled so: the market-level and other designs, the portfolios, the ML
+rows, the regimes, every robustness variant.
+
+- run-34 primary family, equivalence and power (module 24, saved forecasts).
+  Holm-adjusted DM for the primary family on both losses; two one-sided
+  tests (TOST) of equivalence at margins of 1% and 3% of HAR-X's MSE (3% is
+  the size of HAR-X's own gain over HAR at one day), from 90% circular
+  block-bootstrap intervals (block 12, 5000 draws); minimum detectable
+  effect at 5% two-sided and 80% power, 2.80 x the HAC standard error of the
+  mean differential, in percent of HAR-X's MSE. Predictions: no
+  Holm-adjusted rejection in favour of C at any horizon; at least one
+  against (h = 22); equivalence at the 3% margin at h = 1 and h = 5 but not
+  h = 22; equivalence at the 1% margin at no horizon; MDE at h = 5 between
+  1% and 2%; QLIKE: C better at no horizon, worse at h = 22.
+- run-35 Clark-West reconciliation (module 24). Forecast-encompassing test
+  (Harvey, Leybourne and Newbold 1998) of HAR-X by C: regression of HAR-X's
+  error on the difference of the two errors, pooled per date, HAC t on the
+  weight; the MSE of the encompassing-weight combination; dispersion of
+  C's forecast around HAR-X's relative to the target variance; persistence
+  coefficients of C re-estimated at every 52nd origin per stock (sign
+  changes, median |t|) and the in-sample R-squared gain of the persistence
+  block against the out-of-sample one. Predictions: encompassing rejected
+  at h = 1 and 5 with a weight on C between 0.05 and 0.35; the
+  encompassing-weight combination beats HAR-X by less than 0.5%; at least
+  30% of stocks see a sign change in the coefficient on own d-hat across
+  re-estimations; in-sample R-squared gain positive at every horizon while
+  the out-of-sample gain is negative at h = 1 and 22.
+- run-36 data robustness (module 24). Primary family without TXN and AAPL;
+  zero-range and missing-day counts per stock. Prediction: every primary
+  relative MSE reduction moves by less than 0.1 pp.
+- run-37 lagged indices for the persistence specifications (module 25).
+  HAR-X, the three extensions and C refit with VIX and MOVE lagged one
+  trading day (interactions rebuilt on the lagged levels). Prediction: every
+  persistence specification's reduction against lagged HAR-X within 0.5 pp
+  of its aligned value; none significantly positive.
+- run-38 restricted and low-dimensional persistence, trailing maxima, and
+  shrinkage toward HAR-X (module 25). HAR-X + own d-hat only; HAR-X + the
+  first principal component of C's eleven persistence predictors, with
+  standardisation and loadings estimated on each training window only;
+  HAR-X + log trailing-750-day maximum of the VIX; HAR-X + log trailing
+  maximum of the stock's 22-day mean variance over 750 days; HAR-X + the
+  cross-sectional state + the VIX maximum (does the state add beyond the
+  maximum?); forecast combinations of C and HAR-X with weight 0.5 and with
+  the recursive MSE-optimal weight. Predictions: no specification
+  significantly better than HAR-X at any horizon; the VIX-maximum
+  specification within 0.5 pp of the cross-sectional-state one; the
+  combinations within +0.5% of HAR-X.
+- run-39 alternative variance proxies (module 26). Garman-Klass, Rogers-
+  Satchell and close-to-close squared returns replace Parkinson in the
+  target, the HAR terms and the persistence state (rolling GPH, W = 750,
+  log proxy); C without the Hurst features (run-29 showed it within 0.1 pp
+  of C), HAR, HAR-X, A1cs refit on each. Plus a validation of Parkinson
+  against 5-minute realized variance for the 20 stocks with intraday bars
+  (13 Oct 2025 to 21 Apr 2026). Predictions: HAR-X's gain over HAR within
+  1 pp of Parkinson's under GK and RS; C vs HAR-X not significantly positive
+  under any proxy; the cross-sectional state falls at the exit of the 2020
+  episode (W = 750) under every proxy; correlation of log Parkinson with log
+  RV5 between 0.7 and 0.9 and the ratio of means between 0.7 and 1.0.
+- run-40 window placebo and parameter uncertainty (module 27). Event dates
+  chosen by a rule on the VIX alone, fixed here: the first day the VIX
+  closes above 40 after at least 250 trading days below 30. Exit step change
+  of the cross-sectional state (W = 750) averaged over the rule's events,
+  against 1000 placebo dates drawn uniformly from the eligible range
+  (permutation p-value); the two nulls of run-24 re-simulated with their
+  parameters drawn from the estimates' sampling distribution; the same exit
+  test on rolling statistics of log variance (mean, 90th percentile,
+  variance) and on one unrelated to the episode's size (rolling median of
+  daily returns). Predictions: the rule selects the 2008 and 2020 episodes
+  and nothing else; permutation p below 0.05; the observed rise inside the
+  parameter-uncertainty band of the long-memory null; the exit drop present
+  in the rolling mean, quantile and variance of log variance and absent in
+  the rolling median return.
+- run-41 survivorship (module 28; pending Nicholas's Bloomberg pull or
+  CRSP): registered when the data arrive and before it is opened.
+
 ---
 
 ## 2026-10-24  run-30  Within-learner feature ablation (module 23; registered 2026-10-05)
