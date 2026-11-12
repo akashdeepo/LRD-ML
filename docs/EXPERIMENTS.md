@@ -327,6 +327,47 @@ rows, the regimes, every robustness variant.
 
 ---
 
+## 2026-11-12  run-34, run-35, run-36  Primary family, encompassing, data robustness (module 24)
+- Setup: sixth block; saved forecasts of run-31/33 plus per-stock OLS
+  re-estimations of C every 52 origins. Seeds 0. Output CSVs:
+  primary_family, encompassing, coef_stability, insample_vs_oos,
+  data_robustness, missing_zero_days.
+- Result run-34 (C vs HAR-X; MSE of log variance): -1.00 / +0.26 / -3.38%,
+  DM t -2.15 / +0.41 / -2.69, Holm p 0.064 / 0.68 / 0.022. 90% bootstrap
+  intervals [-1.73, -0.27], [-0.72, +1.20], [-5.46, -1.38]: equivalent to
+  HAR-X within 3% at h = 1 and 5, not at h = 22; within 1% at no horizon.
+  MDE (80% power) 1.30 / 1.74 / 3.49%. QLIKE (HAR-X minus C, positive
+  favours C): +0.003 (t 0.53), +0.002 (0.97), -0.006 (-2.08, raw p 0.038,
+  Holm 0.11).
+- Result run-35: HAR-X does not encompass C at any horizon (HLN t 6.0 / 8.3
+  / 6.6). Pooled encompassing weight on C 0.38 / 0.52 / 0.36; the
+  combination with that full-sample weight beats HAR-X by 0.62 / 1.76 /
+  1.65%. C's forecasts differ from HAR-X's by a mean squared 0.025 / 0.021 /
+  0.032 (4-12% of HAR-X's MSE). Sign of the own-d-hat coefficient changes
+  across re-estimations for 50 / 57 / 64% of stocks; median |t| of the
+  persistence coefficients 0.5-2.6, largest for the cross-sectional and
+  sector state at h = 22. Full-sample adjusted R-squared gain of C over
+  HAR-X +0.009 / +0.015 / +0.028, positive for 97 / 99 / 100% of stocks,
+  against out-of-sample -1.00 / +0.26 / -3.38%.
+- Result run-36: without TXN and AAPL the primary reductions move by
+  +0.01 / +0.03 / +0.03 pp. Inside stocks' histories 17 days are missing
+  (MNST 16, GILD 1) and 144 have a zero range: 161 of 698,986 stock-days.
+  The paper's "153 of 705,640" was stale (pre-refresh numerator, and a
+  denominator counting days before listing); corrected in Section 2.2 and
+  Appendix B.
+- Verdict: KEEP. run-34 HELD (QLIKE: "better at no horizon" holds as "not
+  significantly better"; the h = 22 loss is significant raw, not after Holm).
+  run-35 FAILED on the encompassing weight (0.36-0.52 against a predicted
+  0.05-0.35) and on the combination (up to 1.8% against < 0.5%); the
+  coefficient and in-sample predictions HELD. run-36 HELD. Finding #26.
+- Cost: 35 seconds.
+- Lesson: "no significant gain from C" and "C's forecasts carry nothing
+  beyond HAR-X" are different claims, and only the first is true here. The
+  in-sample-weighted combination is an upper bound; run-38's recursive
+  weight decides whether the information is usable in real time.
+
+---
+
 ## 2026-10-24  run-30  Within-learner feature ablation (module 23; registered 2026-10-05)
 - Setup: fourth block, run-30 item, unchanged; run on the refreshed panel
   (run-31) on Kaggle, three notebooks lrdml-m23-h{01,05,22}, 4 vCPUs each,

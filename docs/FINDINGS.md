@@ -177,3 +177,14 @@ at 5% and the tenth (random forest, h = 22, p = 0.09) at 10%. The
 "predictor set, not the estimator" reading holds for the shrinkage
 learners only: the tree learners lose 5.2 to 7.4% to linear HAR-X even on
 its own seven predictors.]
+
+#26 (2026-11-12): HAR-X does not forecast-encompass model C at any horizon
+(HLN t 6.0 / 8.3 / 6.6): C's forecasts carry information HAR-X's do not,
+with a pooled encompassing weight of 0.36-0.52. Used alone, C loses to HAR-X
+(-1.0 / +0.3 / -3.4%) because its persistence coefficients are estimated
+too noisily per stock (sign changes across re-estimations for half the
+stocks; in-sample adjusted R-squared up for 97-100% of stocks). The
+full-sample-weighted combination gains 0.6-1.8%, an upper bound; whether a
+real-time weight keeps any of it is run-38. From run-35. Qualifies the
+paper's reading of the null: "not usable by per-stock OLS at these sample
+sizes", not "uninformative".
