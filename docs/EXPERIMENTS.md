@@ -336,6 +336,46 @@ rows, the regimes, every robustness variant.
 
 ---
 
+## 2026-11-12  run-39  Alternative variance proxies and intraday validation (module 26)
+- Setup: sixth block and its addendum (582bf9d). Garman-Klass (gk),
+  Rogers-Satchell (rs) and close-to-close squared returns (cc) replace
+  Parkinson in the target, HAR terms and persistence state (rolling GPH,
+  W = 750, every derived predictor rebuilt); C without Hurst, HAR, HAR-X,
+  A1cs refit; HAR and HAR-X also with HAR inputs through t-1. Before the
+  run: gk and rs correlate 0.97 and 0.87 with Parkinson in logs, cc 0.58;
+  AAPL drops out of gk and rs (no open price). Fits cached as rev1/{proxy}_*.
+- Result (h = 1 / 5 / 22; Parkinson first for reference):
+  HAR-X vs HAR: PK 3.11 / 5.54 / 1.77%; gk 2.78 / 5.23 / 1.49; rs 2.25 /
+  5.20 / 1.80; cc 1.56 / 7.78 / 7.15.
+  C vs HAR-X: PK -1.00 / +0.26 / -3.38; gk -1.13 / -0.04 / -3.34; rs -1.43
+  / -0.52 / -4.51; cc -1.43 / -0.90 / -4.02 (cc t -4.96 / -1.95 / -4.51).
+  Real-time combination of C with HAR-X: PK +0.55 / +1.66 / +1.42 (t 3.5 /
+  5.1 / 3.2); gk +0.23 / +1.08 / +0.76 (t 1.68 / 3.77 / 1.86); rs +0.12 /
+  +0.91 / +0.16 (t 1.02 / 3.27 / 0.28); cc +0.10 / +0.61 / +0.56 (t 1.45 /
+  3.29 / 2.86).
+  HAR-X vs HAR with HAR inputs through t-1 (misaligned): gk 4.84 / 7.52 /
+  2.58; rs 3.90 / 7.37 / 2.82; cc 1.99 / 8.94 / 8.05.
+  Exit of the 2020 episode at W = 750 (4-week change in the cross-sectional
+  mean of d-hat, percentile among all dates): PK -0.106 (0.19%); gk -0.114
+  (0.19%); rs -0.116 (0.28%); cc -0.074 (0.19%).
+  Intraday, 20 stocks, 131 days: correlation of log Parkinson with log RV5
+  median 0.72 (gk 0.75, rs 0.69); mean Parkinson / mean RV5 median 1.21.
+- Verdict: KEEP. HELD: HAR-X's gain within 1 pp of Parkinson's under gk and
+  rs; C never significantly better than HAR-X under any proxy; the exit drop
+  under every proxy; the combination under gk and rs at h = 5 above 0.5%
+  with t > 2, and positive but smaller under cc; alignment lowers HAR-X's
+  daily gain under every proxy; correlation with RV5 in [0.7, 0.9] (median).
+  FAILED: ratio of means (1.21 against a predicted 0.7-1.0). RV5 here sums
+  within-day 5-minute returns from the first bar, so it omits the opening
+  move that the daily range includes; the prediction ignored this. The
+  combination is robust at one week under every proxy and proxy-sensitive
+  at one day and one month. Finding #28.
+- Cost: 3.5 min per proxy, 24 s evaluation.
+- Lesson: report the horizon at which a combination gain survives every
+  proxy, not the best horizon under one proxy.
+
+---
+
 ## 2026-11-12  run-42  Placebo controls for the combination gain (module 25)
 - Setup: registration in the run-37/38 entry, written before this run.
   Placebo fits cached as rev1/C_noise_*, rev1/C_perm_*; seeds [0, ticker].

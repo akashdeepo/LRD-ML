@@ -201,3 +201,13 @@ per-stock OLS does not deliver it because it estimates eleven noisy
 coefficients, and halving them (the equal-weight combination) does. From
 runs 38 and 42. Supersedes the reading of #26 as an upper bound: the
 real-time combination keeps nearly all of the full-sample-weight gain.
+
+#28 (2026-11-12): Under Garman-Klass, Rogers-Satchell and close-to-close
+variance, the standalone result holds (the persistence model never beats
+HAR-X; it is worse at one day and one month under every proxy), the state's
+exit drop at the 2020 episode's window exit holds (bottom 0.3% of all
+4-week changes), and the information-timing effect holds. The real-time
+combination gain is robust at one week (+0.61 to +1.66%, t 3.3 to 5.1
+across the four proxies) and proxy-sensitive at one day and one month
+(significant at 5% only under Parkinson, and under close-to-close at one
+month). From run-39. Qualifies #27: the robust statement is the weekly one.
