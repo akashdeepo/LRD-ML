@@ -327,6 +327,34 @@ rows, the regimes, every robustness variant.
 
 ---
 
+## 2026-11-12  run-42  Placebo controls for the combination gain (module 25)
+- Setup: registration in the run-37/38 entry, written before this run.
+  Placebo fits cached as rev1/C_noise_*, rev1/C_perm_*; seeds [0, ticker].
+  Unit checks before the run: the permutation keeps each column's values and
+  the eleven columns' rows together; the noise leaves the HAR columns
+  untouched and is reproducible.
+- Result (gain over HAR-X; comb50 / real-time combrt; h = 1 / 5 / 22):
+  C: +0.56 / +1.76 / +1.42 and +0.55 / +1.66 / +1.42 (combrt t 3.53 /
+  5.11 / 3.21). C with noise: -0.37 / -0.32 / -0.37 and -0.00 / +0.00 /
+  -0.00 (the real-time weight goes to zero). C with time-shuffled
+  persistence: -0.26 / +0.03 / -0.77 and +0.06 / +0.22 / +0.17 (combrt t
+  2.17 / 3.27 / 1.34). HAR: combrt -0.01 / -0.03 / +0.73 (t 1.39).
+  Registered extensions and A1pc: combrt at most +0.24 / +0.38% at h = 1 /
+  5, at most -0.04% at h = 22; A1cs comb50 at h = 5 +0.50% (t 2.25).
+- Verdict: KEEP. Predictions HELD for (a) noise, (c) HAR and (d) the
+  extensions; (b) FAILED narrowly: the time-shuffled placebo gains 0.22% at
+  h = 5 with t 3.27, above the 0.2% bound. The shuffled block keeps the
+  persistence predictors' levels, so some of their information about the
+  volatility regime survives the shuffle; that bounds the generic part of
+  the gain at about 0.06 / 0.22 / 0.17%, against C's 0.55 / 1.66 / 1.42%.
+  The rest needs the predictors' timing. Finding #27.
+- Cost: 1.3 min.
+- Lesson: an OLS forecast that loses to its benchmark can still carry
+  information the benchmark lacks; test the combination, with a placebo,
+  before concluding "no information".
+
+---
+
 ## 2026-11-12  run-37, run-38  Lagged indices; restricted persistence, maxima, combinations (module 25)
 - Setup: sixth block. Fits cached in results/intermediate/forecasts/rev1/.
   Checks before the runs: lagged VIX equals the previous day's close; the

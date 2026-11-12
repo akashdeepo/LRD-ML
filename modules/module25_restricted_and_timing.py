@@ -115,9 +115,10 @@ def pc_forecast(X: pd.DataFrame, y: pd.Series, init_date, h: int, full_index,
 
 
 def fit_panel(bundle, targets, name: str, model: str, h: int, overrides=None, extra=None,
-              pca: bool = False) -> tuple[pd.DataFrame, pd.DataFrame]:
+              pca: bool = False, transform=None) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Fit `model` (plus `extra` columns, with `overrides` replacing the
-    model's own columns) for every stock; cache to rev1/{name}_h{h}."""
+    model's own columns, and `transform(X, ticker)` applied to the aligned
+    predictors) for every stock; cache to rev1/{name}_h{h}."""
     fy, fyy = REV / f"{name}_h{h:02d}_yhat.csv", REV / f"{name}_h{h:02d}_y.csv"
     if fy.exists():
         return (pd.read_csv(fy, index_col=0, parse_dates=True), pd.read_csv(fyy, index_col=0, parse_dates=True))
@@ -127,6 +128,8 @@ def fit_panel(bundle, targets, name: str, model: str, h: int, overrides=None, ex
     jobs = []
     for tkr in bundle.panel.kept:
         X, y = _stock_xy(bundle, targets, tkr, model, h, overrides, extra)
+        if transform is not None:
+            X = transform(X, tkr)
         if len(X) >= 60:
             jobs.append((tkr, X, y))
     if pca:
@@ -189,6 +192,65 @@ def run38() -> None:
             print(f"  run-38 {name} h={h} done", flush=True)
 
 
+PERM_BLOCK = 52
+
+
+def _noise_block(X: pd.DataFrame, tkr: str) -> pd.DataFrame:
+    """Persistence predictors replaced by independent Gaussian noise with the
+    stock's own mean and standard deviation (seeded per stock)."""
+    rng = np.random.default_rng([0, sum(map(ord, tkr))])     # seed 0, per-stock stream
+    X = X.copy()
+    for c in PERSISTENCE:
+        X[c] = rng.normal(X[c].mean(), X[c].std(), len(X))
+    return X
+
+
+def _perm_block(X: pd.DataFrame, tkr: str) -> pd.DataFrame:
+    """Persistence predictors block-permuted in time (blocks of PERM_BLOCK
+    rows, one permutation for all eleven), keeping their joint distribution
+    and breaking their timing."""
+    rng = np.random.default_rng([0, sum(map(ord, tkr))])
+    n = len(X)
+    blocks = [np.arange(s, min(s + PERM_BLOCK, n)) for s in range(0, n, PERM_BLOCK)]
+    order = np.concatenate([blocks[i] for i in rng.permutation(len(blocks))])
+    X = X.copy()
+    X[PERSISTENCE] = X[PERSISTENCE].values[order]
+    return X
+
+
+def run42() -> None:
+    bundle = load_bundle(); targets = build_targets(bundle)
+    for name, tf in (("C_noise", _noise_block), ("C_perm", _perm_block)):
+        for h in HORIZONS:
+            fit_panel(bundle, targets, name, "C", h, transform=tf)
+            print(f"  run-42 {name} h={h} done", flush=True)
+
+
+def evaluate42() -> pd.DataFrame:
+    rng = np.random.default_rng(4)
+    rows = []
+    for h in HORIZONS:
+        yb, y = _saved("A1", h)
+        partners = {"C (run-38)": _saved("C", h)[0], "C_noise": _cached("C_noise", h)[0],
+                    "C_perm": _cached("C_perm", h)[0], "HAR (A)": _saved("A", h)[0],
+                    "A1cs": _saved("A1cs", h)[0], "A1sec": _saved("A1sec", h)[0],
+                    "A1mod": _saved("A1mod", h)[0], "A1pc": _cached("A1pc", h)[0]}
+        for name, yp in partners.items():
+            cm = yb.notna() & yp.notna() & y.notna()
+            yp_al = yp.reindex_like(yb)
+            solo = compare(yp_al.where(cm), y, yb.where(cm), y, h)
+            c50 = compare((0.5 * yb + 0.5 * yp_al).where(cm), y, yb.where(cm), y, h, rng=rng)
+            rt = recursive_combination(yb, yp_al, y, h)
+            crt = compare(rt, y, yb.where(rt.notna()), y, h, rng=rng)
+            rows.append({"partner": name, "h": h, "solo_gain_pct": solo["gain_pct"],
+                         "comb50_gain_pct": c50["gain_pct"], "comb50_t": c50["dm_t"],
+                         "combrt_gain_pct": crt["gain_pct"], "combrt_t": crt["dm_t"],
+                         "combrt_ci_lo": crt["ci_lo"], "combrt_ci_hi": crt["ci_hi"]})
+    df = pd.DataFrame(rows)
+    df.to_csv(INTERM / "combination_placebo.csv", index=False)
+    return df
+
+
 def evaluate() -> tuple[pd.DataFrame, pd.DataFrame]:
     rng = np.random.default_rng(3)
     rows37 = []
@@ -228,7 +290,7 @@ def _cached(name: str, h: int):
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--run", choices=["37", "38"], default=None)
+    p.add_argument("--run", choices=["37", "38", "42"], default=None)
     p.add_argument("--eval", action="store_true")
     a = p.parse_args()
     pd.set_option("display.width", 220)
@@ -236,6 +298,11 @@ def main() -> None:
         run37()
     elif a.run == "38":
         run38()
+    elif a.run == "42":
+        run42()
+        print("\n[run-42] combination placebo controls (each partner combined with HAR-X)")
+        print(evaluate42().round(3).to_string(index=False))
+        return
     if a.eval or a.run is None:
         d37, d38 = evaluate()
         print("\n[run-37] lagged VIX and MOVE: each spec vs lagged HAR-X")

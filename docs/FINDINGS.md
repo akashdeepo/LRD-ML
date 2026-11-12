@@ -188,3 +188,16 @@ full-sample-weighted combination gains 0.6-1.8%, an upper bound; whether a
 real-time weight keeps any of it is run-38. From run-35. Qualifies the
 paper's reading of the null: "not usable by per-stock OLS at these sample
 sizes", not "uninformative".
+
+#27 (2026-11-12): Combining model C with HAR-X in real time (recursive
+MSE-optimal weight, pooled over stocks, only errors already observed at the
+origin) reduces the MSE of log variance relative to HAR-X by 0.55 / 1.66 /
+1.42% at h = 1 / 5 / 22 (t 3.5 / 5.1 / 3.2; 95% bootstrap intervals
+[0.25, 0.87], [1.10, 2.21], [0.51, 2.66]). Placebos: with the eleven
+persistence predictors replaced by noise the gain is zero; block-shuffled
+in time it is 0.06 / 0.22 / 0.17%. The persistence state therefore carries
+usable, timing-dependent information about future volatility beyond HAR-X;
+per-stock OLS does not deliver it because it estimates eleven noisy
+coefficients, and halving them (the equal-weight combination) does. From
+runs 38 and 42. Supersedes the reading of #26 as an upper bound: the
+real-time combination keeps nearly all of the full-sample-weight gain.
