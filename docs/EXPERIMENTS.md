@@ -308,6 +308,15 @@ rows, the regimes, every robustness variant.
   under any proxy; the cross-sectional state falls at the exit of the 2020
   episode (W = 750) under every proxy; correlation of log Parkinson with log
   RV5 between 0.7 and 0.9 and the ratio of means between 0.7 and 1.0.
+- run-39 addendum (written 2026-11-12, after runs 34-38 and 42, before run-39
+  runs): under each proxy, also the real-time combination of C (without
+  Hurst) with HAR-X, as in run-38, and the information-timing comparison
+  (HAR inputs through t-1 vs t). AAPL has no Bloomberg open price in the
+  October pull, so it drops out of the Garman-Klass and Rogers-Satchell
+  panels (114 stocks). Predictions: the combination beats HAR-X under GK and
+  RS at h = 5 by at least 0.5% with t > 2; under close-to-close the
+  combination is positive at h = 5 but smaller; aligning the HAR inputs
+  lowers HAR-X's apparent gain over HAR at h = 1 under every proxy.
 - run-40 window placebo and parameter uncertainty (module 27). Event dates
   chosen by a rule on the VIX alone, fixed here: the first day the VIX
   closes above 40 after at least 250 trading days below 30. Exit step change
