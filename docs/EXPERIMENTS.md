@@ -327,6 +327,49 @@ rows, the regimes, every robustness variant.
 
 ---
 
+## 2026-11-12  run-37, run-38  Lagged indices; restricted persistence, maxima, combinations (module 25)
+- Setup: sixth block. Fits cached in results/intermediate/forecasts/rev1/.
+  Checks before the runs: lagged VIX equals the previous day's close; the
+  override touches only a model's own columns; an aligned refit of HAR-X
+  reproduces the saved forecast to 2e-15.
+- Result run-37 (each spec vs HAR-X, both with VIX and MOVE lagged one
+  day; h = 1 / 5 / 22): A1cs -0.27 / -0.29 / -2.19%; A1sec -0.27 / -0.31 /
+  -0.92%; A1mod -0.63 / -0.69 / -1.91% (t -2.35 at h = 22); C -1.46 /
+  -0.35 / -3.54% (t -3.80 / -0.58 / -2.73). Changes against aligned:
+  -0.07 to -0.60 pp, every one negative.
+- Result run-38 (vs aligned HAR-X): A1d -0.10 / -0.05 / -0.67%; A1pc +0.03
+  / -0.02 / -0.92%; A1vmax +0.19 / -0.09 / -1.20%; A1rvmax -0.24 / -0.19 /
+  -0.94%; A1csmax -0.08 / +0.05 / -3.35%; none significant. Combinations:
+  comb50 +0.56 / +1.76 / +1.42% (t 2.32 / 5.18 / 2.24); combrt (real-time
+  weight) +0.55 / +1.66 / +1.42% (t 3.53 / 5.11 / 3.21), 95% intervals
+  [0.25, 0.87], [1.10, 2.21], [0.51, 2.66].
+- Verdict: run-37 HELD except C at h = 5 (-0.60 pp against the 0.5 pp
+  bound); lagging the indices hurts the persistence specifications slightly
+  more than HAR-X, so the aligned results are their better case. run-38
+  HELD for every single specification and for "VIX maximum within 0.5 pp of
+  the cross-sectional state" at h = 1 and 5 (0.8 pp at h = 22); FAILED for
+  the combinations, which beat HAR-X significantly at every horizon in real
+  time. Not interpreted until the placebo control run-42 (registered below,
+  before it runs): averaging two nested OLS forecasts halves the extra
+  coefficients, so part or all of the gain may be generic shrinkage.
+- Cost: 2.6 + 2.8 min of fits, 9 s of evaluation.
+
+**Registration of run-42 (written 2026-11-12, after run-38's result and
+before run-42 runs).** Placebo controls for the combination gain. (a) C with
+its eleven persistence predictors replaced by independent Gaussian noise of
+the same per-stock mean and standard deviation (seed 0), refit, then
+combined with HAR-X by comb50 and combrt; (b) the same with the persistence
+predictors block-permuted in time (blocks of 52 weekly rows, same
+permutation for all eleven, per stock), which keeps their distribution and
+mutual correlation but breaks their timing; (c) HAR-X combined with HAR
+(drops the indices instead of adding persistence); (d) HAR-X combined with
+each registered extension and with A1pc. Predictions: (a) and (b) gain at
+most 0.2% at every horizon and none significantly, so the run-38 gain is
+not generic shrinkage; (c) does not beat HAR-X; (d) gains smaller than C's
+combination at every horizon.
+
+---
+
 ## 2026-11-12  run-34, run-35, run-36  Primary family, encompassing, data robustness (module 24)
 - Setup: sixth block; saved forecasts of run-31/33 plus per-stock OLS
   re-estimations of C every 52 origins. Seeds 0. Output CSVs:
