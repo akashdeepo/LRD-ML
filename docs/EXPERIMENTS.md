@@ -331,6 +331,21 @@ rows, the regimes, every robustness variant.
   parameter-uncertainty band of the long-memory null; the exit drop present
   in the rolling mean, quantile and variance of log variance and absent in
   the rolling median return.
+- run-40 amendment (written 2026-11-12, after seeing which dates the
+  registered rule selects and before computing any test statistic). The
+  registered rule selects one date, 24 Aug 2015: a spike passes 30 on its
+  way to 40 (VIX 39.16 on 27 Feb 2020, the day before 40.11), so "250 days
+  below 30 before t" rejects almost every episode. The prediction "2008 and
+  2020 and nothing else" therefore FAILED as registered. The registered
+  rule is still run and reported. Added: an amended rule requiring the 250
+  calm days to end 20 trading days before t (allowing a run-up), which
+  selects 24 Aug 2015 and 28 Feb 2020 (2008 is excluded: the VIX passed 30
+  in March 2008). Predictions for the amended rule, unchanged in substance:
+  permutation p below 0.05 for the state; the exit drop present in the
+  rolling mean, quantile and variance of log variance, absent in the rolling
+  median return. (c) is implemented by drawing each path's parameters from
+  the per-stock calm-period estimates (a bootstrap over stocks), which
+  carries estimation error and cross-stock heterogeneity.
 - run-41 survivorship (module 28; pending Nicholas's Bloomberg pull or
   CRSP): registered when the data arrive and before it is opened.
 
