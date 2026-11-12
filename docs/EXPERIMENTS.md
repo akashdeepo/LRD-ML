@@ -346,8 +346,26 @@ rows, the regimes, every robustness variant.
   median return. (c) is implemented by drawing each path's parameters from
   the per-stock calm-period estimates (a bootstrap over stocks), which
   carries estimation error and cross-stock heterogeneity.
-- run-41 survivorship (module 28; pending Nicholas's Bloomberg pull or
-  CRSP): registered when the data arrive and before it is opened.
+- run-41 survivorship (module 28; registered 2026-11-12, before any CRSP
+  file exists on this machine; source: CRSP via Nicholas's WRDS login).
+  Panel: every stock that was an S&P 500 member at any time from 29 Nov
+  2001 to the end of the data, with daily OHLC from CRSP (survivors keep
+  their Bloomberg series; a CRSP-Bloomberg check on the overlap is reported).
+  Point in time: at each weekly origin a stock's cells are evaluated only
+  while it is a member on that date; its regressions use its own past data,
+  as before; the cross-sectional and sector states are averages over the
+  members on that date; delisted stocks' targets stop at delisting. Same
+  filters (Parkinson from CRSP high and low, 70% coverage within the
+  membership spell, 250 valid days for d-hat), same models, horizons,
+  windows and tests. Outputs compared with the 115-stock panel: the primary
+  comparison (C vs HAR-X, MSE and QLIKE), the real-time combination, HAR-X
+  vs HAR, and the exit signature of the state. Predictions: C vs HAR-X not
+  significantly positive at any horizon; the weekly real-time combination
+  gain positive with t > 2; HAR-X's gain over HAR within 2 pp of the
+  115-stock value at each horizon; the state's exit drop at the 2020 episode
+  in the bottom 1% of 4-week changes; level of mean d-hat within 0.05 of the
+  115-stock value. If GICS sectors are unavailable, sectors come from a
+  fixed SIC-to-GICS map stated in the paper.
 
 ---
 
