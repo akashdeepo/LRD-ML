@@ -366,6 +366,14 @@ rows, the regimes, every robustness variant.
   in the bottom 1% of 4-week changes; level of mean d-hat within 0.05 of the
   115-stock value. If GICS sectors are unavailable, sectors come from a
   fixed SIC-to-GICS map stated in the paper.
+- run-41 amendment (written 2026-11-14, after Nicholas reported the extract's
+  coverage and before any CRSP file is opened here): the CRSP annual file
+  available through TTU's WRDS account ends on 31 Dec 2025. The point-in-time
+  panel's evaluation therefore ends at the last origin whose target is
+  observed by 31 Dec 2025, and the comparison with the 115-stock panel is
+  made over that same period (the 115-stock panel re-evaluated on origins
+  to that date), so the two differ only in membership. Predictions
+  unchanged.
 
 ---
 
