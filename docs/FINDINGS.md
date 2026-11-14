@@ -222,3 +222,12 @@ generic to rolling statistics driven by the episode's size. A brief spike
 (Aug 2015 alone) produces no exit drop in the state. With parameters drawn
 from per-stock estimates, both simulated nulls contain the observed 2020
 rise in their 5-95% band. From run-40.
+
+#30 (2026-11-14): On a point-in-time panel of every S&P 500 member
+(CRSP, 742 stocks evaluated, members on each date only, evaluation to Dec
+2025), the persistence model is worse than HAR-X at one day and one month
+(-1.9%, -6.3%; t -4.7, -3.4) and equal at one week, and the real-time
+combination beats HAR-X by 0.50 / 1.70 / 1.23% (t 4.2 / 5.7 / 2.6). The
+point-in-time state correlates 0.996 with the 115-stock state and shows the
+same 2020 exit drop. Neither survivorship nor the 115-stock panel's tilt to
+large stocks (median size percentile 83) drives the conclusions. From run-41.

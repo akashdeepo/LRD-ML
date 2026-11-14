@@ -377,6 +377,51 @@ rows, the regimes, every robustness variant.
 
 ---
 
+## 2026-11-14  run-41  Survivorship: point-in-time S&P 500 panel from CRSP (module 28)
+- Setup: registration 082c0ed, amendment cf462d7. CRSP CIZ via WRDS
+  (Nicholas Appiah): 1,055 ever-members 2001-2025, 1,080 membership spells.
+  Checks before the run: all 115 of our stocks matched to PERMNOs (GOOGL =
+  class A, 90319; MRSH listed as MMC); 499-506 members on every date; CRSP and
+  Bloomberg log Parkinson agree within 1% on 99.1% of 687,387 stock-days
+  (correlation 0.9992), daily total returns correlate 0.9996. Panel: 1,031
+  stocks pass the 70%-coverage-within-spells filter (all 115 of ours); one
+  stock without a GICS sector. Rebuilding d-hat for our 115 reproduces the
+  saved values to 2e-14; the point-in-time state correlates 0.996 with the
+  115-stock state. Fits: A, A1, C over the full weekly grid (training split
+  unchanged), evaluation to the last origin with a target by 31 Dec 2025
+  (631 origins at h = 1 and 5, 627 at h = 22), member cells only.
+- Result (h = 1 / 5 / 22; 115-stock panel over the same period, then the
+  point-in-time panel with 742 / 742 / 739 stocks):
+  HAR-X vs HAR: 3.14 / 5.97 / 2.28%; point-in-time 2.69 / 5.12 / 0.54%.
+  C vs HAR-X: -1.09 / +0.10 / -3.61% (t -2.31 / 0.16 / -2.85); point-in-time
+  -1.86 / -0.01 / -6.31% (t -4.66 / -0.03 / -3.44); QLIKE t point-in-time
+  +0.60 / +0.60 / -2.93.
+  Real-time combination vs HAR-X: +0.51 / +1.57 / +1.35% (t 3.20 / 4.88 /
+  3.00); point-in-time +0.50 / +1.70 / +1.23% (t 4.19 / 5.69 / 2.65).
+  Our 115 inside the point-in-time panel (member cells, 108 stocks): C vs
+  HAR-X -0.99 / +0.44 / -2.47%; combination +0.55 / +1.71 / +1.58%.
+  State: mean d-hat 0.423 vs 0.418; 2020 exit change -0.108 vs -0.100, both
+  at the 0.09th percentile of 4-week changes.
+- Verdict: KEEP; every registered prediction HELD (C never significantly
+  positive; weekly combination t 5.69 > 2; HAR-X's gain within 2 pp of the
+  115-stock value at each horizon, the largest difference 1.7 pp at h = 22;
+  exit drop in the bottom 1%; mean d-hat within 0.05). Survivorship and the
+  panel's tilt toward large stocks do not drive the standalone null, which
+  is stronger on the full membership, or the combination gain, which is
+  significant at all three horizons on it. Finding #30.
+- Also (not a registered item): Nicholas reports the 125 were "selected
+  randomly from the S&P 500" and pulled on 21 Apr 2026. Against CRSP market
+  values on 31 Dec 2025, 93% of our 115 are above the index median (median
+  size percentile 83); none of 10,000 random draws of 115 members has as
+  high a mean size percentile. The paper must not call the sample random;
+  query sent to Nicholas.
+- Cost: build 3.2 min; fits about 9 min per model (1,031 stocks); evaluation
+  31 s.
+- Lesson: the point-in-time panel also answers the size-selection question,
+  because it contains every member.
+
+---
+
 ## 2026-11-12  run-40  Window-composition placebo and parameter uncertainty (module 27)
 - Setup: sixth block and the run-40 amendment (d5996ac). Exit statistic: mean
   of the standardised series over the 20 trading days after event + 750
