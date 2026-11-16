@@ -374,6 +374,28 @@ rows, the regimes, every robustness variant.
   made over that same period (the 115-stock panel re-evaluated on origins
   to that date), so the two differ only in membership. Predictions
   unchanged.
+- run-43 co-author checks (module 29; registered 2026-11-16, after Prof.
+  Rachev's review of the package and before any of these numbers exist).
+  (a) Matched proxy comparison. Run-39's alternative proxies used C without
+  the two Hurst predictors (C_noH) and, for Garman-Klass and Rogers-Satchell,
+  114 stocks (AAPL has no open price), while the Parkinson row used C on
+  115. Fit C_noH on Parkinson for all 115 stocks and re-evaluate, under
+  Parkinson, C_noH vs HAR-X and the real-time combination of C_noH and HAR-X
+  on (i) all 115 and (ii) the 114 without AAPL, so each alternative proxy
+  has a Parkinson row with the same predictors and stocks. Prediction: the
+  weekly combination gain under matched Parkinson is within 0.2 pp of the
+  reported 1.66% in both (i) and (ii), so the lower weekly gains under
+  Garman-Klass (1.08%) and Rogers-Satchell (0.91%) are due to the proxy, not
+  to the predictor set or the stock sample.
+  (b) The combination under QLIKE. The real-time combination (weight chosen
+  on squared error of log variance, as registered) is scored by QLIKE with
+  the point-in-time level correction of run-34, against HAR-X on the same
+  cells, at h = 1, 5, 22, for C and for the noise and shuffled placebos.
+  Prediction: at h = 5 the combination's QLIKE is lower than HAR-X's with
+  DM t > 2; the noise placebo's QLIKE difference is within one standard
+  error of zero at every horizon. No prediction at h = 1 and 22.
+  (c) Descriptive, no prediction: the count of the 1,031 eligible stocks of
+  run-41 that contribute evaluated forecasts, and why the others do not.
 
 ---
 
