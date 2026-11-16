@@ -399,6 +399,40 @@ rows, the regimes, every robustness variant.
 
 ---
 
+## 2026-11-16  run-43  Co-author checks: matched proxy row, combination under QLIKE, survivorship counts (module 29)
+- Setup: registration 975971c. (a) C_noH (C without h, delta_h) fitted on
+  Parkinson for all 115 stocks (`python -m modules.module29_coauthor_checks
+  --fit`), evaluated with C on 115 and on the 114 without AAPL. (b) Real-time
+  combinations of run-38/42 scored by QLIKE with the run-34 point-in-time
+  level correction, against HAR-X on the same cells. (c) Counts from the
+  run-41 panel.
+- Result: (a) weekly combination gain under Parkinson with C_noH 1.20% (t
+  4.23) on 115, 1.21% (t 4.20) on 114; with C 1.66% / 1.66%. Daily 0.43 /
+  0.44% (t 2.65); monthly 0.96 / 0.95% (t 2.55). Standalone C_noH vs HAR-X
+  -0.68 / +0.20 / -2.82%. Matched comparison at one week: Parkinson 1.21,
+  Garman-Klass 1.08, Rogers-Satchell 0.91 (114 stocks); Parkinson 1.20,
+  close-to-close 0.61 (115). (b) QLIKE difference HAR-X minus combination,
+  C: 0.0030 / 0.0032 / 0.0010 (DM t 2.42 / 3.14 / 0.88); noise 0.0000 at
+  every horizon (|t| < 0.8); shuffled 0.0002 / 0.0004 / 0.0003 (t 1.07 /
+  2.40 / 0.95). (c) 1,031 eligible; 742 contribute at h = 1 and 5 (739 at
+  h = 22); 273 (278) were members only before the evaluation period starts
+  (17 Jun 2013); 16 (14) were members during it but have no forecast,
+  recent listings with a median of 222 valid days before their last member
+  date (fewer than the 250 the persistence estimates need).
+- Verdict: (a) prediction FAILED: the matched Parkinson gain is 0.45 pp
+  below the reported 1.66%, so part of the gap to the alternative proxies
+  was the Hurst predictors, not the proxy; on matched predictors the weekly
+  gain is 0.61-1.21% under all four proxies. (b) prediction HELD (h = 5 t
+  3.14 > 2; noise within one SE everywhere); QLIKE also favours the
+  combination at h = 1. KEEP; Table 16 gains a matched Parkinson row.
+  Finding #31.
+- Cost: C_noH fits about 6 min; evaluation under 1 min.
+- Lesson: when a robustness variant changes the predictor set as well as
+  the proxy, run the baseline with the same predictor set; a standalone
+  equivalence (run-29, within 0.1 pp) did not carry over to the combination.
+
+---
+
 ## 2026-11-14  run-41  Survivorship: point-in-time S&P 500 panel from CRSP (module 28)
 - Setup: registration 082c0ed, amendment cf462d7. CRSP CIZ via WRDS
   (Nicholas Appiah): 1,055 ever-members 2001-2025, 1,080 membership spells.

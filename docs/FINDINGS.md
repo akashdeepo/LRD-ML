@@ -231,3 +231,14 @@ combination beats HAR-X by 0.50 / 1.70 / 1.23% (t 4.2 / 5.7 / 2.6). The
 point-in-time state correlates 0.996 with the 115-stock state and shows the
 same 2020 exit drop. Neither survivorship nor the 115-stock panel's tilt to
 large stocks (median size percentile 83) drives the conclusions. From run-41.
+
+#31 (2026-11-16): With the same predictors (C without the two Hurst
+variables) the real-time combination's weekly gain over HAR-X is 1.20%
+under Parkinson (1.21% on the 114 stocks without AAPL), against 1.08%,
+0.91% and 0.61% under Garman-Klass, Rogers-Satchell and close-to-close, all
+with t > 3. The Hurst predictors add about 0.45 pp to the Parkinson
+combination (1.66% with full C). Scored by QLIKE, the combination of C and
+HAR-X (weight chosen on squared log error) beats HAR-X at one day and one
+week (t 2.4, 3.1), not at one month (t 0.9); the noise placebo gains nothing
+on QLIKE and the shuffled placebo about an eighth of the real gain. From
+run-43.
