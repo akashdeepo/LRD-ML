@@ -396,6 +396,29 @@ rows, the regimes, every robustness variant.
   error of zero at every horizon. No prediction at h = 1 and 22.
   (c) Descriptive, no prediction: the count of the 1,031 eligible stocks of
   run-41 that contribute evaluated forecasts, and why the others do not.
+- run-44 verification checks (module 30; registered 2026-11-17, after Prof.
+  Rachev's report of 16 Nov and before any of these numbers exist). No model
+  is refitted; everything uses saved forecasts.
+  (a) Paired tests on common cells, squared error of log variance: the
+  real-time combination of C against the same combination of the shuffled
+  placebo, of the noise placebo, and of C without the Hurst predictors (the
+  matched ablation of run-43), at h = 1, 5, 22. Prediction: at h = 5 the
+  real combination beats the shuffled and the noise combinations with DM
+  t > 2.
+  (b) Timing census. The implemented weight (lag of ceil(h/5) weekly rows)
+  is recomputed independently with explicit trading-calendar maturity
+  (an origin s enters the weight at t only if pos(s) + h <= pos(t)), and the
+  two are compared; first scored dates and sample sizes of the combination
+  under MSE and QLIKE are reported per horizon. Prediction: the two weights
+  are identical (max abs difference below 1e-12) and no error enters the
+  weight before its target window has ended.
+  (c) Descriptive, no prediction: quantiles of the real-time weight,
+  clipping frequency, first usable date; the combination's gain by period
+  (Jun 2013-Dec 2019, 2020, 2021-2026); for the run-41 panel, per-date counts
+  of members, members with a persistence state, issued forecasts and
+  scorable targets, the split of non-contributing stocks into before and
+  after the evaluation window, and the 24 stocks removed by the coverage
+  filter.
 
 ---
 
