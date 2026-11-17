@@ -250,3 +250,6 @@ independent recomputation with explicit trading-calendar maturity, never
 uses an unfinished target window, and is never clipped (median 0.37 /
 0.49 / 0.33). The CRSP coverage filter removes only 24 stocks that left the
 index before the sample starts, so it is not binding. From run-44.
+(Correction 2026-11-17: "equals" means agreement to numerical precision,
+max abs difference 1.1e-15; monthly membership split corrected in the
+run-44 entry.)

@@ -455,6 +455,19 @@ rows, the regimes, every robustness variant.
 - Cost: about 4 min (reading the CRSP daily files for the 24).
 - Lesson: check what a look-ahead filter actually removes before
   qualifying it; here it is not binding.
+- Correction (2026-11-17, co-author check; no number in any table changes):
+  the h = 22 sentence above is incomplete. The census
+  (survivorship_census.csv, authoritative; survivorship_counts.csv from
+  run-43 uses coarser categories and is superseded) gives disjoint splits
+  1,031 = 742 + 205 + 68 + 16 at h = 1 and 5, and
+  1,031 = 739 + 205 + 68 + 5 + 14 at h = 22 (68 = 48 + 20). A cross-tab of
+  the categories shows the 5 that joined after the last monthly origin
+  (24 Nov 2025) are 3 stocks that contribute at h = 1 and 5 and 2 of the
+  16: reclassifications by horizon, not further exclusions. "Identical"
+  weights means agreement to numerical precision (max abs difference
+  1.1e-15). Weight counts 621 / 621 / 617 are origins with a weight;
+  620 / 620 / 612 are combination dates with both forecasts and an
+  observed target.
 
 ---
 
