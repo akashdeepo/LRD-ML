@@ -422,6 +422,42 @@ rows, the regimes, every robustness variant.
 
 ---
 
+## 2026-11-17  run-44  Verification checks for the final package (module 30)
+- Setup: registration 08383ba. Saved forecasts only (`python -m
+  modules.module30_verification --wrds <extract>`); outputs in
+  results/intermediate/verification/.
+- Result: (a) paired, real-time combination of C against the same
+  combination of: shuffled C +0.49 / +1.44 / +1.25% (t 3.21 / 4.66 / 2.62);
+  noise C +0.56 / +1.66 / +1.42% (t 3.55 / 5.11 / 3.21); C without Hurst
+  +0.13 / +0.46 / +0.47% (t 3.11 / 4.54 / 3.33); 620 / 620 / 612 dates.
+  (b) implemented weight and calendar-maturity weight identical (max abs
+  difference 0.0 at every horizon); the latest target window entering a
+  weight ends 4 / 0 / 3 trading days before the origin. Combination scored
+  from 19 Dec 2013 (h = 1, 5; 26 origins after 17 Jun 2013) and 21 Jan 2014
+  (h = 22; 30 origins), on 620 / 620 / 612 dates; standalone QLIKE from the
+  same dates; combination QLIKE from 27 Jun 2014 / 27 Jun 2014 / 25 Aug 2014
+  on 594 / 594 / 582 dates (its own 26 matured errors for the smearing
+  factor). (c) Weight median 0.37 / 0.49 / 0.33, 5-95% range 0.19-0.40 /
+  0.35-0.52 / 0.29-0.41, never clipped. Gain by period (Jun 2013-2019, 2020,
+  2021-2026): h = 5 1.33 / 2.34 / 1.90% (t 3.75 / 1.04 / 4.33); h = 1 0.44 /
+  1.53 / 0.48%; h = 22 1.02 / 0.06 / 2.92%. Run-41 panel: 500-506 members
+  per origin (494-505 with a persistence state, 486-502 issued and
+  scorable). Of 1,031 eligible, the 289 without a scored forecast at h = 1
+  and 5 are 48 whose membership ended before the first forecast origin (22
+  Nov 2004), 20 with one- to three-day CRSP spells between forecast origins,
+  205 members only before the evaluation period, and 16 members during it
+  without a scorable forecast; at h = 22 also 5 that joined after the last
+  monthly origin (739). The 24 stocks removed by the coverage filter all
+  left the index before 29 Nov 2001 and have no member day in the sample:
+  the filter removes no stock that was a member during the sample.
+- Verdict: both predictions HELD (h = 5 paired t 4.66 and 5.11 > 2; weights
+  identical, no immature error). KEEP. Finding #32.
+- Cost: about 4 min (reading the CRSP daily files for the 24).
+- Lesson: check what a look-ahead filter actually removes before
+  qualifying it; here it is not binding.
+
+---
+
 ## 2026-11-16  run-43  Co-author checks: matched proxy row, combination under QLIKE, survivorship counts (module 29)
 - Setup: registration 975971c. (a) C_noH (C without h, delta_h) fitted on
   Parkinson for all 115 stocks (`python -m modules.module29_coauthor_checks

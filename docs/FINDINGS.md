@@ -242,3 +242,11 @@ HAR-X (weight chosen on squared log error) beats HAR-X at one day and one
 week (t 2.4, 3.1), not at one month (t 0.9); the noise placebo gains nothing
 on QLIKE and the shuffled placebo about an eighth of the real gain. From
 run-43.
+
+#32 (2026-11-17): The combination with the real persistence predictors
+beats the same combination with time-shuffled predictors directly (paired
+DM t 3.2 / 4.7 / 2.6 at h = 1 / 5 / 22). The real-time weight equals an
+independent recomputation with explicit trading-calendar maturity, never
+uses an unfinished target window, and is never clipped (median 0.37 /
+0.49 / 0.33). The CRSP coverage filter removes only 24 stocks that left the
+index before the sample starts, so it is not binding. From run-44.
