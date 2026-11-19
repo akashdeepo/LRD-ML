@@ -485,6 +485,20 @@ Eq. 5-6 unless stated. All variants below are reported, whatever they show.
   2020 excess profile injected into (i) and (ii), no prediction.
   Limitation stated in advance: single series, not a simulated
   cross-section.
+  Amendment (2026-11-19, after a 6-replication trial and before the full
+  run): with a single series the diagnostic never fires, not even in the
+  power reference with the 2020 episode injected (0 of 6 under both nulls;
+  0 of 6 in every other scenario), so a single-series false-positive rate
+  would be uninformative. The paper's diagnostic is applied to the
+  cross-sectional mean of 115 stocks. Changed design: each replication
+  simulates a cross-section of 50 independent stocks, each with its own
+  calm-period parameters drawn as before; the episode (power reference) and
+  the change in d (scenarios iii, iv) are common to all stocks at the same
+  date; events are picked from the cross-sectional mean of the simulated log
+  variance, and the diagnostic is applied to the cross-sectional mean of the
+  rolling estimates, as in the paper. Replications: 300 per scenario.
+  Thresholds and predictions unchanged. The trial is kept as
+  run48_trial_single_series.csv.
 
 ---
 
