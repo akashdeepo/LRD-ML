@@ -502,6 +502,50 @@ Eq. 5-6 unless stated. All variants below are reported, whatever they show.
 
 ---
 
+## 2026-11-19  run-46  Size quintiles on the CRSP panel (module 31)
+- Setup: registration 00a7539. `python -m modules.module31_round2 --run 46
+  --wrds <extract>`; run-41 forecasts, CRSP dlycap on the origin date;
+  quintiles among scored members at each origin; output
+  results/intermediate/round2/run46_size_quintiles.csv.
+- Result (quintile 1 = smallest; gain over HAR-X, DM t): combination
+  h = 5: +1.37 (4.70) / +1.78 (5.73) / +1.86 (5.55) / +1.90 (5.03) / +1.61
+  (4.70); h = 1: +0.34 to +0.59, t 2.5 to 4.2; h = 22: +0.55 (1.12) / +1.13
+  (2.26) / +1.65 (3.23) / +1.50 (2.76) / +1.33 (2.31). Model C: h = 1 -2.93
+  to -1.37 (all t < -2.6); h = 5 -1.01 to +0.37 (|t| < 1.7); h = 22 -10.8
+  to -5.4 (all t < -2.6). 195 to 448 stocks per quintile; every scored cell
+  has a market capitalization. Our 115 fall 61% in the top quintile, 29% in
+  the fourth, 7% in the third, 2% in the second and 0.4% in the smallest.
+- Verdict: both predictions HELD. KEEP. The combination gain does not
+  depend on size; the standalone model loses in every quintile. Finding #33.
+- Cost: 75 s.
+
+---
+
+## 2026-11-19  run-45  Combination robustness (module 31)
+- Setup: registration 00a7539. Saved forecasts only (`--run 45`); the
+  expanding weight is checked to reproduce the published combination
+  (max abs difference < 1e-12). Output
+  results/intermediate/round2/run45_*.csv, results/figures/fig_weight_path.pdf.
+- Result (gain over HAR-X, DM t; h = 1 / 5 / 22): fixed 0.25: +0.57 (4.3) /
+  +1.27 (6.7) / +1.43 (4.3); fixed 0.50: +0.60 (2.4) / +1.74 (4.9) / +1.33
+  (2.0); fixed 0.75: +0.11 (0.3) / +1.39 (2.8) / -0.32 (-0.3); expanding
+  (published): +0.55 (3.5) / +1.66 (5.1) / +1.42 (3.2); rolling 52 origins:
+  +0.33 (1.8) / +1.39 (3.6) / +1.17 (2.4); rolling 156: +0.53 (3.1) / +1.60
+  (4.6) / +1.41 (3.0). Generic shrinkage: HAR-X toward lagged HAR-X -0.04 /
+  -0.28 / -0.48 (t -1.6 / -1.6 / -0.7); toward HAR -0.01 / -0.03 / +0.73
+  (t -1.6 / -1.6 / 1.4). Crisis exclusions (published combination):
+  without 2020 +0.46 (3.1) / +1.58 (5.7) / +1.80 (3.4); without top-decile
+  VIX origins +0.31 (2.3) / +1.37 (5.0) / +1.42 (2.8); without both +0.30
+  (2.2) / +1.48 (5.5) / +1.79 (3.2). Indices lagged one day: +0.30 (3.0) /
+  +1.17 (4.1) / +1.28 (2.7). Holm over the three horizons of the published
+  combination: p 0.0009 / < 0.0001 / 0.0014.
+- Verdict: all four predictions HELD ((a) six of six with t > 2 at h = 5;
+  (b) both generic shrinkages lose at h = 5; (c) t > 5 under every
+  exclusion; (d) 1.17% with t 4.1). KEEP. Finding #33.
+- Cost: 18 s.
+
+---
+
 ## 2026-11-17  run-44  Verification checks for the final package (module 30)
 - Setup: registration 08383ba. Saved forecasts only (`python -m
   modules.module30_verification --wrds <extract>`); outputs in
