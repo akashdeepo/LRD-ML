@@ -420,6 +420,72 @@ rows, the regimes, every robustness variant.
   after the evaluation window, and the 24 stocks removed by the coverage
   filter.
 
+**Round-2 registrations (written 2026-11-19, after Reviewer 1's round-2
+report and before any of these numbers exist; module 31).** Loss: squared
+error of log variance; gain = 100 (1 - pooled MSE / HAR-X pooled MSE) on
+common cells; HLN-DM as before. "Combination" = the real-time combination of
+Eq. 5-6 unless stated. All variants below are reported, whatever they show.
+
+- run-45 combination robustness (saved forecasts only).
+  (a) Weight estimators for C with HAR-X, h = 1, 5, 22, on the cells where
+  the real-time combination exists: fixed weights 0.25, 0.5, 0.75; the
+  expanding real-time weight (as published); rolling real-time weights over
+  the last 52 and 156 matured origins (warm-up 26, same maturity lag).
+  Prediction: at h = 5 all six variants beat HAR-X with DM t > 2.
+  (b) Generic shrinkage, same expanding real-time weight: HAR-X toward its
+  own forecast from the previous origin (lagged HAR-X), and HAR-X toward
+  HAR. Prediction: at h = 5 both gain less than 0.3% and at least 1
+  percentage point less than the C combination.
+  (c) Crisis exclusions, published combination, cells removed: (i) origins
+  in calendar 2020; (ii) origins whose VIX close is in the top decile of
+  evaluation-period origins; (iii) both. Prediction: at h = 5 the gain stays
+  positive with DM t > 2 under each exclusion.
+  (d) Lag sensitivity: the combination of C_lagidx with A1_lagidx (VIX and
+  MOVE lagged one day, run-37 fits) against A1_lagidx. Prediction: at h = 5
+  gain >= 1.0% with DM t > 2.
+  (e) Descriptive, no prediction: Holm-adjusted p-values of the published
+  combination over its three horizons, as a separate exploratory family;
+  the path of the weight over time (figure).
+- run-46 size quintiles (saved run-41 CRSP-panel forecasts; CRSP daily
+  market capitalization, dlycap). At each origin, the members with a scored
+  forecast are ranked by their market capitalization on the origin date
+  (known at the close, before the forecast) and split into quintiles;
+  model C and the published pooled combination (Table 17) are each compared
+  with HAR-X within each quintile. Prediction: at h = 5 the combination
+  gain is positive in all five quintiles and has DM t > 2 in at least four;
+  model C is not significantly better than HAR-X (gain > 0 with t > 2) in
+  any quintile at h = 1 or 22. Descriptive: the quintile shares of our 115.
+- run-47 placebo distribution preserving autocorrelation (refits of model C
+  with cached design matrices). In each draw the eleven persistence
+  predictors of a stock are shifted together circularly in time by an
+  offset drawn uniformly from [150, n - 150] rows (150 weekly rows = the
+  750-day estimation window, so that no draw stays close to the real
+  alignment); this keeps each predictor's autocorrelation, their joint
+  distribution and cross-correlation, and breaks their timing relative to
+  the target. Variant (a): an independent offset per stock, 200 draws.
+  Variant (b): one common offset for all stocks in a draw, which also keeps
+  the cross-sectional alignment of the market and sector states, 100 draws.
+  Seeds 1..200 / 1001..1100. Statistic per draw: the combination's gain
+  over HAR-X at each horizon. Empirical p = (1 + #{draws >= real}) /
+  (1 + draws). Prediction: p < 0.05 at h = 5 under both variants; separately,
+  p < 0.05 at h = 1 and at h = 22 under variant (a).
+- run-48 calibration of the window-length diagnostic (simulation). Full-
+  length daily series (the sample's length), 500 replications per scenario,
+  per-stock calm-period (2012-2019) parameters drawn as in run-40: (i)
+  ARMA(1,1) and (ii) ARFIMA(0,d,0) with constant parameters and no injected
+  episode; (iii) ARFIMA with a permanent increase in d from 0.30 to 0.45 at
+  a random date and no episode; (iv) descriptive, no prediction: ARFIMA with
+  d raised to 0.45 for one year only. Events by the paper's rule (the three
+  largest days at least 250 days apart). The diagnostic is positive for an
+  event if, at each of W = 500, 750 and 1000, its entry change lies in the
+  top 1% and its exit change (at event + W) in the bottom 1% of all step
+  changes of that series. False-positive rate = share of replications with
+  at least one positive event. Prediction: at most 5% under (i) and (ii),
+  at most 10% under (iii). Power reference: the same rate with the observed
+  2020 excess profile injected into (i) and (ii), no prediction.
+  Limitation stated in advance: single series, not a simulated
+  cross-section.
+
 ---
 
 ## 2026-11-17  run-44  Verification checks for the final package (module 30)
