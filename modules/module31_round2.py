@@ -23,6 +23,7 @@ Outputs: results/intermediate/round2/
 from __future__ import annotations
 
 import argparse
+import os
 import time
 import warnings
 from pathlib import Path
@@ -44,7 +45,7 @@ INTERM = BASE / "results" / "intermediate"
 FCST = INTERM / "forecasts"
 OUT = INTERM / "round2"
 WRDS_PKL = BASE / "bloomberg_pull" / "processed" / "wrds" / "survivorship_panel.pkl"
-JOBS = 12
+JOBS = int(os.environ.get("LRDML_JOBS", 12))
 
 
 def _rd(stem: Path):
