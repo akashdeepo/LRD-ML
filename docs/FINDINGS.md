@@ -253,3 +253,30 @@ index before the sample starts, so it is not binding. From run-44.
 (Correction 2026-11-17: "equals" means agreement to numerical precision,
 max abs difference 1.1e-15; monthly membership split corrected in the
 run-44 entry.)
+
+#33 (2026-11-19): The weekly combination gain is not an artifact of the
+weight estimator, of 2020, of the information cutoff or of firm size. Every
+weight rule beats HAR-X at h = 5 (fixed 0.25 / 0.5 / 0.75: 1.27 / 1.74 /
+1.39%; rolling 52 / 156 origins: 1.39 / 1.60%); generic shrinkage of HAR-X
+toward its lagged forecast or toward HAR loses; without 2020 and high-VIX
+origins the gain is 1.48% (t 5.5); with the indices lagged one day 1.17%
+(t 4.1); on the CRSP membership it is positive with t >= 4.7 in every size
+quintile, while model C alone never beats HAR-X in any quintile. From
+runs 45-46.
+
+#34 (2026-11-20): The window-length diagnostic is conservative. In
+simulated cross-sections of 50 stocks with events picked by the paper's
+retrospective rule, it never fires without an episode (0 of 1,225 events
+under short- and long-memory nulls) or under a genuine change in d
+(permanent or one-year; 0 of 1,205 events), and fires in 17% (ARMA) and
+60% (ARFIMA) of replications with the 2020 episode added. From run-48.
+
+#35 (2026-11-20): About half of the weekly combination gain survives a
+placebo that keeps the persistence predictors' autocorrelation but breaks
+their timing (circular shifts of at least the estimation window): placebo
+median 0.85% against the real 1.66%. No placebo draw reaches the real gain
+at any horizon with per-stock shifts (p 0.005), or at h = 1 and 5 with a
+common shift (p 0.010); at h = 22 the common shift does not separate it
+(p 0.059). Corrects the reading of #27, whose block shuffle (0.22%) broke
+the predictors' autocorrelation and understated the generic part. From
+run-47.

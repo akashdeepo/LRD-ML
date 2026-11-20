@@ -502,6 +502,50 @@ Eq. 5-6 unless stated. All variants below are reported, whatever they show.
 
 ---
 
+## 2026-11-20  run-47  Placebo distribution preserving autocorrelation (module 31)
+- Setup: registration 00a7539. Unit check before the run: a zero shift
+  reproduces the saved model C forecasts (max abs difference 1.8e-15 at each
+  horizon). Variant (a) 200 draws, variant (b) 100 draws; 246 draw-horizons
+  of (a) ran locally, the rest on Kaggle (private dataset and jobs deleted
+  afterwards); Kaggle reproduces all 246 local draws exactly. Output
+  results/intermediate/round2/run47_placebo_{a,b,summary}.csv.
+- Result (combination gain over HAR-X; real 0.55 / 1.66 / 1.42%):
+  (a) per-stock offsets: placebo median 0.22 / 0.85 / 0.85%, 95th
+  percentile 0.28 / 1.01 / 1.09%, largest 0.34 / 1.10 / 1.23%; empirical
+  p 0.005 / 0.005 / 0.005 (no draw reaches the real gain).
+  (b) common offset: median 0.20 / 0.79 / 0.58%, 95th percentile 0.37 /
+  1.26 / 1.41%, largest 0.49 / 1.56 / 2.83%; p 0.010 / 0.010 / 0.059.
+- Verdict: both predictions HELD ((a) p < 0.05 at every horizon; (b)
+  p < 0.05 at h = 5). Not predicted: (b) at h = 22 does not separate the
+  real gain (p 0.059). KEEP. Finding #35. Lesson: predictors that keep
+  their persistence but lose their timing reproduce about half of the
+  weekly gain (0.85 of 1.66%), far more than the block shuffle of run-42
+  (0.22%), which broke the predictors' autocorrelation. The block shuffle
+  understated the generic part; about half of the weekly gain needs the
+  timing.
+- Cost: about 2 h on Kaggle (4 CPUs) plus about 25 min locally.
+
+---
+
+## 2026-11-20  run-48  Calibration of the window-length diagnostic (module 31)
+- Setup: registration 00a7539, amendment d2cb6e8 (simulated cross-section
+  of 50 stocks, 300 replications per scenario). The first 780 replications
+  ran locally, the rest on Kaggle (private dataset, deleted afterwards);
+  Kaggle reproduces all 780 local replications exactly. Output
+  results/intermediate/round2/run48_window_calibration*.csv.
+- Result (share of replications with a positive event; positive / usable
+  events): ARMA(1,1) no episode 0.0% (0 / 624); ARFIMA no episode 0.0%
+  (0 / 601); permanent rise in d 0.30 -> 0.45 0.0% (0 / 573); one-year rise
+  0.0% (0 / 632); ARMA + 2020 episode 16.7% (50 / 726); ARFIMA + 2020
+  episode 59.7% (179 / 713).
+- Verdict: both predictions HELD (<= 5% under (i) and (ii): 0%; <= 10%
+  under (iii): 0%). KEEP. The diagnostic is conservative: no false
+  positives without an episode, none for a change in dependence, power
+  17-60% for an episode of the 2020 size. Finding #34.
+- Cost: about 15 min on Kaggle (4 CPUs) plus about 13 min locally.
+
+---
+
 ## 2026-11-19  run-46  Size quintiles on the CRSP panel (module 31)
 - Setup: registration 00a7539. `python -m modules.module31_round2 --run 46
   --wrds <extract>`; run-41 forecasts, CRSP dlycap on the origin date;
