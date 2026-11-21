@@ -280,3 +280,11 @@ common shift (p 0.010); at h = 22 the common shift does not separate it
 (p 0.059). Corrects the reading of #27, whose block shuffle (0.22%) broke
 the predictors' autocorrelation and understated the generic part. From
 run-47.
+Correction (2026-11-21, co-author review; run-49): the shifts are at least
+150 weekly rows, about the 750-day persistence window, not the estimation
+window. The shifted block includes the d x VIX and d x MOVE products and
+the common states, so the shift is a destructive diagnostic, not an
+intervention on timing alone: the gap between 1.66% and the placebo median
+is a descriptive contrast between refitted procedures, not a split of the
+gain into a generic and a timing part. "p" is an add-one exceedance
+fraction, descriptive rather than an exact randomization p-value.

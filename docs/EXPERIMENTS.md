@@ -502,6 +502,51 @@ Eq. 5-6 unless stated. All variants below are reported, whatever they show.
 
 ---
 
+## 2026-11-21  run-49  Round-2 co-author audits (module 32; NOT registered in advance)
+- Setup: requested in the co-author review of 20 Nov 2026 (items R3, R4, R5,
+  R9, R11). Not registered before running and no outcome predicted: these
+  are descriptive checks on saved forecasts and saved simulation records; no
+  model is refitted and no reported number changes. `python -m
+  modules.module32_round2_audits` and `--hist`; outputs
+  results/intermediate/verification/round2b_*.csv.
+- Result: (a) Table 13 equal weights and Table 14A fixed 0.50 use different
+  samples, both as coded: Table 13 scores all common cells, 646 origins from
+  17 Jun 2013 (642 at h = 22; 74,290 / 73,830 cells): +0.558 / +1.759 /
+  +1.424%; Table 14A scores the baseline real-time combination's cells after
+  its 26-origin warm-up, 620 origins from 19 Dec 2013 (612 from 21 Jan 2014;
+  71,300 / 70,380 cells): +0.602 / +1.736 / +1.325%. (b) Main panel: N_t =
+  115 at every evaluated origin, so the cell-pooled and date-balanced
+  reductions are identical. Historical panel (run-41): N_t 486-502; pooled
+  vs date-balanced differ by at most 0.009 pp, same sign everywhere (C
+  -1.860 / -0.014 / -6.311% vs -1.862 / -0.016 / -6.302%; combination
+  +0.498 / +1.701 / +1.225% vs +0.497 / +1.699 / +1.224%). Shortened target
+  windows among scored cells: 0 / 0.03% / 0.17% (combination: 0 / 91 /
+  491 cells), of which 0 / 87 / 475 at the end of the stock's price
+  history. (c) Combination QLIKE sample: 594 / 594 / 582 origins from 27 Jun
+  2014 (25 Aug 2014 at h = 22), as in the run-44 census. (d) Run-48: every
+  episode replication selects the injected episode among its three events
+  (300 / 300 under both nulls); every positive replication has exactly one
+  positive event (50 and 179). Which event was flagged was not recorded.
+  Also documented from the code: run-47 shifts the whole constructed
+  11-column block (including d_x_vix, d_x_move, cs_mean_d, cs_std_d,
+  sector_mean_d) by np.roll on design-matrix rows; HAR terms, VIX and MOVE
+  are not shifted. Variant (a) offsets are uniform on [150, n - 150], so the
+  circular distance is at least 150 rows; offsets repeat across draws.
+  Variant (b) folds the common offset into [150, n - 150] for short stocks.
+  Lagged indices (run-37): VIX and MOVE forward-filled over holidays, then
+  shifted one trading day; the d products rebuilt from the lagged values.
+- Correction to the run-47 registration text (not edited above): "150
+  weekly rows = the 750-day estimation window" is wrong. The 750-day window
+  is the persistence window (about 150 five-trading-day origins); the
+  regression estimation window expands from 431 origins. The design is
+  unaffected; the manuscript wording is corrected.
+- Verdict: no prediction (descriptive). All reported numbers stand; table
+  notes and text now state the samples, the aggregation and the placebo
+  construction.
+- Cost: about 15 min (the historical-panel pass).
+
+---
+
 ## 2026-11-20  run-47  Placebo distribution preserving autocorrelation (module 31)
 - Setup: registration 00a7539. Unit check before the run: a zero shift
   reproduces the saved model C forecasts (max abs difference 1.8e-15 at each
