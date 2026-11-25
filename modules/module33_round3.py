@@ -86,7 +86,7 @@ def summarize50() -> pd.DataFrame:
         pos_ep = pos_other = 0
         for _, x in g.iterrows():
             ev = [int(e) for e in str(x.events).split(";")]
-            fl = str(x.flags).split(";")
+            fl = str(x["flags"]).split(";")
             for e, f in zip(ev, fl):
                 if f == "1":
                     if x.tau <= e < x.tau + x.episode_len:
