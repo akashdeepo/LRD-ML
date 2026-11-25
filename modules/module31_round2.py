@@ -389,7 +389,9 @@ def _sim_one(scenario: str, rep: int, T: int, arma, d_s, sd_s, profile, sd_tab) 
         flags.append(ok)
     usable = [f for f in flags if f is not None]
     return {"scenario": scenario, "rep": rep, "events_usable": len(usable), "positive_events": int(sum(usable)),
-            "any_positive": bool(any(usable)), "tau": tau, "events": ";".join(map(str, ev))}
+            "any_positive": bool(any(usable)), "tau": tau, "events": ";".join(map(str, ev)),
+            "flags": ";".join("u" if f is None else str(int(f)) for f in flags),     # run-50: per-event flag
+            "episode_len": int(min(len(profile), T - tau)) if scenario.endswith("+episode") else 0}
 
 
 def run48(reps: int) -> pd.DataFrame:

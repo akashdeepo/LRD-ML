@@ -500,6 +500,33 @@ Eq. 5-6 unless stated. All variants below are reported, whatever they show.
   Thresholds and predictions unchanged. The trial is kept as
   run48_trial_single_series.csv.
 
+**Round-3 registrations (written 2026-11-25, after Reviewer 1's round-3
+report and before any of these numbers exist; module 33).** Both runs are
+reported whatever they show; neither changes a published number.
+
+- run-50 which event the window diagnostic flags (simulation). The run-48
+  cross-sectional design for the two scenarios with the 2020 episode
+  injected (ARMA(1,1) and ARFIMA(0,d,0)), 300 replications each, with the
+  same seeds, now recording the flag of every selected event. An event is
+  "the injected episode" if its date lies in [tau, tau + episode length).
+  Predictions: (i) the rerun reproduces run-48 exactly (same events and
+  positive counts, 50 and 179 positive replications); (ii) every positive
+  event is the injected episode (no positive event outside it). Inputs are
+  the run-48 fitted parameters and the episode profile only (no price data),
+  so it may run on Kaggle.
+- run-51 volatility-managed portfolio with the combination (saved
+  forecasts; local). The Appendix E construction (weekly rebalancing,
+  w = c / sigma2_hat with the real-time constant, excess total returns) with
+  the real-time combination's weekly forecast exponentiated as for the
+  other models, on the cells where the combination, HAR-X and model C
+  forecasts and the return all exist (after the combination's warm-up);
+  same-close and next-day execution. Tests: Ledoit-Wolf HAC and studentized
+  circular block bootstrap (block 5, 2000 draws) of the Sharpe difference,
+  combination-managed vs HAR-X-managed and vs equal weight; descriptive:
+  C-managed vs HAR-X-managed on the same cells. Prediction: under next-day
+  execution, neither Sharpe difference of the combination-managed portfolio
+  is significant (HAC p > 0.10). Table A4 is not changed.
+
 ---
 
 ## 2026-11-21  run-49  Round-2 co-author audits (module 32; NOT registered in advance)
