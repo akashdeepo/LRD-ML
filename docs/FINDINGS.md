@@ -288,3 +288,13 @@ intervention on timing alone: the gap between 1.66% and the placebo median
 is a descriptive contrast between refitted procedures, not a split of the
 gain into a generic and a timing part. "p" is an add-one exceedance
 fraction, descriptive rather than an exact randomization p-value.
+
+#36 (2026-11-25): In the window-diagnostic simulations with the 2020
+episode injected, every flagged event lies inside the injected episode (50
+of 50 and 179 of 179 positive replications); the diagnostic's detections
+are the episode, not another large day. From run-50.
+
+#37 (2026-11-25): The weekly combination's 1.7% loss reduction does not
+show up as a Sharpe difference in volatility-managed portfolios (next-day
+Sharpe 0.748 vs 0.749 for HAR-X-managed, p 0.88). Statistical and economic
+gains differ, as for the standalone models. From run-51.

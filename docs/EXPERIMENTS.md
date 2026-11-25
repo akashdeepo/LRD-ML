@@ -529,6 +529,43 @@ reported whatever they show; neither changes a published number.
 
 ---
 
+## 2026-11-25  run-50  Which event the window diagnostic flags (module 33)
+- Setup: registration 07cde2c (module-33 column-name fix 2 lines later,
+  before any run). Kaggle, one private script kernel (lrdml-r3-w50, 4
+  workers, no internet) on a private dataset holding only the code, the
+  run-48 fitted parameters (no tickers) and the 2020 episode profile; no
+  price data. A one-replication local test without the price panel ran
+  first. Dataset and kernel deleted after download (verified 25 Nov).
+- Result: the rerun reproduces run-48 exactly (events and positive counts
+  identical in all 600 replications). Positive replications 50 / 300
+  (ARMA + episode) and 179 / 300 (ARFIMA + episode); every positive event
+  lies in the injected episode, [tau, tau + 252): 50 / 50 and 179 / 179,
+  none outside. Descriptive: in 142 of the 229 positive replications two of
+  the three selected events lie inside the episode window (events are at
+  least 250 days apart, the episode lasts 252 days).
+- Verdict: both predictions HELD. KEEP.
+- Cost: about 15 min on Kaggle.
+
+---
+
+## 2026-11-25  run-51  Volatility-managed portfolio with the combination (module 33)
+- Setup: registration 07cde2c. Local, saved forecasts. Appendix E
+  construction on the cells where the combination, HAR-X and C forecasts
+  and the return exist: 568 weeks (567 next-day) from 2 Jan 2015.
+- Result: Sharpe ratios, next-day execution: equal weight 0.844,
+  HAR-X-managed 0.749, C-managed 0.744, combination-managed 0.748;
+  same-close: 0.888 / 0.937 / 0.936 / 0.938. Combination-managed vs
+  HAR-X-managed: next-day delta -0.0002 (HAC p 0.882, bootstrap 0.886),
+  same-close +0.0002 (0.912, 0.908). Vs equal weight: next-day -0.014
+  (0.458, 0.459), same-close +0.007 (0.748, 0.767). C-managed vs
+  HAR-X-managed: p 0.787 / 0.970.
+- Verdict: prediction HELD (no significant Sharpe difference). The 1.7%
+  weekly loss reduction does not translate into a Sharpe difference in
+  this construction. Table A4 unchanged.
+- Cost: about 3 min.
+
+---
+
 ## 2026-11-21  run-49  Round-2 co-author audits (module 32; NOT registered in advance)
 - Setup: requested in the co-author review of 20 Nov 2026 (items R3, R4, R5,
   R9, R11). Not registered before running and no outcome predicted: these
